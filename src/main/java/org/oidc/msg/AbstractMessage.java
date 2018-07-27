@@ -18,8 +18,18 @@ package org.oidc.msg;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTCreator;
+import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTDecodeException;
+import com.auth0.jwt.exceptions.JWTVerificationException;
+import com.auth0.jwt.exceptions.oicmsg_exceptions.ImportException;
+import com.auth0.jwt.exceptions.oicmsg_exceptions.UnknownKeyType;
+import com.auth0.jwt.exceptions.oicmsg_exceptions.ValueError;
+import com.auth0.jwt.interfaces.DecodedJWT;
+import com.auth0.msg.Key;
+import com.auth0.msg.KeyBundle;
+import com.auth0.msg.KeyJar;
+import com.auth0.msg.KeyType;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -28,6 +38,8 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.charset.StandardCharsets;
+import java.security.interfaces.ECPublicKey;
+import java.security.interfaces.RSAPublicKey;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -134,17 +146,18 @@ public abstract class AbstractMessage implements Message {
   /**
    * Constructs message from JWT.
    * 
-   * @param input
+   * @param jwt
    *          the jwt String representation of a message
+   * @param keyJar
+   *          KeyJar having a key for verifying the signature. If null, signature is not verified.
+   * @param keyOwner
+   *          For whom the key belongs to.
    * @throws InvalidClaimException
    *           thrown if message parameters do not match the message requirements.
    */
   @SuppressWarnings("unchecked")
-  public void fromJwt(String input) throws IOException {
-    //TODO: This method should verify possible signature and decrypt if jwt is encrypted.
-    //Requires keyjar.
-    
-    String[] parts = MessageUtil.splitToken(input);
+  public void fromJwt(String jwt, KeyJar keyJar, String keyOwner) throws IOException {
+    String[] parts = MessageUtil.splitToken(jwt);
     String headerJson;
     String payloadJson;
     try {
@@ -153,9 +166,95 @@ public abstract class AbstractMessage implements Message {
     } catch (NullPointerException e) {
       throw new JWTDecodeException("The UTF-8 Charset isn't initialized.", e);
     }
+
     this.header = mapper.readValue(headerJson, Map.class);
     this.claims = mapper.readValue(payloadJson, Map.class);
     verified = false;
+
+    if (keyJar == null) {
+      return;
+    }
+
+    if (header.get("alg") == null || !(header.get("alg") instanceof String)) {
+      throw new JWTDecodeException("JWT does not have alg in header");
+    }
+
+    String alg = (String) header.get("alg");
+    if ("none".equals(alg)) {
+      Algorithm algorithm = Algorithm.none();
+      JWTVerifier verifier = JWT.require(algorithm).build();
+      verifier.verify(jwt);
+      return;
+    }
+
+    Map<String, String> args = new HashMap<String, String>();
+    args.put("alg", alg);
+    if (header.get("kid") != null && !(header.get("alg") instanceof String)) {
+      throw new JWTDecodeException("JWT header field kid has to be string");
+    }
+    // Get matching keys
+    String kid = (String) header.get("kid");
+    List<Key> keys = null;
+    switch (alg) {
+      case "RS256":
+      case "RS384":
+      case "RS512":
+        keys = keyJar.getVerifyKey(KeyType.RSA.name(), keyOwner, kid, args);
+        break;
+      case "ES256":
+      case "ES384":
+      case "ES512":
+        keys = keyJar.getVerifyKey(KeyType.EC.name(), keyOwner, kid, args);
+        break;
+      default:
+        break;
+    }
+    if (keys == null || keys.size() == 0) {
+      throw new JWTDecodeException("Not able to locate keys to verify JWT");
+    }
+    // We try each located key
+    try {
+      for (Key key : keys) {
+        Algorithm algorithm = null;
+        switch (alg) {
+          case "RS256":
+            algorithm = Algorithm.RSA256((RSAPublicKey) key.getKey(false), null);
+            break;
+          case "RS384":
+            algorithm = Algorithm.RSA384((RSAPublicKey) key.getKey(false), null);
+            break;
+          case "RS512":
+            algorithm = Algorithm.RSA512((RSAPublicKey) key.getKey(false), null);
+            break;
+          case "ES256":
+            algorithm = Algorithm.ECDSA256((ECPublicKey) key.getKey(false), null);
+            break;
+          case "ES384":
+            algorithm = Algorithm.ECDSA384((ECPublicKey) key.getKey(false), null);
+            break;
+          case "ES512":
+            algorithm = Algorithm.ECDSA512((ECPublicKey) key.getKey(false), null);
+            break;
+          default:
+            break;
+        }
+        if (algorithm == null) {
+          throw new JWTDecodeException("Not able to initialize algorithm to verify JWT");
+        }
+        JWTVerifier verifier = JWT.require(algorithm).build();
+        try {
+          verifier.verify(jwt);
+          return;
+        } catch (JWTVerificationException e) {
+          // Move to next key
+          continue;
+        }
+      }
+    } catch (IllegalArgumentException | ValueError e) {
+      throw new JWTDecodeException("Key handling exception");
+    }
+    throw new JWTDecodeException("Not able to verify JWT with any of the keys provided");
+
   }
 
   /**

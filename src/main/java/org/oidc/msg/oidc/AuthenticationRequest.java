@@ -112,7 +112,7 @@ public class AuthenticationRequest extends AuthorizationRequest {
     if (idTokenHint != null) {
       IDToken idToken = new IDToken();
       try {
-        idToken.fromJwt(idTokenHint);
+        idToken.fromJwt(idTokenHint, null, null);
       } catch (IOException e) {
         getError().getMessages()
             .add(String.format("Unable to parse id token from '%s'", idTokenHint));

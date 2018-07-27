@@ -17,6 +17,7 @@
 package org.oidc.msg;
 
 import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.msg.KeyJar;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import java.io.IOException;
@@ -80,7 +81,7 @@ public interface Message {
    * @param KeyJar
    *          that might contain the necessary key
    */
-  void fromJwt(String input) throws IOException;
+  void fromJwt(String input, KeyJar keyJar, String keyOwner) throws IOException;
 
   /**
    *
