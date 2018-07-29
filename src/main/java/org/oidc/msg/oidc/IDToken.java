@@ -45,7 +45,7 @@ public class IDToken extends OpenIDSchema {
   private long skew = 0;
 
   /** Nonce storage time in seconds. */
-  private long storageTime = 4 * 3600;
+  private long storageTime = 4 * 60 * 10 * 1000;
 
   {
     // Updating parameter requirements.
@@ -120,7 +120,7 @@ public class IDToken extends OpenIDSchema {
    *          Skew in seconds for calculating if the id token has expired or not.
    */
   public void setSkew(long skew) {
-    this.skew = skew;
+    this.skew = skew * 1000;
   }
 
   /**
@@ -131,7 +131,7 @@ public class IDToken extends OpenIDSchema {
    *          nonce storage time in seconds
    */
   public void setStorageTime(long storageTime) {
-    this.storageTime = storageTime;
+    this.storageTime = storageTime * 1000;
   }
 
   /**
@@ -169,7 +169,7 @@ public class IDToken extends OpenIDSchema {
       getError().getMessages().add(String.format(
           "Client ID '%s' should equal to azp claim value '%s'", clientId, getClaims().get("azp")));
     }
-    
+
     long now = System.currentTimeMillis();
     long exp = ((Date) getClaims().get("exp")).getTime();
     if (now - skew > exp) {
