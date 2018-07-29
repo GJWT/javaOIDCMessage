@@ -17,6 +17,7 @@
 package org.oidc.msg.oidc;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.oidc.msg.InvalidClaimException;
@@ -39,6 +40,9 @@ public class AuthenticationResponse extends AuthorizationResponse {
     paramVerDefs.put("state", ParameterVerification.SINGLE_OPTIONAL_STRING.getValue());
     paramVerDefs.put("code", ParameterVerification.SINGLE_OPTIONAL_STRING.getValue());
     paramVerDefs.put("id_token", ParameterVerification.SINGLE_OPTIONAL_IDTOKEN.getValue());
+    // TODO: For some reason this parameter is included in python implementation and checked
+    // against client id.
+    paramVerDefs.put("aud", ParameterVerification.OPTIONAL_LIST_OF_STRINGS.getValue());
   }
 
   /**
@@ -47,7 +51,7 @@ public class AuthenticationResponse extends AuthorizationResponse {
   public AuthenticationResponse() {
     this(new HashMap<String, Object>());
   }
-  
+
   /**
    * Constructor.
    * 
@@ -70,20 +74,27 @@ public class AuthenticationResponse extends AuthorizationResponse {
    * @throws InvalidClaimException
    *           if verification fails.
    */
+  @SuppressWarnings("unchecked")
   public boolean verify() throws InvalidClaimException {
     super.verify();
-    
-    // TODO: if client id is set (setter inherited) and response contains aud, THEN check if they
-    // match.
+
+    // TODO: For some reason aud parameter is included in python implementation as optional
+    // parameter and checked against client id.
+    if (getClaims().get("aud") != null && getClientId() != null) {
+      List<String> aud = (List<String>) getClaims().get("aud");
+      if (!aud.contains(getClientId())) {
+        getError().getMessages().add(String.format("Client ID not included in audience"));
+      }
+    }
     
     // TODO: if id_token exists, pass arguments for it and perform verify: 'keyjar','verify',
     // 'encalg', 'encenc', 'sigalg','issuer', 'allow_missing_kid', 'no_kid_issuer','trusting',
     // 'skew', 'nonce_storage_time', 'client_id'
-    
-    // TODO: Check the algorithm for id token header. 
+
+    // TODO: Check the algorithm for id token header.
     // If access token is returned, check from id token that at_hash exists and is correct one
     // If code is returned, check from id token that c_hash exists and is correct one
-    
+
     if (getError().getMessages().size() > 0) {
       this.setVerified(false);
       throw new InvalidClaimException(
