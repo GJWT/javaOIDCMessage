@@ -136,24 +136,24 @@ public class IDTokenTest {
 
   @Test(expected = InvalidClaimException.class)
   public void testFailExp() throws InvalidClaimException {
-    claims.put("exp", now - 1);
+    claims.put("exp", now - 2000);
     IDToken req = new IDToken(claims);
     req.verify();
   }
 
   @Test
   public void testSuccessExpSkew() throws InvalidClaimException {
-    claims.put("exp", now - 1);
+    claims.put("exp", now - 2000);
     IDToken req = new IDToken(claims);
-    req.setSkew(2);
+    req.setSkew(3000);
     req.verify();
   }
 
   @Test(expected = InvalidClaimException.class)
   public void testFailIat() throws InvalidClaimException {
-    claims.put("iat", now - 100);
+    claims.put("iat", now - 2000);
     IDToken req = new IDToken(claims);
-    req.setStorageTime(90);
+    req.setStorageTime(1000);
     req.verify();
   }
 
