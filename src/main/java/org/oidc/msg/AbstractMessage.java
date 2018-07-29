@@ -38,7 +38,9 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.charset.StandardCharsets;
+import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.ECPublicKey;
+import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.Date;
 import java.util.HashMap;
@@ -260,23 +262,64 @@ public abstract class AbstractMessage implements Message {
   /**
    * Serialize the content of this instance (the claims map) into a jwt string.
    * 
-   * @param algorithm
-   *          the algorithm to use in signing the JWT
-   * @return a jwt String
-   * @throws InvalidClaimException
-   *           thrown if message parameters do not match the message requirements.
+   * @param key
+   *          signing key
+   * @param alg
+   *          signing algorithm
+   * @return message as jwt string.
    */
-  public String toJwt(Algorithm algorithm)
-      throws JsonProcessingException, SerializationException, InvalidClaimException {
-    header.put("alg", algorithm.getName());
+  public String toJwt(Key key, String alg) {
+    
+    header = new HashMap<String, Object>();
+    header.put("alg", alg);
     header.put("typ", "JWT");
-    String signingKeyId = algorithm.getSigningKeyId();
-    if (signingKeyId != null) {
-      header.put("kid", signingKeyId);
+    if (key != null && key.getKid() != null) {
+      header.put("kid", key.getKid());
+    }
+    
+    Algorithm algorithm = null;
+    try {
+      switch (alg) {
+        case "none":
+          algorithm = Algorithm.none();
+          break;
+        case "RS256":
+          algorithm = Algorithm.RSA256(null, (RSAPrivateKey) key.getKey(true));
+          break;
+        case "RS384":
+          algorithm = Algorithm.RSA384(null,(RSAPrivateKey) key.getKey(true));
+          break;
+        case "RS512":
+          algorithm = Algorithm.RSA512(null,(RSAPrivateKey) key.getKey(true));
+          break;
+        case "ES256":
+          algorithm = Algorithm.ECDSA256(null,(ECPrivateKey) key.getKey(true));
+          break;
+        case "ES384":
+          algorithm = Algorithm.ECDSA384(null,(ECPrivateKey) key.getKey(true));
+          break;
+        case "ES512":
+          algorithm = Algorithm.ECDSA512(null,(ECPrivateKey) key.getKey(true));
+          break;
+        default:
+          break;
+         //TODO: HMAC algorithms
+      }
+    } catch (IllegalArgumentException | ValueError e) {
+      // TODO: This is not Decoding exception, replace it.
+      throw new JWTDecodeException(String
+          .format("Not able to initialize algorithm '%s' to sign JWT, '%s'", alg, e.getMessage()));
+    }
+    if (algorithm == null) {
+      // TODO: This is not Decoding exception, replace it.
+      throw new JWTDecodeException(
+          String.format("Not able to initialize algorithm '%s' to sign JWT", alg));
     }
     JWTCreator.Builder newBuilder = JWT.create().withHeader(this.header);
     for (String claimName : claims.keySet()) {
-      // TODO this needs to be extended for all claim types
+      // TODO: This mapping may prove not to be enough. How are Messages etc serialized?
+      // We may end up using toJson as the serialization method. This will be seen once we get to
+      // test more complex messages.
       Object value = claims.get(claimName);
       if (value instanceof Boolean) {
         newBuilder.withClaim(claimName, (Boolean) value);

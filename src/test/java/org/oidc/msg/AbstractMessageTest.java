@@ -17,12 +17,13 @@
 package org.oidc.msg;
 
 import com.auth0.jwt.JWT;
-import com.auth0.jwt.JWTCreator;
+import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.oicmsg_exceptions.ImportException;
 import com.auth0.jwt.exceptions.oicmsg_exceptions.UnknownKeyType;
 import com.auth0.jwt.exceptions.oicmsg_exceptions.ValueError;
 import com.auth0.jwt.impl.PayloadSerializer;
+import com.auth0.jwt.interfaces.DecodedJWT;
 import com.auth0.msg.Key;
 import com.auth0.msg.KeyBundle;
 import com.auth0.msg.KeyJar;
@@ -32,19 +33,10 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializerProvider;
-import org.junit.Before;
-import org.junit.Test;
-
-import org.junit.Assert;
-
 import java.io.IOException;
 import java.io.StringWriter;
 import java.lang.reflect.Array;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.ECPrivateKey;
-import java.security.interfaces.ECPublicKey;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.ArrayList;
@@ -53,120 +45,28 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.hamcrest.CoreMatchers;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
-import static org.hamcrest.CoreMatchers.is;
 
 public class AbstractMessageTest {
-	
-	private static final String PRIVATE_KEY_FILE = "src/test/resources/rsa-private.pem";
-	private static final String PUBLIC_KEY_FILE = "src/test/resources/rsa-public.pem";
+
+  private static final String PRIVATE_KEY_FILE = "src/test/resources/rsa-private.pem";
+  private static final String PUBLIC_KEY_FILE = "src/test/resources/rsa-public.pem";
+  private String keyOwner = "https://issuer.example.com";
+  protected KeyJar keyJarOfPrivateKeys = null;
+  protected KeyJar keyJarOfPublicKeys = null;
+  protected String signedJwt = null;
+
 
   private StringWriter writer;
   private PayloadSerializer serializer;
   private JsonGenerator jsonGenerator;
   private SerializerProvider serializerProvider;
   
-  private String keyOwner="https://issuer.example.com";
-  protected KeyJar keyJarOfPrivateKeys = null;
-  protected KeyJar keyJarOfPublicKeys = null;
-  protected String signedJwt = null;
   
-
-  /**
-   * Creates simple signed jwt.
-   * 
-   * @param alg slg to use.
-   * @return simple jwt.
-   * 
-   */
-  private String getSignedJwt(String alg)
-      throws IllegalArgumentException, ImportException, UnknownKeyType, ValueError {
-    List<Key> keys = null;
-    switch (alg) {
-      case "RS256":
-      case "RS384":
-      case "RS512":
-        keys = getKeyJarPrv().getSigningKey(KeyType.RSA.name(), keyOwner, null,
-            null);
-        break;
-      case "ES256":
-      case "ES384":
-      case "ES512":
-        keys = getKeyJarPrv().getSigningKey(KeyType.EC.name(), keyOwner, null,
-            null);
-        break;
-      default:
-        break;
-    }
-    Key key = keys == null ? null : keys.get(0);
-    Algorithm algorithm = null;
-    switch (alg) {
-      case "none":
-        algorithm = Algorithm.none();
-        break;
-      case "RS256":
-        algorithm = Algorithm.RSA256(null, (RSAPrivateKey) key.getKey(true));
-        break;
-      case "RS384":
-        algorithm = Algorithm.RSA384(null, (RSAPrivateKey) key.getKey(true));
-        break;
-      case "RS512":
-        algorithm = Algorithm.RSA512(null, (RSAPrivateKey) key.getKey(true));
-        break;
-      case "ES256":
-        algorithm = Algorithm.ECDSA256(null, (ECPrivateKey) key.getKey(true));
-        break;
-      case "ES384":
-        algorithm = Algorithm.ECDSA384(null, (ECPrivateKey) key.getKey(true));
-        break;
-      case "ES512":
-        algorithm = Algorithm.ECDSA512(null, (ECPrivateKey) key.getKey(true));
-        break;
-      default:
-        break;
-    }
-    return JWT.create().withIssuer("op").sign(algorithm);
-  }
-
-  /**
-   * Creates if needed one keyjar with one private rsa key.
-   * 
-   * @return keyjar
-   * 
-   */
-  private KeyJar getKeyJarPrv()
-      throws ImportException, UnknownKeyType, IllegalArgumentException, ValueError {
-    if (keyJarOfPrivateKeys != null) {
-      return keyJarOfPrivateKeys;
-    }
-    keyJarOfPrivateKeys = new KeyJar();
-    ArrayList<String> usesPrv = new ArrayList<String>();
-    usesPrv.add("sig");
-    usesPrv.add("dec");
-    KeyBundle keyBundlePrv = KeyBundle.keyBundleFromLocalFile(PRIVATE_KEY_FILE, "der", usesPrv);
-    keyJarOfPrivateKeys.addKeyBundle(keyOwner, keyBundlePrv);
-    return keyJarOfPrivateKeys;
-  }
-  
-  /**
-   * Creates if needed one keyjar with one public rsa key.
-   * 
-   * @return keyjar
-   * 
-   */
-  private KeyJar getKeyJarPub()
-      throws ImportException, UnknownKeyType, IllegalArgumentException, ValueError {
-    if (keyJarOfPublicKeys != null) {
-      return keyJarOfPublicKeys;
-    }
-    keyJarOfPublicKeys = new KeyJar();
-    ArrayList<String> usesPub = new ArrayList<String>();
-    usesPub.add("ver");
-    usesPub.add("enc");
-    KeyBundle keyBundlePub = KeyBundle.keyBundleFromLocalFile(PUBLIC_KEY_FILE, "der", usesPub);
-    keyJarOfPublicKeys.addKeyBundle(keyOwner, keyBundlePub);
-    return keyJarOfPublicKeys;
-  }
 
   // TODO: Old tests start here. go through them and make sense out of them.
 
@@ -198,7 +98,7 @@ public class AbstractMessageTest {
     MockMessage pcr = new MockMessage(claims);
     String pcrJson = pcr.toJson();
     String testJson = "{\"GRANT_TYPE\":\"refresh_token\"}";
-    Assert.assertThat(pcrJson, is(testJson));
+    Assert.assertThat(pcrJson, CoreMatchers.is(testJson));
   }
 
   @Test
@@ -214,9 +114,71 @@ public class AbstractMessageTest {
   }
 
   // New tests ->
-
+  
   @Test
-  public void testFromJWTNoSignVerify() throws IOException, ImportException, UnknownKeyType, IllegalArgumentException, ValueError {
+  public void testSuccessToAndFromJWTNoneAlgBasicTypes() throws IOException, InvalidClaimException {
+    HashMap<String, Object> claims = new HashMap<String, Object>();
+    Map<String, ParameterVerificationDefinition> parVerDef = new HashMap<String, ParameterVerificationDefinition>();
+    parVerDef.put("foo1", ParameterVerification.SINGLE_OPTIONAL_BOOLEAN.getValue());
+    parVerDef.put("foo2", ParameterVerification.SINGLE_OPTIONAL_STRING.getValue());
+    parVerDef.put("foo3", ParameterVerification.SINGLE_OPTIONAL_DATE.getValue());
+    parVerDef.put("foo4", ParameterVerification.SINGLE_OPTIONAL_INT.getValue());
+    Date date = new Date();
+    claims.put("foo1", true);
+    claims.put("foo2", "bar");
+    claims.put("foo3", date);
+    claims.put("foo4", 5L);
+    MockMessage mockMessage = new MockMessage(claims, parVerDef);
+    mockMessage.verify();
+    String jwt = mockMessage.toJwt(null, "none");
+    // Test jwt can be verified by auth0
+    Algorithm algorithm = Algorithm.none();
+    JWTVerifier verifier = JWT.require(algorithm).build();
+    DecodedJWT decodedJwt = verifier.verify(jwt);
+    Assert.assertEquals(true, decodedJwt.getClaim("foo1").asBoolean());
+    Assert.assertEquals("bar", decodedJwt.getClaim("foo2").asString());
+    Assert.assertThat((date.getTime() / 1000) * 1000,
+        CoreMatchers.is(decodedJwt.getClaim("foo3").asDate().getTime()));
+    Assert.assertEquals((long) 5L, (long) decodedJwt.getClaim("foo4").asLong());
+    // Test we can parse a message from jwt
+    MockMessage mockMessage2 = new MockMessage(new HashMap<String, Object>(), parVerDef);
+    mockMessage2.fromJwt(jwt, null, null);
+    mockMessage2.verify();
+    Assert.assertEquals((boolean) mockMessage.getClaims().get("foo1"),
+        (boolean) mockMessage2.getClaims().get("foo1"));
+    Assert.assertEquals((String) mockMessage.getClaims().get("foo2"),
+        (String) mockMessage2.getClaims().get("foo2"));
+    Assert.assertThat((Date) mockMessage.getClaims().get("foo3"), CoreMatchers.is(date));
+    Assert.assertThat(mockMessage2.getClaims().get("foo4"),
+        CoreMatchers.is(mockMessage2.getClaims().get("foo4")));
+  }
+  
+  @Test
+  public void testSuccessToJWTSignRS()
+      throws IllegalArgumentException, ImportException, UnknownKeyType, ValueError,
+      JsonProcessingException, SerializationException, InvalidClaimException {
+    List<Key> keysSign = getKeyJarPrv().getSigningKey(KeyType.RSA.name(), keyOwner, null, null);
+    List<Key> keysVerify = getKeyJarPub().getVerifyKey(KeyType.RSA.name(), keyOwner, null, null);
+    HashMap<String, Object> claims = new HashMap<String, Object>();
+    claims.put("foo", "bar");
+    MockMessage mockMessage = new MockMessage(claims);
+    DecodedJWT jwt = JWT
+        .require(Algorithm.RSA256((RSAPublicKey) keysVerify.get(0).getKey(false), null)).build()
+        .verify(mockMessage.toJwt(keysSign.get(0), "RS256"));
+    Assert.assertEquals("bar", jwt.getClaim("foo").asString());
+    Assert.assertEquals("RS256", jwt.getHeaderClaim("alg").asString());
+    jwt = JWT.require(Algorithm.RSA384((RSAPublicKey) keysVerify.get(0).getKey(false), null))
+        .build().verify(mockMessage.toJwt(keysSign.get(0), "RS384"));
+    Assert.assertEquals("bar", jwt.getClaim("foo").asString());
+    Assert.assertEquals("RS384", jwt.getHeaderClaim("alg").asString());
+    jwt = JWT.require(Algorithm.RSA512((RSAPublicKey) keysVerify.get(0).getKey(false), null))
+        .build().verify(mockMessage.toJwt(keysSign.get(0), "RS512"));
+    Assert.assertEquals("bar", jwt.getClaim("foo").asString());
+    Assert.assertEquals("RS512", jwt.getHeaderClaim("alg").asString());
+  }
+ 
+  @Test
+  public void testSuccessFromJWTNoSignVerify() throws IOException, ImportException, UnknownKeyType, IllegalArgumentException, ValueError {
     String idToken = "eyJraWQiOiIxZTlnZGs3IiwiYWxnIjoiUlMyNTYifQ.ewogImlz"
         + "cyI6ICJodHRwOi8vc2VydmVyLmV4YW1wbGUuY29tIiwKICJzdWIiOiAiMjQ4"
         + "Mjg5NzYxMDAxIiwKICJhdWQiOiAiczZCaGRSa3F0MyIsCiAibm9uY2UiOiAi"
@@ -253,7 +215,7 @@ public class AbstractMessageTest {
  
   
   @Test
-  public void testFromJWTSignVerifyNone() throws InvalidClaimException, IllegalArgumentException,
+  public void testSuccessFromJWTSignVerifyNone() throws InvalidClaimException, IllegalArgumentException,
       IOException, ImportException, UnknownKeyType, ValueError {
     HashMap<String, Object> claims = new HashMap<>();
     MockMessage mockMessage = new MockMessage(claims);
@@ -264,7 +226,7 @@ public class AbstractMessageTest {
   }
 
   @Test
-  public void testFromJWTSignVerifyRS() throws InvalidClaimException, IllegalArgumentException,
+  public void testSuccessFromJWTSignVerifyRS() throws InvalidClaimException, IllegalArgumentException,
       IOException, ImportException, UnknownKeyType, ValueError {
     HashMap<String, Object> claims = new HashMap<>();
     MockMessage mockMessage = new MockMessage(claims);
@@ -390,7 +352,7 @@ public class AbstractMessageTest {
     Assert.assertEquals(((List<String>) mockMessage.getClaims().get("parameter1")).get(0), "value");
     Assert.assertEquals(((List<String>) mockMessage.getClaims().get("parameter1")).get(1),
         "value2");
-    Assert.assertThat(mockMessage.toJson(), is("{\"parameter1\":[\"value\",\"value2\"]}"));
+    Assert.assertThat(mockMessage.toJson(), CoreMatchers.is("{\"parameter1\":[\"value\",\"value2\"]}"));
   }
 
   @SuppressWarnings("unchecked")
@@ -411,7 +373,7 @@ public class AbstractMessageTest {
     Assert.assertEquals(((List<String>) mockMessage.getClaims().get("parameter1")).get(0), "value");
     Assert.assertEquals(((List<String>) mockMessage.getClaims().get("parameter1")).get(1),
         "value2");
-    Assert.assertThat(mockMessage.toJson(), is("{\"parameter1\":[\"value\",\"value2\"]}"));
+    Assert.assertThat(mockMessage.toJson(), CoreMatchers.is("{\"parameter1\":[\"value\",\"value2\"]}"));
   }
 
   @Test(expected = InvalidClaimException.class)
@@ -442,7 +404,7 @@ public class AbstractMessageTest {
     mockMessage.verify();
     Assert.assertEquals(((List<String>) mockMessage.getClaims().get("parameter1")).get(0),
         "values");
-    Assert.assertThat(mockMessage.toJson(), is("{\"parameter1\":[\"values\"]}"));
+    Assert.assertThat(mockMessage.toJson(), CoreMatchers.is("{\"parameter1\":[\"values\"]}"));
   }
 
   @SuppressWarnings("unchecked")
@@ -459,7 +421,7 @@ public class AbstractMessageTest {
     mockMessage.verify();
     Assert.assertEquals(((List<String>) mockMessage.getClaims().get("parameter1")).get(0),
         "values");
-    Assert.assertThat(mockMessage.toJson(), is("{\"parameter1\":[\"values\"]}"));
+    Assert.assertThat(mockMessage.toJson(), CoreMatchers.is("{\"parameter1\":[\"values\"]}"));
   }
 
   @Test(expected = InvalidClaimException.class)
@@ -503,7 +465,7 @@ public class AbstractMessageTest {
     MockMessage mockMessage = new MockMessage(claims, parVerDef);
     mockMessage.verify();
     Assert.assertEquals(mockMessage.getClaims().get("parameter1"), "value value2");
-    Assert.assertThat(mockMessage.toJson(), is("{\"parameter1\":\"value value2\"}"));
+    Assert.assertThat(mockMessage.toJson(), CoreMatchers.is("{\"parameter1\":\"value value2\"}"));
   }
 
   @Test(expected = InvalidClaimException.class)
@@ -600,6 +562,102 @@ public class AbstractMessageTest {
     parVerDef.put("parameter1", ParameterVerification.SINGLE_OPTIONAL_MESSAGE.getValue());
     MockMessage mockMessage = new MockMessage(claims, parVerDef);
     mockMessage.verify();
+  }
+  
+  /**
+   * Creates simple signed jwt.
+   * 
+   * @param alg slg to use.
+   * @return simple jwt.
+   * 
+   */
+  private String getSignedJwt(String alg)
+      throws IllegalArgumentException, ImportException, UnknownKeyType, ValueError {
+    List<Key> keys = null;
+    switch (alg) {
+      case "RS256":
+      case "RS384":
+      case "RS512":
+        keys = getKeyJarPrv().getSigningKey(KeyType.RSA.name(), keyOwner, null,
+            null);
+        break;
+      case "ES256":
+      case "ES384":
+      case "ES512":
+        keys = getKeyJarPrv().getSigningKey(KeyType.EC.name(), keyOwner, null,
+            null);
+        break;
+      default:
+        break;
+    }
+    Key key = keys == null ? null : keys.get(0);
+    Algorithm algorithm = null;
+    switch (alg) {
+      case "none":
+        algorithm = Algorithm.none();
+        break;
+      case "RS256":
+        algorithm = Algorithm.RSA256(null, (RSAPrivateKey) key.getKey(true));
+        break;
+      case "RS384":
+        algorithm = Algorithm.RSA384(null, (RSAPrivateKey) key.getKey(true));
+        break;
+      case "RS512":
+        algorithm = Algorithm.RSA512(null, (RSAPrivateKey) key.getKey(true));
+        break;
+      case "ES256":
+        algorithm = Algorithm.ECDSA256(null, (ECPrivateKey) key.getKey(true));
+        break;
+      case "ES384":
+        algorithm = Algorithm.ECDSA384(null, (ECPrivateKey) key.getKey(true));
+        break;
+      case "ES512":
+        algorithm = Algorithm.ECDSA512(null, (ECPrivateKey) key.getKey(true));
+        break;
+      default:
+        break;
+    }
+    return JWT.create().withIssuer("op").sign(algorithm);
+  }
+
+  /**
+   * Creates if needed one keyjar with one private rsa key.
+   * 
+   * @return keyjar
+   * 
+   */
+  private KeyJar getKeyJarPrv()
+      throws ImportException, UnknownKeyType, IllegalArgumentException, ValueError {
+    if (keyJarOfPrivateKeys != null) {
+      return keyJarOfPrivateKeys;
+    }
+    keyJarOfPrivateKeys = new KeyJar();
+    ArrayList<String> usesPrv = new ArrayList<String>();
+    usesPrv.add("sig");
+    usesPrv.add("dec");
+    KeyBundle keyBundlePrv = KeyBundle.keyBundleFromLocalFile(PRIVATE_KEY_FILE, "der", usesPrv);
+    keyJarOfPrivateKeys.addKeyBundle(keyOwner, keyBundlePrv);
+    return keyJarOfPrivateKeys;
+  }
+  
+  /**
+   * Creates if needed one keyjar with one public rsa key.
+   * 
+   * @return keyjar
+   * 
+   */
+  private KeyJar getKeyJarPub()
+      throws ImportException, UnknownKeyType, IllegalArgumentException, ValueError {
+    if (keyJarOfPublicKeys != null) {
+      return keyJarOfPublicKeys;
+    }
+    keyJarOfPublicKeys = new KeyJar();
+    ArrayList<String> usesPub = new ArrayList<String>();
+    usesPub.add("ver");
+    usesPub.add("enc");
+    KeyBundle keyBundlePub = KeyBundle.keyBundleFromLocalFile(PUBLIC_KEY_FILE, "der", usesPub);
+    keyJarOfPublicKeys.addKeyBundle(keyOwner, keyBundlePub);
+    return keyJarOfPublicKeys;
   }
 
   class MockMessage extends AbstractMessage {

@@ -17,6 +17,7 @@
 package org.oidc.msg;
 
 import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.msg.Key;
 import com.auth0.msg.KeyJar;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
@@ -47,16 +48,15 @@ public interface Message {
       throws SerializationException, JsonProcessingException, InvalidClaimException;
 
   /**
-   * Serialize the content of this instance (the claims map) into a jwt string
+   * Serialize the content of this instance (the claims map) into a jwt string.
    * 
-   * @param KeyJar
-   *          the signing keyjar
-   * @param String
-   *          the algorithm to use in signing the JWT
-   * @return a jwt String
-   * @throws InvalidClaimException
+   * @param key
+   *          signing key
+   * @param alg
+   *          signing algorithm
+   * @return message as jwt string.
    */
-  String toJwt(Algorithm algorithm)
+  String toJwt(Key key, String alg)
       throws SerializationException, JsonProcessingException, InvalidClaimException;
 
   /**
