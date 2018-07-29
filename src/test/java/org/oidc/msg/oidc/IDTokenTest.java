@@ -36,12 +36,12 @@ public class IDTokenTest {
    */
   @Before
   public void setup() {
-    now = System.currentTimeMillis();
+    now = System.currentTimeMillis()/1000;
     claims.clear();
     claims.put("iss", "issuer");
     claims.put("sub", "subject");
     claims.put("aud", "clientid");
-    claims.put("exp", now + 5000);
+    claims.put("exp", now+5);
     claims.put("iat", now);
   }
 
@@ -53,8 +53,8 @@ public class IDTokenTest {
     Assert.assertEquals("issuer", req.getClaims().get("iss"));
     Assert.assertEquals("subject", req.getClaims().get("sub"));
     Assert.assertTrue(((List<String>) req.getClaims().get("aud")).contains("clientid"));
-    Assert.assertEquals(now + 5000, ((Date)req.getClaims().get("exp")).getTime());
-    Assert.assertEquals(now, ((Date)req.getClaims().get("iat")).getTime());
+    Assert.assertEquals((now + 5)*1000, ((Date)req.getClaims().get("exp")).getTime());
+    Assert.assertEquals(now*1000, ((Date)req.getClaims().get("iat")).getTime());
   }
 
   @Test(expected = InvalidClaimException.class)
@@ -136,24 +136,24 @@ public class IDTokenTest {
 
   @Test(expected = InvalidClaimException.class)
   public void testFailExp() throws InvalidClaimException {
-    claims.put("exp", now - 2000);
+    claims.put("exp", now - 5);
     IDToken req = new IDToken(claims);
     req.verify();
   }
 
   @Test
   public void testSuccessExpSkew() throws InvalidClaimException {
-    claims.put("exp", now - 2000);
+    claims.put("exp", now - 1);
     IDToken req = new IDToken(claims);
-    req.setSkew(3000);
+    req.setSkew(5);
     req.verify();
   }
 
   @Test(expected = InvalidClaimException.class)
   public void testFailIat() throws InvalidClaimException {
-    claims.put("iat", now - 2000);
+    claims.put("iat", now - 10);
     IDToken req = new IDToken(claims);
-    req.setStorageTime(1000);
+    req.setStorageTime(5);
     req.verify();
   }
 
