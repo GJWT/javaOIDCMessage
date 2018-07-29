@@ -28,10 +28,10 @@ public class DateClaimValidator implements ClaimValidator {
       return value;
     } // Convert Integer and Long to Date if possible.
     if (value instanceof Integer) {
-      return new Date(((Integer) value).longValue());
+      return new Date(((Integer) value).longValue() * 1000L);
     }
     if (value instanceof Long) {
-      return new Date((Long) value);
+      return new Date((Long) value * 1000L);
     }
     throw new InvalidClaimException(String.format("Parameter '%s' is not of expected type", value));
   }
