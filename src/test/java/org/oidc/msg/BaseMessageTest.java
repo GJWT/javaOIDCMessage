@@ -28,7 +28,11 @@ import com.auth0.msg.KeyType;
 import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.RSAPrivateKey;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
+import org.oidc.msg.oidc.IDToken;
 
 /** Base class for tests offering helpers.*/
 public abstract class BaseMessageTest {
@@ -153,5 +157,25 @@ public abstract class BaseMessageTest {
     return keyJarOfPublicKeys;
   }
 
+  /**
+   * Generates simple id token jwt string for tests
+   * 
+   * @param claims
+   *          any additional to add to minimal set. Must not be null but may be empty.
+   * @param key
+   *          signing key or null
+   * @param algo
+   *          algorithm used to sign, may be none
+   * @return
+   */
+  protected String generateIdTokenNow(Map<String, Object> claims, Key key, String algo) {
+    claims.put("iss", "issuer");
+    claims.put("sub", "subject");
+    claims.put("aud", "clientid");
+    claims.put("exp", (System.currentTimeMillis() / 1000) + 10000);
+    claims.put("iat", System.currentTimeMillis() / 1000);
+    IDToken token = new IDToken(claims);
+    return token.toJwt(key, algo);
+  }
   
 }
