@@ -112,6 +112,7 @@ public class AuthenticationRequest extends AuthorizationRequest {
     if (idTokenHint != null) {
       IDToken idToken = new IDToken();
       try {
+        //TODO: set keyjar and owner
         idToken.fromJwt(idTokenHint, null, null);
       } catch (IOException e) {
         getError().getMessages()
