@@ -17,6 +17,7 @@
 package org.oidc.msg.oidc;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,8 +53,8 @@ public class IDTokenTest {
     Assert.assertEquals("issuer", req.getClaims().get("iss"));
     Assert.assertEquals("subject", req.getClaims().get("sub"));
     Assert.assertTrue(((List<String>) req.getClaims().get("aud")).contains("clientid"));
-    Assert.assertEquals(now + 10, req.getClaims().get("exp"));
-    Assert.assertEquals(now, req.getClaims().get("iat"));
+    Assert.assertEquals(now + 10, ((Date)req.getClaims().get("exp")).getTime());
+    Assert.assertEquals(now, ((Date)req.getClaims().get("iat")).getTime());
   }
 
   @Test(expected = InvalidClaimException.class)

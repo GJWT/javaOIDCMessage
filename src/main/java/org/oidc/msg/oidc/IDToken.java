@@ -16,6 +16,7 @@
 
 package org.oidc.msg.oidc;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,9 +52,9 @@ public class IDToken extends OpenIDSchema {
     paramVerDefs.put("iss", ParameterVerification.SINGLE_REQUIRED_STRING.getValue());
     paramVerDefs.put("sub", ParameterVerification.SINGLE_REQUIRED_STRING.getValue());
     paramVerDefs.put("aud", ParameterVerification.REQUIRED_LIST_OF_STRINGS.getValue());
-    paramVerDefs.put("exp", ParameterVerification.SINGLE_REQUIRED_INT.getValue());
-    paramVerDefs.put("iat", ParameterVerification.SINGLE_REQUIRED_INT.getValue());
-    paramVerDefs.put("auth_time", ParameterVerification.SINGLE_OPTIONAL_INT.getValue());
+    paramVerDefs.put("exp", ParameterVerification.SINGLE_REQUIRED_DATE.getValue());
+    paramVerDefs.put("iat", ParameterVerification.SINGLE_REQUIRED_DATE.getValue());
+    paramVerDefs.put("auth_time", ParameterVerification.SINGLE_OPTIONAL_DATE.getValue());
     paramVerDefs.put("nonce", ParameterVerification.SINGLE_OPTIONAL_STRING.getValue());
     paramVerDefs.put("at_hash", ParameterVerification.SINGLE_OPTIONAL_STRING.getValue());
     paramVerDefs.put("c_hash", ParameterVerification.SINGLE_OPTIONAL_STRING.getValue());
@@ -170,11 +171,13 @@ public class IDToken extends OpenIDSchema {
     }
 
     long now = System.currentTimeMillis() / 1000;
-    if (now - skew > (long) getClaims().get("exp")) {
+    long exp = ((Date) getClaims().get("exp")).getTime();
+    if (now - skew > exp) {
       getError().getMessages().add("Claim exp is in the past");
     }
 
-    if ((long) getClaims().get("iat") + storageTime < now - skew) {
+    long iat = ((Date) getClaims().get("iat")).getTime();
+    if (iat + storageTime < now - skew) {
       getError().getMessages().add("id token has been issued too long ago");
     }
 
