@@ -167,14 +167,16 @@ public abstract class BaseMessageTest {
    * @param algo
    *          algorithm used to sign, may be none
    * @return
+   * @throws InvalidClaimException 
    */
-  protected String generateIdTokenNow(Map<String, Object> claims, Key key, String algo) {
+  protected String generateIdTokenNow(Map<String, Object> claims, Key key, String algo) throws InvalidClaimException {
     claims.put("iss", "issuer");
     claims.put("sub", "subject");
     claims.put("aud", "clientid");
     claims.put("exp", (System.currentTimeMillis() / 1000) + 10000);
     claims.put("iat", System.currentTimeMillis() / 1000);
     IDToken token = new IDToken(claims);
+    token.verify();
     return token.toJwt(key, algo);
   }
   
