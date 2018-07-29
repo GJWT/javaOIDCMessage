@@ -489,13 +489,13 @@ public class AbstractMessageTest extends BaseMessageTest {
   public void successTestDateTypeConversion() throws InvalidClaimException {
     HashMap<String, Object> claims = new HashMap<>();
     Date date = new Date();
-    claims.put("parameter1", date.getTime());
+    claims.put("parameter1", date.getTime()/1000);
     Map<String, ParameterVerificationDefinition> parVerDef = new HashMap<String, ParameterVerificationDefinition>();
     parVerDef.put("parameter1", ParameterVerification.SINGLE_OPTIONAL_DATE.getValue());
     MockMessage mockMessage = new MockMessage(claims, parVerDef);
     mockMessage.verify();
     Assert.assertEquals(((Date) mockMessage.getClaims().get("parameter1")).getTime(),
-        date.getTime());
+        (date.getTime()/1000)*1000);
   }
 
   @Test(expected = InvalidClaimException.class)
