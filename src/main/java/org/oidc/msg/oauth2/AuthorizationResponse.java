@@ -80,6 +80,16 @@ public class AuthorizationResponse extends ResponseMessage {
   public void setClientId(String clientId) {
     this.clientId = clientId;
   }
+  
+  /**
+   * Get Client ID to use when verifying response.
+   * 
+   * @param clientId
+   *          Client ID to match the response to.
+   */
+  public String getClientId() {
+    return clientId;
+  }
 
   /**
    * Verifies the presence of required message parameters. Verifies the the format of message
