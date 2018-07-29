@@ -16,17 +16,23 @@
 
 package org.oidc.msg.validator;
 
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.exceptions.JWTDecodeException;
 import org.oidc.msg.InvalidClaimException;
-import org.oidc.msg.oidc.IDToken;
 
 /** General validator for claims type of id token. */
 public class IDTokenClaimValidator implements ClaimValidator {
 
   @Override
   public Object validate(Object value) throws InvalidClaimException {
-    if (!(value instanceof IDToken)) {
+    if (!(value instanceof String)) {
       throw new InvalidClaimException(
           String.format("Parameter '%s' is not of expected type", value));
+    }
+    try {
+      JWT.decode((String) value);
+    } catch (JWTDecodeException e) {
+      throw new InvalidClaimException(String.format("Parameter '%s' is not JWT", value));
     }
     return value;
   }
