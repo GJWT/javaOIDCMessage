@@ -169,8 +169,8 @@ public class IDToken extends OpenIDSchema {
       getError().getMessages().add(String.format(
           "Client ID '%s' should equal to azp claim value '%s'", clientId, getClaims().get("azp")));
     }
-
-    long now = System.currentTimeMillis() / 1000;
+    
+    long now = System.currentTimeMillis();
     long exp = ((Date) getClaims().get("exp")).getTime();
     if (now - skew > exp) {
       getError().getMessages().add("Claim exp is in the past");

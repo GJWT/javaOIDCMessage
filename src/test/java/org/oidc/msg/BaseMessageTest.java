@@ -28,6 +28,7 @@ import com.auth0.msg.KeyType;
 import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.RSAPrivateKey;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -173,8 +174,8 @@ public abstract class BaseMessageTest {
     claims.put("iss", "issuer");
     claims.put("sub", "subject");
     claims.put("aud", "clientid");
-    claims.put("exp", (System.currentTimeMillis() / 1000) + 10000);
-    claims.put("iat", System.currentTimeMillis() / 1000);
+    claims.put("exp", System.currentTimeMillis() + 5000);
+    claims.put("iat", new Date());
     IDToken token = new IDToken(claims);
     token.verify();
     return token.toJwt(key, algo);

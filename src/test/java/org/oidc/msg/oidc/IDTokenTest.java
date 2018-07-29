@@ -36,7 +36,7 @@ public class IDTokenTest {
    */
   @Before
   public void setup() {
-    now = System.currentTimeMillis() / 1000;
+    now = System.currentTimeMillis();
     claims.clear();
     claims.put("iss", "issuer");
     claims.put("sub", "subject");
