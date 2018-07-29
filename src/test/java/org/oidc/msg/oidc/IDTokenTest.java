@@ -41,7 +41,7 @@ public class IDTokenTest {
     claims.put("iss", "issuer");
     claims.put("sub", "subject");
     claims.put("aud", "clientid");
-    claims.put("exp", now + 10);
+    claims.put("exp", now + 5000);
     claims.put("iat", now);
   }
 
@@ -53,7 +53,7 @@ public class IDTokenTest {
     Assert.assertEquals("issuer", req.getClaims().get("iss"));
     Assert.assertEquals("subject", req.getClaims().get("sub"));
     Assert.assertTrue(((List<String>) req.getClaims().get("aud")).contains("clientid"));
-    Assert.assertEquals(now + 10, ((Date)req.getClaims().get("exp")).getTime());
+    Assert.assertEquals(now + 5000, ((Date)req.getClaims().get("exp")).getTime());
     Assert.assertEquals(now, ((Date)req.getClaims().get("iat")).getTime());
   }
 
