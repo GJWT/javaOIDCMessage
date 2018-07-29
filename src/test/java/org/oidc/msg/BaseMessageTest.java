@@ -174,7 +174,7 @@ public abstract class BaseMessageTest {
     claims.put("iss", "issuer");
     claims.put("sub", "subject");
     claims.put("aud", "clientid");
-    claims.put("exp", System.currentTimeMillis() + 5000);
+    claims.put("exp", (System.currentTimeMillis()/1000)+5);
     claims.put("iat", new Date());
     IDToken token = new IDToken(claims);
     token.verify();
