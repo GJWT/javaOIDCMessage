@@ -32,9 +32,9 @@ public class RegistrationResponse extends ResponseMessage {
         ParameterVerification.SINGLE_OPTIONAL_STRING.getValue());
     paramVerDefs.put("registration_client_uri",
         ParameterVerification.SINGLE_OPTIONAL_STRING.getValue());
-    paramVerDefs.put("client_id_issued_at", ParameterVerification.SINGLE_OPTIONAL_INT.getValue());
+    paramVerDefs.put("client_id_issued_at", ParameterVerification.SINGLE_OPTIONAL_DATE.getValue());
     paramVerDefs.put("client_secret_expires_at",
-        ParameterVerification.SINGLE_OPTIONAL_INT.getValue());
+        ParameterVerification.SINGLE_OPTIONAL_DATE.getValue());
     // copy all the values from registration request
     paramVerDefs.putAll(new RegistrationRequest().getParameterVerificationDefinitions());
   }
