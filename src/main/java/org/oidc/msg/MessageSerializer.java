@@ -17,6 +17,7 @@
 package org.oidc.msg;
 
 import java.io.IOException;
+import java.util.Date;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -40,7 +41,13 @@ public class MessageSerializer extends StdSerializer<AbstractMessage> {
     gen.writeStartObject();
     Map<String, Object> claims = value.getClaims();
     for (Entry<String, Object> entry : claims.entrySet()) {
-      gen.writeObjectField(entry.getKey(), entry.getValue());
+      Object entryValue = entry.getValue();
+      if (entryValue instanceof Date) {
+        Date date = (Date) entryValue;
+        gen.writeObjectField(entry.getKey(), date.getTime() / 1000L);
+      } else {
+        gen.writeObjectField(entry.getKey(), entry.getValue());
+      }
     }
     gen.writeEndObject();
 
