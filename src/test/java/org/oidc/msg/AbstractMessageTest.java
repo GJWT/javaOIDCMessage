@@ -42,6 +42,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Before;
@@ -69,12 +70,25 @@ public class AbstractMessageTest extends BaseMessageTest {
 
   
   @Test
-  public void testToUrlEncoded() throws Exception {
+  public void testToAndFromUrlEncoded() throws Exception {
     HashMap<String, Object> claims = new HashMap<>();
-    claims.put("GRANT_TYPE", "refresh_token");
-
+    claims.put("grant_type", "refresh_token");
+    claims.put("another", "value");
+    claims.put("mock_json", "{ \"mock\" : { \"key\" : \"value\" } }");
     MockMessage pcr = new MockMessage(claims);
+    
     String pcrUrlEncoded = pcr.toUrlEncoded();
+    Assert.assertTrue(pcrUrlEncoded.contains("grant_type=refresh_token"));
+    Assert.assertTrue(pcrUrlEncoded.contains("another=value"));
+    Assert.assertTrue(pcrUrlEncoded.contains("mock_json=%7B+%22mock%22+%3A+%7B+%22key%22+%3A+%22value%22+%7D+%7D"));
+    
+    MockMessage newMock = new MockMessage();
+    newMock.fromUrlEncoded(pcrUrlEncoded);
+    
+    Assert.assertEquals(3, newMock.getClaims().size());
+    Assert.assertEquals("refresh_token", newMock.getClaims().get("grant_type"));
+    Assert.assertEquals("value", newMock.getClaims().get("another"));
+    Assert.assertEquals("{ \"mock\" : { \"key\" : \"value\" } }", newMock.getClaims().get("mock_json"));
   }
 
   @Test
@@ -560,6 +574,10 @@ public class AbstractMessageTest extends BaseMessageTest {
   
 
   class MockMessage extends AbstractMessage {
+    
+    MockMessage() {
+      this(new HashMap<String, Object>());
+    }
 
     MockMessage(HashMap<String, Object> claims) {
       this(claims, new HashMap<String, ParameterVerificationDefinition>());

@@ -22,30 +22,35 @@ import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTDecodeException;
 import com.auth0.jwt.exceptions.JWTVerificationException;
-import com.auth0.jwt.exceptions.oicmsg_exceptions.ImportException;
-import com.auth0.jwt.exceptions.oicmsg_exceptions.UnknownKeyType;
 import com.auth0.jwt.exceptions.oicmsg_exceptions.ValueError;
-import com.auth0.jwt.interfaces.DecodedJWT;
 import com.auth0.msg.Key;
-import com.auth0.msg.KeyBundle;
 import com.auth0.msg.KeyJar;
 import com.auth0.msg.KeyType;
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.google.common.base.Strings;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
-import java.nio.charset.StandardCharsets;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.ECPublicKey;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.StringTokenizer;
+
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.StringUtils;
 
@@ -86,13 +91,27 @@ public abstract class AbstractMessage implements Message {
    * @param input
    *          the urlEncoded String representation of a message
    */
-  public void fromUrlEncoded(String input) throws MalformedURLException, IOException {
-    String msgJson = StringUtils.newStringUtf8(Base64.decodeBase64(input));
-    Map<String, Object> newClaims = mapper.readValue(msgJson,
-        new TypeReference<Map<String, Object>>() {
-        });
-    this.claims = newClaims;
-    verified = false;
+  public void fromUrlEncoded(String input)
+      throws MalformedURLException, IOException, InvalidClaimException {
+    if (Strings.isNullOrEmpty(input)) {
+      return;
+    }
+    StringBuilder jsonBuilder = new StringBuilder("{ ");
+    StringTokenizer paramTokenizer = new StringTokenizer(input.substring(1), "&");
+    while (paramTokenizer.hasMoreTokens()) {
+      String pair = paramTokenizer.nextToken();
+      StringTokenizer pairTokenizer = new StringTokenizer(pair, "=");
+      String key = URLDecoder.decode(pairTokenizer.nextToken(), "UTF-8");
+      String value = URLDecoder.decode(pairTokenizer.nextToken(), "UTF-8");
+      jsonBuilder.append("\"" + key + "\" : ");
+      jsonBuilder.append(
+          value.startsWith("{") || value.startsWith("[") ? "\"" + value.replace("\"", "\\\"") + "\""
+              : "\"" + value + "\"");
+      // jsonBuilder.append("\"" + value.replace("\"", "\\\"") + "\"");
+      jsonBuilder.append(paramTokenizer.hasMoreTokens() ? "," : new String());
+    }
+    jsonBuilder.append("}");
+    fromJson(jsonBuilder.toString());
   }
 
   /**
@@ -105,10 +124,33 @@ public abstract class AbstractMessage implements Message {
    */
   public String toUrlEncoded()
       throws SerializationException, JsonProcessingException, InvalidClaimException {
-    String jsonMsg = mapper.writeValueAsString(this.claims);
-    String urlEncodedMsg = Base64
-        .encodeBase64URLSafeString(jsonMsg.getBytes(StandardCharsets.UTF_8));
-    return urlEncodedMsg;
+    if (claims.size() == 0) {
+      return "";
+    }
+    JsonFactory factory = mapper.getFactory();
+    JsonNode rootNode;
+    try {
+      JsonParser parser = factory.createParser(this.toJson());
+      rootNode = mapper.readTree(parser);
+    } catch (IOException e) {
+      throw new SerializationException("Could not build the JSON", e);
+    }
+    StringBuilder query = new StringBuilder("?");
+    Iterator<String> keys = claims.keySet().iterator();
+    while (keys.hasNext()) {
+      String key = keys.next();
+      JsonNode value = rootNode.get(key);
+      try {
+        String pair = URLEncoder.encode(key, "UTF-8") + "="
+            + URLEncoder.encode(value.asText(), "UTF-8");
+        query.append(keys.hasNext() ? pair + "&" : pair);
+      } catch (UnsupportedEncodingException e) {
+        throw new SerializationException("Could not URL encode the parameter", e);
+      }
+    }
+    // String urlEncodedMsg =
+    // Base64.encodeBase64URLSafeString(jsonMsg.getBytes(StandardCharsets.UTF_8));
+    return query.toString();
   }
 
   /**
@@ -198,18 +240,18 @@ public abstract class AbstractMessage implements Message {
     String kid = (String) header.get("kid");
     List<Key> keys = null;
     switch (alg) {
-      case "RS256":
-      case "RS384":
-      case "RS512":
-        keys = keyJar.getVerifyKey(KeyType.RSA.name(), keyOwner, kid, args);
-        break;
-      case "ES256":
-      case "ES384":
-      case "ES512":
-        keys = keyJar.getVerifyKey(KeyType.EC.name(), keyOwner, kid, args);
-        break;
-      default:
-        break;
+    case "RS256":
+    case "RS384":
+    case "RS512":
+      keys = keyJar.getVerifyKey(KeyType.RSA.name(), keyOwner, kid, args);
+      break;
+    case "ES256":
+    case "ES384":
+    case "ES512":
+      keys = keyJar.getVerifyKey(KeyType.EC.name(), keyOwner, kid, args);
+      break;
+    default:
+      break;
     }
     if (keys == null || keys.size() == 0) {
       throw new JWTDecodeException("Not able to locate keys to verify JWT");
@@ -219,26 +261,26 @@ public abstract class AbstractMessage implements Message {
       for (Key key : keys) {
         Algorithm algorithm = null;
         switch (alg) {
-          case "RS256":
-            algorithm = Algorithm.RSA256((RSAPublicKey) key.getKey(false), null);
-            break;
-          case "RS384":
-            algorithm = Algorithm.RSA384((RSAPublicKey) key.getKey(false), null);
-            break;
-          case "RS512":
-            algorithm = Algorithm.RSA512((RSAPublicKey) key.getKey(false), null);
-            break;
-          case "ES256":
-            algorithm = Algorithm.ECDSA256((ECPublicKey) key.getKey(false), null);
-            break;
-          case "ES384":
-            algorithm = Algorithm.ECDSA384((ECPublicKey) key.getKey(false), null);
-            break;
-          case "ES512":
-            algorithm = Algorithm.ECDSA512((ECPublicKey) key.getKey(false), null);
-            break;
-          default:
-            break;
+        case "RS256":
+          algorithm = Algorithm.RSA256((RSAPublicKey) key.getKey(false), null);
+          break;
+        case "RS384":
+          algorithm = Algorithm.RSA384((RSAPublicKey) key.getKey(false), null);
+          break;
+        case "RS512":
+          algorithm = Algorithm.RSA512((RSAPublicKey) key.getKey(false), null);
+          break;
+        case "ES256":
+          algorithm = Algorithm.ECDSA256((ECPublicKey) key.getKey(false), null);
+          break;
+        case "ES384":
+          algorithm = Algorithm.ECDSA384((ECPublicKey) key.getKey(false), null);
+          break;
+        case "ES512":
+          algorithm = Algorithm.ECDSA512((ECPublicKey) key.getKey(false), null);
+          break;
+        default:
+          break;
         }
         if (algorithm == null) {
           throw new JWTDecodeException("Not able to initialize algorithm to verify JWT");
@@ -269,41 +311,41 @@ public abstract class AbstractMessage implements Message {
    * @return message as jwt string.
    */
   public String toJwt(Key key, String alg) {
-    
+
     header = new HashMap<String, Object>();
     header.put("alg", alg);
     header.put("typ", "JWT");
     if (key != null && key.getKid() != null) {
       header.put("kid", key.getKid());
     }
-    
+
     Algorithm algorithm = null;
     try {
       switch (alg) {
-        case "none":
-          algorithm = Algorithm.none();
-          break;
-        case "RS256":
-          algorithm = Algorithm.RSA256(null, (RSAPrivateKey) key.getKey(true));
-          break;
-        case "RS384":
-          algorithm = Algorithm.RSA384(null,(RSAPrivateKey) key.getKey(true));
-          break;
-        case "RS512":
-          algorithm = Algorithm.RSA512(null,(RSAPrivateKey) key.getKey(true));
-          break;
-        case "ES256":
-          algorithm = Algorithm.ECDSA256(null,(ECPrivateKey) key.getKey(true));
-          break;
-        case "ES384":
-          algorithm = Algorithm.ECDSA384(null,(ECPrivateKey) key.getKey(true));
-          break;
-        case "ES512":
-          algorithm = Algorithm.ECDSA512(null,(ECPrivateKey) key.getKey(true));
-          break;
-        default:
-          break;
-         //TODO: HMAC algorithms
+      case "none":
+        algorithm = Algorithm.none();
+        break;
+      case "RS256":
+        algorithm = Algorithm.RSA256(null, (RSAPrivateKey) key.getKey(true));
+        break;
+      case "RS384":
+        algorithm = Algorithm.RSA384(null, (RSAPrivateKey) key.getKey(true));
+        break;
+      case "RS512":
+        algorithm = Algorithm.RSA512(null, (RSAPrivateKey) key.getKey(true));
+        break;
+      case "ES256":
+        algorithm = Algorithm.ECDSA256(null, (ECPrivateKey) key.getKey(true));
+        break;
+      case "ES384":
+        algorithm = Algorithm.ECDSA384(null, (ECPrivateKey) key.getKey(true));
+        break;
+      case "ES512":
+        algorithm = Algorithm.ECDSA512(null, (ECPrivateKey) key.getKey(true));
+        break;
+      default:
+        break;
+      // TODO: HMAC algorithms
       }
     } catch (IllegalArgumentException | ValueError e) {
       // TODO: This is not Decoding exception, replace it.
