@@ -21,7 +21,7 @@ import com.auth0.jwt.exceptions.JWTDecodeException;
 import org.oidc.msg.InvalidClaimException;
 
 /** General validator for claims type of id token. */
-public class IDTokenClaimValidator implements ClaimValidator {
+public class JWTClaimValidator implements ClaimValidator {
 
   @Override
   public Object validate(Object value) throws InvalidClaimException {

@@ -556,7 +556,7 @@ public class AbstractMessageTest extends BaseMessageTest {
     HashMap<String, Object> claims = new HashMap<>();
     claims.put("parameter1", idToken);
     Map<String, ParameterVerificationDefinition> parVerDef = new HashMap<String, ParameterVerificationDefinition>();
-    parVerDef.put("parameter1", ParameterVerification.SINGLE_OPTIONAL_IDTOKEN.getValue());
+    parVerDef.put("parameter1", ParameterVerification.SINGLE_OPTIONAL_JWT.getValue());
     MockMessage mockMessage = new MockMessage(claims, parVerDef);
     mockMessage.verify();
     Assert.assertEquals(mockMessage.getClaims().get("parameter1"), idToken);
@@ -567,7 +567,7 @@ public class AbstractMessageTest extends BaseMessageTest {
     HashMap<String, Object> claims = new HashMap<>();
     claims.put("parameter1", "value");
     Map<String, ParameterVerificationDefinition> parVerDef = new HashMap<String, ParameterVerificationDefinition>();
-    parVerDef.put("parameter1", ParameterVerification.SINGLE_OPTIONAL_IDTOKEN.getValue());
+    parVerDef.put("parameter1", ParameterVerification.SINGLE_OPTIONAL_JWT.getValue());
     MockMessage mockMessage = new MockMessage(claims, parVerDef);
     mockMessage.verify();
   }

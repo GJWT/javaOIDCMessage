@@ -47,7 +47,7 @@ public class AuthenticationResponse extends AuthorizationResponse {
     paramVerDefs.put("scope", ParameterVerification.OPTIONAL_LIST_OF_SP_SEP_STRINGS.getValue());
     paramVerDefs.put("state", ParameterVerification.SINGLE_OPTIONAL_STRING.getValue());
     paramVerDefs.put("code", ParameterVerification.SINGLE_OPTIONAL_STRING.getValue());
-    paramVerDefs.put("id_token", ParameterVerification.SINGLE_OPTIONAL_IDTOKEN.getValue());
+    paramVerDefs.put("id_token", ParameterVerification.SINGLE_OPTIONAL_JWT.getValue());
     // TODO: For some reason this parameter is included in python implementation and checked
     // against client id. Check the reason.
     paramVerDefs.put("aud", ParameterVerification.OPTIONAL_LIST_OF_STRINGS.getValue());
