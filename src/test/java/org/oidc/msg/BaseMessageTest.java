@@ -29,15 +29,19 @@ import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.RSAPrivateKey;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.junit.Assert;
+import org.junit.Test;
 import org.oidc.msg.oidc.IDToken;
 
 /** Base class for tests offering helpers.*/
-public abstract class BaseMessageTest {
+public abstract class BaseMessageTest<T extends AbstractMessage> {
 
+  /** The message to be tested. */
+  protected T message;
+  
   private static final String PRIVATE_KEY_FILE = "src/test/resources/rsa-private.pem";
   private static final String PUBLIC_KEY_FILE = "src/test/resources/rsa-public.pem";
   protected String keyOwner = "https://issuer.example.com";
@@ -61,6 +65,39 @@ public abstract class BaseMessageTest {
       + "4XB1CKKumZvCedgHHF3IAK4dVEDSUoGlH9z4pP_eWYNXvqQOjGs-rDaQzUHl" + "6cQQWNiDpWOl_lxXjQEvQ";
 
 
+  @Test
+  public void testEmptyClaimsValidity() {
+    boolean containsRequired = false;
+    for (String key : message.getParameterVerificationDefinitions().keySet()) {
+      ParameterVerificationDefinition parVerDef = message.getParameterVerificationDefinitions().get(key);
+      if (parVerDef.isRequired()) {
+        containsRequired = true;
+      }
+    }
+    boolean verifiedAsExpected = false;
+    if (containsRequired) {
+      try {
+        Assert.assertFalse(message.verify());
+      } catch (InvalidClaimException e) {
+        verifiedAsExpected = true;
+      }
+    } else {
+      try {
+        Assert.assertTrue(message.verify());
+        verifiedAsExpected = true;
+      } catch (InvalidClaimException e) {
+      }
+    }
+    Assert.assertTrue(verifiedAsExpected);
+  }
+  
+  @Test
+  public void testDefaultValuesExists() {
+    for (String key : message.defaultValues.keySet()) {
+      Assert.assertEquals(message.defaultValues.get(key), message.getClaims().get(key));
+    }
+  }
+  
    
   /**
    * Creates simple signed jwt.

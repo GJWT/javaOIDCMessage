@@ -21,11 +21,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
+import org.oidc.msg.BaseMessageTest;
 import org.oidc.msg.InvalidClaimException;
 import org.oidc.msg.oauth2.AuthorizationRequest;
 
-public class AuthorizationRequestTest {
+public class AuthorizationRequestTest extends BaseMessageTest<AuthorizationRequest> {
+  
+  @Before
+  public void setup() {
+    message = new AuthorizationRequest();
+  }
 
   @Test
   public void testSuccessMandatoryParameters() throws InvalidClaimException {
@@ -36,18 +43,18 @@ public class AuthorizationRequestTest {
     responseType[1] = "token";
     claims.put("response_type", responseType);
     claims.put("client_id", "value");
-    AuthorizationRequest req = new AuthorizationRequest(claims);
-    req.verify();
-    Assert.assertEquals("id_token token", req.getClaims().get("response_type"));
-    Assert.assertEquals("value", req.getClaims().get("client_id"));
+    message = new AuthorizationRequest(claims);
+    message.verify();
+    Assert.assertEquals("id_token token", message.getClaims().get("response_type"));
+    Assert.assertEquals("value", message.getClaims().get("client_id"));
   }
 
   @Test(expected = InvalidClaimException.class)
   public void testFailureMissingResponseTypeMandatoryParameter() throws InvalidClaimException {
     Map<String, Object> claims = new HashMap<String, Object>();
     claims.put("client_id", "value");
-    AuthorizationRequest req = new AuthorizationRequest(claims);
-    req.verify();
+    message = new AuthorizationRequest(claims);
+    message.verify();
   }
 
   @Test(expected = InvalidClaimException.class)
@@ -56,8 +63,8 @@ public class AuthorizationRequestTest {
     List<String> responseType = new ArrayList<String>();
     responseType.add("code");
     claims.put("response_type", responseType);
-    AuthorizationRequest req = new AuthorizationRequest(claims);
-    req.verify();
+    message = new AuthorizationRequest(claims);
+    message.verify();
   }
 
 }
