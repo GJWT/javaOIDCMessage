@@ -18,6 +18,7 @@ package org.oidc.msg.oidc;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.oidc.msg.InvalidClaimException;
@@ -58,6 +59,10 @@ public class OpenIDSchema extends ResponseMessage {
 
   }
 
+  public OpenIDSchema() {
+    this(new HashMap<String, Object>());
+  }
+  
   /**
    * Constructor.
    * 
