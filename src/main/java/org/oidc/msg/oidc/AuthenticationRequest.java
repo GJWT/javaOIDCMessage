@@ -51,7 +51,7 @@ public class AuthenticationRequest extends AuthorizationRequest {
     paramVerDefs.put("login_hint", ParameterVerification.SINGLE_OPTIONAL_STRING.getValue());
     paramVerDefs.put("acr_values",
         ParameterVerification.OPTIONAL_LIST_OF_SP_SEP_STRINGS.getValue());
-    paramVerDefs.put("request", ParameterVerification.SINGLE_OPTIONAL_STRING.getValue());
+    paramVerDefs.put("request", ParameterVerification.SINGLE_OPTIONAL_JWT.getValue());
     paramVerDefs.put("request_uri", ParameterVerification.SINGLE_OPTIONAL_STRING.getValue());
     paramVerDefs.put("response_mode", ParameterVerification.SINGLE_OPTIONAL_STRING.getValue());
     // Updating allowed values of parameters
@@ -91,13 +91,27 @@ public class AuthenticationRequest extends AuthorizationRequest {
   public boolean verify() throws InvalidClaimException {
     super.verify();
 
-    // TODO: TASK2
-    // Verify "request" is formed correctly if it exists..
-    // Create OpenIDRequest message class, decode it from JWT. It should check the signature
-    // Check that fields match -> ValueError
+    String request = ((String) getClaims().get("request"));
+    if (request != null) {
+      RequestObject requestObject = new RequestObject();
+      try {
+        // TODO: set keyjar and owner
+        requestObject.fromJwt(request, null, null);
+      } catch (IOException e) {
+        getError().getMessages()
+            .add(String.format("Unable to parse request object from '%s'", request));
+      }
+      try {
+        requestObject.verify();
+      } catch (InvalidClaimException e) {
+        for (String errorDesc : requestObject.getError().getMessages()) {
+          getError().getMessages()
+              .add(String.format("request parameter verification failed: '%s'", errorDesc));
+        }
+      }
+    }
 
     // TODO: verify from Rolands code the case ''Nonce in id_token not matching nonce in authz'
-
     String idTokenHint = ((String) getClaims().get("id_token_hint"));
     if (idTokenHint != null) {
       IDToken idToken = new IDToken();
@@ -106,13 +120,14 @@ public class AuthenticationRequest extends AuthorizationRequest {
         idToken.fromJwt(idTokenHint, null, null);
       } catch (IOException e) {
         getError().getMessages()
-            .add(String.format("Unable to parse id token from '%s'", idTokenHint));
+            .add(String.format("Unable to parse id_token_hint from '%s'", idTokenHint));
       }
       try {
         idToken.verify();
       } catch (InvalidClaimException e) {
         for (String errorDesc : idToken.getError().getMessages()) {
-          getError().getMessages().add(String.format("id_token_hint failed: '%s'", errorDesc));
+          getError().getMessages()
+              .add(String.format("id_token_hint parameter verification failed: '%s'", errorDesc));
         }
       }
     }
