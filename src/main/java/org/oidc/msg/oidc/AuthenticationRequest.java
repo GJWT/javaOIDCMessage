@@ -42,6 +42,7 @@ public class AuthenticationRequest extends AuthorizationRequest {
     paramVerDefs.put("display", ParameterVerification.SINGLE_OPTIONAL_STRING.getValue());
     paramVerDefs.put("prompt", ParameterVerification.OPTIONAL_LIST_OF_STRINGS.getValue());
     paramVerDefs.put("max_age", ParameterVerification.SINGLE_OPTIONAL_INT.getValue());
+    paramVerDefs.put("claims", ParameterVerification.SINGLE_OPTIONAL_MESSAGE.getValue());
     paramVerDefs.put("ui_locales",
         ParameterVerification.OPTIONAL_LIST_OF_SP_SEP_STRINGS.getValue());
     paramVerDefs.put("claims_locales",
@@ -53,17 +54,6 @@ public class AuthenticationRequest extends AuthorizationRequest {
     paramVerDefs.put("request", ParameterVerification.SINGLE_OPTIONAL_STRING.getValue());
     paramVerDefs.put("request_uri", ParameterVerification.SINGLE_OPTIONAL_STRING.getValue());
     paramVerDefs.put("response_mode", ParameterVerification.SINGLE_OPTIONAL_STRING.getValue());
-
-    // TODO: TASK1
-    // Roland has SINGLE_OPTIONAL_CLAIMSREQ.
-    /*
-     * class ClaimsRequest(Message): c_param = { "userinfo": OPTIONAL_MULTIPLE_Claims, "id_token":
-     * OPTIONAL_MULTIPLE_Claims }
-     */
-    // paramVerDefs.put("claims", ParameterVerification.SINGLE_OPTIONAL_CLAIMSREQ.getValue());
-    // TODO: Roland has this "registration" parameter, what is it?
-    // paramVerDefs.put("registration", ParameterVerification.SINGLE_OPTIONAL_JSON.getValue());
-
     // Updating allowed values of parameters
     allowedValues.put("display", Arrays.asList("page", "popup", "touch", "wap"));
     allowedValues.put("prompt", Arrays.asList("none", "login", "consent", "select_account"));
@@ -112,7 +102,7 @@ public class AuthenticationRequest extends AuthorizationRequest {
     if (idTokenHint != null) {
       IDToken idToken = new IDToken();
       try {
-        //TODO: set keyjar and owner
+        // TODO: set keyjar and owner
         idToken.fromJwt(idTokenHint, null, null);
       } catch (IOException e) {
         getError().getMessages()
