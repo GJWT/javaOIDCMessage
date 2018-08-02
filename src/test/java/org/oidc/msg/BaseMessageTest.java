@@ -29,26 +29,28 @@ import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.RSAPrivateKey;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.oidc.msg.oidc.ClaimsRequest;
 import org.oidc.msg.oidc.IDToken;
 
-/** Base class for tests offering helpers.*/
+/** Base class for tests offering helpers. */
 public abstract class BaseMessageTest<T extends AbstractMessage> {
 
   /** The message to be tested. */
   protected T message;
-  
+
   private static final String PRIVATE_KEY_FILE = "src/test/resources/rsa-private.pem";
   private static final String PUBLIC_KEY_FILE = "src/test/resources/rsa-public.pem";
   protected String keyOwner = "https://issuer.example.com";
   protected KeyJar keyJarOfPrivateKeys = null;
   protected KeyJar keyJarOfPublicKeys = null;
   protected String signedJwt = null;
-  
+
   protected String idToken = "eyJraWQiOiIxZTlnZGs3IiwiYWxnIjoiUlMyNTYifQ.ewogImlz"
       + "cyI6ICJodHRwOi8vc2VydmVyLmV4YW1wbGUuY29tIiwKICJzdWIiOiAiMjQ4"
       + "Mjg5NzYxMDAxIiwKICJhdWQiOiAiczZCaGRSa3F0MyIsCiAibm9uY2UiOiAi"
@@ -64,12 +66,12 @@ public abstract class BaseMessageTest<T extends AbstractMessage> {
       + "u0532g9Exxcm-ChymrB4xLykpDj3lUivJt63eEGGN6DH5K6o33TcxkIjNrCD"
       + "4XB1CKKumZvCedgHHF3IAK4dVEDSUoGlH9z4pP_eWYNXvqQOjGs-rDaQzUHl" + "6cQQWNiDpWOl_lxXjQEvQ";
 
-
   @Test
   public void testEmptyClaimsValidity() {
     boolean containsRequired = false;
     for (String key : message.getParameterVerificationDefinitions().keySet()) {
-      ParameterVerificationDefinition parVerDef = message.getParameterVerificationDefinitions().get(key);
+      ParameterVerificationDefinition parVerDef = message.getParameterVerificationDefinitions()
+          .get(key);
       if (parVerDef.isRequired()) {
         containsRequired = true;
       }
@@ -90,19 +92,19 @@ public abstract class BaseMessageTest<T extends AbstractMessage> {
     }
     Assert.assertTrue(verifiedAsExpected);
   }
-  
+
   @Test
   public void testDefaultValuesExists() {
     for (String key : message.defaultValues.keySet()) {
       Assert.assertEquals(message.defaultValues.get(key), message.getClaims().get(key));
     }
   }
-  
-   
+
   /**
    * Creates simple signed jwt.
    * 
-   * @param alg slg to use.
+   * @param alg
+   *          slg to use.
    * @return simple jwt.
    * 
    */
@@ -113,14 +115,12 @@ public abstract class BaseMessageTest<T extends AbstractMessage> {
       case "RS256":
       case "RS384":
       case "RS512":
-        keys = getKeyJarPrv().getSigningKey(KeyType.RSA.name(), keyOwner, null,
-            null);
+        keys = getKeyJarPrv().getSigningKey(KeyType.RSA.name(), keyOwner, null, null);
         break;
       case "ES256":
       case "ES384":
       case "ES512":
-        keys = getKeyJarPrv().getSigningKey(KeyType.EC.name(), keyOwner, null,
-            null);
+        keys = getKeyJarPrv().getSigningKey(KeyType.EC.name(), keyOwner, null, null);
         break;
       default:
         break;
@@ -174,7 +174,7 @@ public abstract class BaseMessageTest<T extends AbstractMessage> {
     keyJarOfPrivateKeys.addKeyBundle(keyOwner, keyBundlePrv);
     return keyJarOfPrivateKeys;
   }
-  
+
   /**
    * Creates if needed one keyjar with one public rsa key.
    * 
@@ -205,17 +205,51 @@ public abstract class BaseMessageTest<T extends AbstractMessage> {
    * @param algo
    *          algorithm used to sign, may be none
    * @return
-   * @throws InvalidClaimException 
+   * @throws InvalidClaimException
    */
-  protected String generateIdTokenNow(Map<String, Object> claims, Key key, String algo) throws InvalidClaimException {
+  protected String generateIdTokenNow(Map<String, Object> claims, Key key, String algo)
+      throws InvalidClaimException {
     claims.put("iss", "issuer");
     claims.put("sub", "subject");
     claims.put("aud", "clientid");
-    claims.put("exp", (System.currentTimeMillis()/1000)+5);
+    claims.put("exp", (System.currentTimeMillis() / 1000) + 5);
     claims.put("iat", new Date());
     IDToken token = new IDToken(claims);
     token.verify();
     return token.toJwt(key, algo);
   }
-  
+
+  /**
+   * Helper to generate claims request.
+   */
+  protected ClaimsRequest getClaimsRequest() throws InvalidClaimException {
+    Map<String, Object> userInfoClaimsRequestMembers = new HashMap<String, Object>();
+    Map<String, Object> essentialTrue = new HashMap<String, Object>();
+    essentialTrue.put("essential", true);
+    userInfoClaimsRequestMembers.put("given_name", essentialTrue);
+    userInfoClaimsRequestMembers.put("nickname", null);
+    userInfoClaimsRequestMembers.put("email", essentialTrue);
+    userInfoClaimsRequestMembers.put("email_verified", essentialTrue);
+    userInfoClaimsRequestMembers.put("picture", null);
+    userInfoClaimsRequestMembers.put("http://example.info/claims/groups", null);
+    Map<String, Object> claims = new HashMap<String, Object>();
+    claims.put("userinfo", userInfoClaimsRequestMembers);
+    Map<String, Object> acrParams = new HashMap<String, Object>();
+    acrParams.put("essential", true);
+    List<String> acrValues = new ArrayList<String>();
+    acrValues.add("urn:mace:incommon:iap:silver");
+    acrValues.add("urn:mace:incommon:iap:bronze");
+    acrParams.put("values", acrValues);
+    Map<String, Object> idTokenClaimsRequestMembers = new HashMap<String, Object>();
+    idTokenClaimsRequestMembers.put("acr", acrParams);
+    Map<String, Object> value = new HashMap<String, Object>();
+    value.put("value", "248289761001");
+    idTokenClaimsRequestMembers.put("sub", value);
+    idTokenClaimsRequestMembers.put("auth_time", essentialTrue);
+    claims.put("idtoken", idTokenClaimsRequestMembers);
+    ClaimsRequest message = new ClaimsRequest(claims);
+    message.verify();
+    return message;
+  }
+
 }
