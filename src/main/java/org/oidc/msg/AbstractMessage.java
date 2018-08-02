@@ -322,30 +322,30 @@ public abstract class AbstractMessage implements Message {
     Algorithm algorithm = null;
     try {
       switch (alg) {
-      case "none":
-        algorithm = Algorithm.none();
-        break;
-      case "RS256":
-        algorithm = Algorithm.RSA256(null, (RSAPrivateKey) key.getKey(true));
-        break;
-      case "RS384":
-        algorithm = Algorithm.RSA384(null, (RSAPrivateKey) key.getKey(true));
-        break;
-      case "RS512":
-        algorithm = Algorithm.RSA512(null, (RSAPrivateKey) key.getKey(true));
-        break;
-      case "ES256":
-        algorithm = Algorithm.ECDSA256(null, (ECPrivateKey) key.getKey(true));
-        break;
-      case "ES384":
-        algorithm = Algorithm.ECDSA384(null, (ECPrivateKey) key.getKey(true));
-        break;
-      case "ES512":
-        algorithm = Algorithm.ECDSA512(null, (ECPrivateKey) key.getKey(true));
-        break;
-      default:
-        break;
-      // TODO: HMAC algorithms
+        case "none":
+          algorithm = Algorithm.none();
+          break;
+        case "RS256":
+          algorithm = Algorithm.RSA256(null, (RSAPrivateKey) key.getKey(true));
+          break;
+        case "RS384":
+          algorithm = Algorithm.RSA384(null, (RSAPrivateKey) key.getKey(true));
+          break;
+        case "RS512":
+          algorithm = Algorithm.RSA512(null, (RSAPrivateKey) key.getKey(true));
+          break;
+        case "ES256":
+          algorithm = Algorithm.ECDSA256(null, (ECPrivateKey) key.getKey(true));
+          break;
+        case "ES384":
+          algorithm = Algorithm.ECDSA384(null, (ECPrivateKey) key.getKey(true));
+          break;
+        case "ES512":
+          algorithm = Algorithm.ECDSA512(null, (ECPrivateKey) key.getKey(true));
+          break;
+        default:
+          break;
+        // TODO: HMAC algorithms
       }
     } catch (IllegalArgumentException | ValueError e) {
       // TODO: This is not Decoding exception, replace it.
@@ -358,10 +358,8 @@ public abstract class AbstractMessage implements Message {
           String.format("Not able to initialize algorithm '%s' to sign JWT", alg));
     }
     JWTCreator.Builder newBuilder = JWT.create().withHeader(this.header);
+    
     for (String claimName : claims.keySet()) {
-      // TODO: This mapping may prove not to be enough. How are Messages etc serialized?
-      // We may end up using toJson as the serialization method. This will be seen once we get to
-      // test more complex messages.
       Object value = claims.get(claimName);
       if (value instanceof Boolean) {
         newBuilder.withClaim(claimName, (Boolean) value);
@@ -371,9 +369,17 @@ public abstract class AbstractMessage implements Message {
         newBuilder.withClaim(claimName, (Date) value);
       } else if (value instanceof Long) {
         newBuilder.withClaim(claimName, (Long) value);
+      } else if (value instanceof List<?>) {
+        if (((List<?>) value).get(0) instanceof String) {
+          newBuilder.withArrayClaim(claimName, ((List<?>) value).toArray(new String[0]));
+        } else if (((List<?>) value).get(0) instanceof Long) {
+          newBuilder.withArrayClaim(claimName, ((List<?>) value).toArray(new Long[0]));
+        }
       }
+
     }
     return newBuilder.sign(algorithm);
+    
   }
 
   /**
