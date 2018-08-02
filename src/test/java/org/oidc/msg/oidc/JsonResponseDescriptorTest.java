@@ -17,6 +17,7 @@
 package org.oidc.msg.oidc;
 
 import org.junit.Test;
+import org.oidc.msg.BaseMessageTest;
 import org.oidc.msg.InvalidClaimException;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -27,22 +28,28 @@ import java.util.List;
 import java.util.Map;
 
 import org.junit.Assert;
+import org.junit.Before;
 
 /**
  * Unit tests for {@link JsonResponseDescriptor}.
  */
-public class JsonResponseDescriptorTest {
+public class JsonResponseDescriptorTest extends BaseMessageTest<JsonResponseDescriptor> {
 
+  @Before
+  public void setup() {
+    message = new JsonResponseDescriptor();
+  }
+  
   @Test
   public void testFromJson() throws InvalidClaimException, JsonProcessingException {
     String json = "{ \"subject\" : \"acct:juliet%40capulet.example@shopping.example.com\",\n"
         + "   \"links\":\n" + "    [\n" + "     {\n"
         + "      \"rel\": \"http://openid.net/specs/connect/1.0/issuer\",\n"
         + "      \"href\": \"https://server.example.com\"\n" + "     }\n" + "    ]\n" + "  }";
-    JsonResponseDescriptor jrd = new JsonResponseDescriptor();
-    jrd.fromJson(json);
-    jrd.verify();
-    Map<String, Object> claims = jrd.getClaims();
+    message = new JsonResponseDescriptor();
+    message.fromJson(json);
+    message.verify();
+    Map<String, Object> claims = message.getClaims();
     Assert.assertEquals("acct:juliet%40capulet.example@shopping.example.com",
         claims.get("subject"));
     List<Link> links = (List<Link>) claims.get("links");
@@ -63,9 +70,9 @@ public class JsonResponseDescriptorTest {
     link.addClaim("href", "https://server.example.com");
     links.add(link);
     claims.put("links", links);
-    JsonResponseDescriptor jrd = new JsonResponseDescriptor(claims);
-    jrd.verify();
-    Map<String, Object> parsedClaims = jrd.getClaims();
+    message = new JsonResponseDescriptor(claims);
+    message.verify();
+    Map<String, Object> parsedClaims = message.getClaims();
     Assert.assertEquals("acct:juliet%40capulet.example@shopping.example.com",
         parsedClaims.get("subject"));
     List<Link> parsedLinks = (List<Link>) parsedClaims.get("links");

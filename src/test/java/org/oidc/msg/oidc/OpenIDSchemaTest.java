@@ -21,9 +21,10 @@ import java.util.Map;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.oidc.msg.BaseMessageTest;
 import org.oidc.msg.InvalidClaimException;
 
-public class OpenIDSchemaTest {
+public class OpenIDSchemaTest extends BaseMessageTest<OpenIDSchema> {
 
   Map<String, Object> claims = new HashMap<String, Object>();
 
@@ -32,47 +33,48 @@ public class OpenIDSchemaTest {
    */
   @Before
   public void setup() {
+    message = new OpenIDSchema();
     claims.clear();
     claims.put("sub", "foo");
   }
 
   @Test
   public void testSuccessMandatoryParameters() throws InvalidClaimException {
-    OpenIDSchema req = new OpenIDSchema(claims);
-    req.verify();
-    Assert.assertEquals("foo", req.getClaims().get("sub"));
+    message = new OpenIDSchema(claims);
+    message.verify();
+    Assert.assertEquals("foo", message.getClaims().get("sub"));
   }
 
   @Test(expected = InvalidClaimException.class)
   public void testFailMissingOpenidScopeParameter() throws InvalidClaimException {
     claims.remove("sub");
-    OpenIDSchema req = new OpenIDSchema(claims);
-    req.verify();
+    message = new OpenIDSchema(claims);
+    message.verify();
   }
 
   @Test
   public void testSuccessDateFormats() throws InvalidClaimException {
-    OpenIDSchema req = new OpenIDSchema(claims);
+    message = new OpenIDSchema(claims);
     claims.put("birthdate", "1990-12-31");
-    req.verify();
+    message.verify();
     claims.put("birthdate", "0000-12-31");
-    req.verify();
+    message.verify();
     claims.put("birthdate", "1990");
-    req.verify();
+    message.verify();
   }
 
   @Test(expected = InvalidClaimException.class)
   public void testFailDateFormats() throws InvalidClaimException {
-    OpenIDSchema req = new OpenIDSchema(claims);
     claims.put("birthdate", "X-1555-15");
-    req.verify();
+    message = new OpenIDSchema(claims);
+    message.verify();
   }
 
   @Test(expected = InvalidClaimException.class)
   public void testFailNullValue() throws InvalidClaimException {
-    OpenIDSchema req = new OpenIDSchema(claims);
     claims.put("any", null);
-    req.verify();
+    message = new OpenIDSchema(claims);
+    message.verify();
   }
 
 }

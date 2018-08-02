@@ -22,18 +22,12 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.oicmsg_exceptions.ImportException;
 import com.auth0.jwt.exceptions.oicmsg_exceptions.UnknownKeyType;
 import com.auth0.jwt.exceptions.oicmsg_exceptions.ValueError;
-import com.auth0.jwt.impl.PayloadSerializer;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.auth0.msg.Key;
 import com.auth0.msg.KeyJar;
 import com.auth0.msg.KeyType;
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializerProvider;
 import java.io.IOException;
-import java.io.StringWriter;
 import java.lang.reflect.Array;
 import java.security.interfaces.RSAPublicKey;
 import java.util.ArrayList;
@@ -48,24 +42,14 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-
-public class AbstractMessageTest extends BaseMessageTest {
+/**
+ * Unit tests for {@link AbstractMessage}.
+ */
+public class AbstractMessageTest extends BaseMessageTest<AbstractMessage> {
   
-  private StringWriter writer;
-  private PayloadSerializer serializer;
-  private JsonGenerator jsonGenerator;
-  private SerializerProvider serializerProvider;
-  
-  // TODO: Old tests start here. go through them and make sense out of them.
-
   @Before
   public void setUp() throws Exception {
-    writer = new StringWriter();
-    serializer = new PayloadSerializer();
-    jsonGenerator = new JsonFactory().createGenerator(writer);
-    ObjectMapper mapper = new ObjectMapper();
-    jsonGenerator.setCodec(mapper);
-    serializerProvider = mapper.getSerializerProvider();
+    message = new MockMessage();
   }
 
   

@@ -21,9 +21,10 @@ import java.util.Map;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.oidc.msg.BaseMessageTest;
 import org.oidc.msg.InvalidClaimException;
 
-public class AuthorizationResponseTest {
+public class AuthorizationResponseTest extends BaseMessageTest<AuthorizationResponse> {
   
   Map<String, Object> claims = new HashMap<String, Object>();
 
@@ -32,15 +33,16 @@ public class AuthorizationResponseTest {
    */
   @Before
   public void setup() {
+    message = new AuthorizationResponse();
     claims.clear();
     claims.put("code", "FOOCODEBAR");
   }
 
   @Test
   public void testSuccessMandatoryParameters() throws InvalidClaimException {
-    AuthorizationResponse req = new AuthorizationResponse(claims);
-    req.verify();
-    Assert.assertEquals("FOOCODEBAR", req.getClaims().get("code"));
+    message = new AuthorizationResponse(claims);
+    message.verify();
+    Assert.assertEquals("FOOCODEBAR", message.getClaims().get("code"));
   }
   
   @Test
@@ -60,15 +62,15 @@ public class AuthorizationResponseTest {
   @Test(expected = InvalidClaimException.class)
   public void testFailVerifyIssuerValue() throws InvalidClaimException {
     claims.put("iss", "FOOISSBAR");
-    AuthorizationResponse req = new AuthorizationResponse(claims);
-    req.verify();
+    message = new AuthorizationResponse(claims);
+    message.verify();
   }
   
   @Test(expected = InvalidClaimException.class)
   public void testFailVerifyClientValue() throws InvalidClaimException {
     claims.put("client_id", "FOOCLIENTBAR");
-    AuthorizationResponse req = new AuthorizationResponse(claims);
-    req.verify();
+    message = new AuthorizationResponse(claims);
+    message.verify();
   }
   
 }

@@ -23,13 +23,19 @@ import java.util.List;
 import java.util.Map;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.oidc.msg.BaseMessageTest;
 import org.oidc.msg.InvalidClaimException;
 
-public class ClaimsRequestTest extends BaseMessageTest {
+public class ClaimsRequestTest extends BaseMessageTest<ClaimsRequest> {
 
   Map<String, Object> claims = new HashMap<String, Object>();
+  
+  @Before
+  public void setup() {
+    message = new ClaimsRequest();
+  }
 
   /**
    * 
@@ -62,9 +68,9 @@ public class ClaimsRequestTest extends BaseMessageTest {
     idTokenClaimsRequestMembers.put("sub", value);
     idTokenClaimsRequestMembers.put("auth_time", essentialTrue);
     claims.put("idtoken", idTokenClaimsRequestMembers);
-    ClaimsRequest req = new ClaimsRequest(claims);
-    req.verify();
-    Assert.assertThat(req.toJson(), CoreMatchers.is(
+    message = new ClaimsRequest(claims);
+    message.verify();
+    Assert.assertThat(message.toJson(), CoreMatchers.is(
         "{\"idtoken\":{\"acr\":{\"values\":[\"urn:mace:incommon:iap:silver\",\"urn:mace:incommon:iap:bronze\"],\"essential\":true},\"sub\":{\"value\":\"248289761001\"},\"auth_time\":{\"essential\":true}},\"userinfo\":{\"email_verified\":{\"essential\":true},\"nickname\":null,\"http://example.info/claims/groups\":null,\"given_name\":{\"essential\":true},\"email\":{\"essential\":true},\"picture\":null}}"));
   }
 
