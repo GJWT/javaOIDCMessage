@@ -16,6 +16,12 @@
 
 package org.oidc.msg.oidc;
 
+import com.auth0.jwt.exceptions.oicmsg_exceptions.ImportException;
+import com.auth0.jwt.exceptions.oicmsg_exceptions.UnknownKeyType;
+import com.auth0.jwt.exceptions.oicmsg_exceptions.ValueError;
+import com.auth0.msg.Key;
+import com.auth0.msg.KeyType;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -127,14 +133,29 @@ public class AuthenticationRequestTest extends BaseMessageTest<AuthenticationReq
     message.verify();
   }
 
-  //@Test
-  public void testSuccessIdTokenHint() throws InvalidClaimException {
-    // TODO: Update test
-    claims.put("id_token_hint", idToken);
-    message = new AuthenticationRequest(claims);
-    message.verify();
-    Assert.assertEquals(idToken, message.getClaims().get("id_token_hint"));
+  @Test
+  public void testSuccessIdTokenHint() throws InvalidClaimException, IllegalArgumentException,
+      ImportException, UnknownKeyType, ValueError, IOException {
+    Map<String, Object> idTokenClaims = new HashMap<String, Object>();
+    idTokenClaims.put("iss", "issuer");
+    idTokenClaims.put("sub", "subject");
+    idTokenClaims.put("aud", "clientid");
+    long now = System.currentTimeMillis() / 1000;
+    idTokenClaims.put("exp", now + 60);
+    idTokenClaims.put("iat", now);
+    IDToken idTokenHint = new IDToken(idTokenClaims);
+    idTokenHint.verify();
+    List<Key> keysSign = getKeyJarPrv().getSigningKey(KeyType.RSA.name(), keyOwner, null, null);
+    claims.put("id_token_hint", idTokenHint.toJwt(keysSign.get(0), "RS256"));
+    AuthenticationRequest req = new AuthenticationRequest(claims);
+    req.verify();
+    IDToken idTokenHintFromJwt = new IDToken();
+    idTokenHintFromJwt.fromJwt((String) req.getClaims().get("id_token_hint"), getKeyJarPub(),
+        keyOwner);
+    Assert.assertEquals((String) idTokenHintFromJwt.getClaims().get("iss"),
+        (String) idTokenHint.getClaims().get("iss"));
   }
+
 
   @Test(expected = Exception.class)
   public void testFailIdTokenHintInvalid() throws InvalidClaimException {
@@ -142,7 +163,6 @@ public class AuthenticationRequestTest extends BaseMessageTest<AuthenticationReq
     claims.put("id_token_hint", idToken);
     message = new AuthenticationRequest(claims);
     message.verify();
-    Assert.assertEquals(idToken, message.getClaims().get("id_token_hint"));
   }
 
 }
