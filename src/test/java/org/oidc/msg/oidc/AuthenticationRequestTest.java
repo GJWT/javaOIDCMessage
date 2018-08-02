@@ -21,21 +21,24 @@ import com.auth0.jwt.exceptions.oicmsg_exceptions.UnknownKeyType;
 import com.auth0.jwt.exceptions.oicmsg_exceptions.ValueError;
 import com.auth0.msg.Key;
 import com.auth0.msg.KeyType;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.oidc.msg.BaseMessageTest;
 import org.oidc.msg.InvalidClaimException;
+import org.oidc.msg.SerializationException;
 
 public class AuthenticationRequestTest extends BaseMessageTest<AuthenticationRequest> {
 
   Map<String, Object> claims = new HashMap<String, Object>();
-  
+
   /**
    * Setup mandatory claims.
    */
@@ -136,15 +139,7 @@ public class AuthenticationRequestTest extends BaseMessageTest<AuthenticationReq
   @Test
   public void testSuccessIdTokenHint() throws InvalidClaimException, IllegalArgumentException,
       ImportException, UnknownKeyType, ValueError, IOException {
-    Map<String, Object> idTokenClaims = new HashMap<String, Object>();
-    idTokenClaims.put("iss", "issuer");
-    idTokenClaims.put("sub", "subject");
-    idTokenClaims.put("aud", "clientid");
-    long now = System.currentTimeMillis() / 1000;
-    idTokenClaims.put("exp", now + 60);
-    idTokenClaims.put("iat", now);
-    IDToken idTokenHint = new IDToken(idTokenClaims);
-    idTokenHint.verify();
+    IDToken idTokenHint = getIDTokenHint();
     List<Key> keysSign = getKeyJarPrv().getSigningKey(KeyType.RSA.name(), keyOwner, null, null);
     claims.put("id_token_hint", idTokenHint.toJwt(keysSign.get(0), "RS256"));
     AuthenticationRequest req = new AuthenticationRequest(claims);
@@ -156,13 +151,68 @@ public class AuthenticationRequestTest extends BaseMessageTest<AuthenticationReq
         (String) idTokenHint.getClaims().get("iss"));
   }
 
-
   @Test(expected = Exception.class)
   public void testFailIdTokenHintInvalid() throws InvalidClaimException {
     String idToken = "notparsableasidtoken";
     claims.put("id_token_hint", idToken);
     message = new AuthenticationRequest(claims);
     message.verify();
+  }
+
+  @Test
+  public void testAllParametersAndUrlEncodingSuccess()
+      throws InvalidClaimException, IllegalArgumentException, ImportException, UnknownKeyType,
+      ValueError, JsonProcessingException, SerializationException {
+    claims.clear();
+    claims.put("scope", "openid email profile");
+    claims.put("response_type", "id_token token");
+    claims.put("client_id", "CLIENT_ID_010101010");
+    claims.put("redirect_uri", "https://example.com");
+    claims.put("state", "STATE_ID_010101010");
+    claims.put("response_mode", "query");
+    claims.put("nonce", "NONCE_010101010");
+    claims.put("display", "page");
+    // TODO: Verify type of the prompt, should it really be list
+    List<String> prompt = new ArrayList<String>();
+    prompt.add("login");
+    prompt.add("consent");
+    claims.put("prompt", prompt);
+    claims.put("max_age", 60);
+    String[] locales = new String[3];
+    locales[0] = "fr-CA";
+    locales[1] = "fr";
+    locales[2] = "en";
+    claims.put("ui_locales", locales);
+    IDToken idTokenHint = getIDTokenHint();
+    List<Key> keysSign = getKeyJarPrv().getSigningKey(KeyType.RSA.name(), keyOwner, null, null);
+    claims.put("id_token_hint", idTokenHint.toJwt(keysSign.get(0), "RS256"));
+    claims.put("login_hint", "user_is_bob");
+    String[] acrs = new String[2];
+    acrs[0] = "1";
+    acrs[1] = "2";
+    claims.put("acr_values", acrs);
+    ClaimsRequest claimsRequest = getClaimsRequest();
+    claims.put("claims", claimsRequest.toJson());
+    RequestObject requestObject = new RequestObject(claims);
+    requestObject.verify();
+    claims.put("request", requestObject.toJwt(keysSign.get(0), "RS256"));
+    message = new AuthenticationRequest(claims);
+    message.verify();
+    // Assert.assertThat(message.toUrlEncoded(), CoreMatchers.is("test"));
+
+  }
+
+  private IDToken getIDTokenHint() throws InvalidClaimException {
+    Map<String, Object> idTokenClaims = new HashMap<String, Object>();
+    idTokenClaims.put("iss", "issuer");
+    idTokenClaims.put("sub", "subject");
+    idTokenClaims.put("aud", "clientid");
+    long now = System.currentTimeMillis() / 1000;
+    idTokenClaims.put("exp", now + 60);
+    idTokenClaims.put("iat", now);
+    IDToken idTokenHint = new IDToken(idTokenClaims);
+    idTokenHint.verify();
+    return idTokenHint;
   }
 
 }
