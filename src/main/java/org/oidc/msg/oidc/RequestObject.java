@@ -54,11 +54,11 @@ public class RequestObject extends AuthenticationRequest {
    */
   public boolean verify() throws InvalidClaimException {
     super.verify();
-    if (getClaims().containsKey("redirect")) {
-      getError().getMessages().add("redirect parameter not allowed");
+    if (getClaims().containsKey("request")) {
+      getError().getMessages().add("request parameter not allowed");
     }
-    if (getClaims().containsKey("redirect_uri")) {
-      getError().getMessages().add("redirect_uri parameter not allowed");
+    if (getClaims().containsKey("request_uri")) {
+      getError().getMessages().add("request_uri parameter not allowed");
     }
     if (getError().getMessages().size() > 0) {
       this.setVerified(false);
