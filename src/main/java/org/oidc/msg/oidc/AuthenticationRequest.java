@@ -42,7 +42,7 @@ public class AuthenticationRequest extends AuthorizationRequest {
     paramVerDefs.put("display", ParameterVerification.SINGLE_OPTIONAL_STRING.getValue());
     paramVerDefs.put("prompt", ParameterVerification.OPTIONAL_LIST_OF_STRINGS.getValue());
     paramVerDefs.put("max_age", ParameterVerification.SINGLE_OPTIONAL_INT.getValue());
-    paramVerDefs.put("claims", ParameterVerification.SINGLE_OPTIONAL_MESSAGE.getValue());
+    paramVerDefs.put("claims", ParameterVerification.SINGLE_OPTIONAL_STRING.getValue());
     paramVerDefs.put("ui_locales",
         ParameterVerification.OPTIONAL_LIST_OF_SP_SEP_STRINGS.getValue());
     paramVerDefs.put("claims_locales",
