@@ -72,7 +72,7 @@ public abstract class BaseMessageTest<T extends AbstractMessage> {
     for (String key : message.getParameterVerificationDefinitions().keySet()) {
       ParameterVerificationDefinition parVerDef = message.getParameterVerificationDefinitions()
           .get(key);
-      if (parVerDef.isRequired()) {
+      if (parVerDef.isRequired() && !message.getClaims().containsKey(key)) {
         containsRequired = true;
       }
     }
