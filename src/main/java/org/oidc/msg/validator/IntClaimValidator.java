@@ -18,12 +18,15 @@ package org.oidc.msg.validator;
 
 import org.oidc.msg.InvalidClaimException;
 
-public class IntClaimValidator implements ClaimValidator {
+/**
+ * A {@link ClaimValidator} for {@link Long}s.
+ */
+public class IntClaimValidator implements ClaimValidator<Long> {
 
   @Override
-  public Object validate(Object value) throws InvalidClaimException {
+  public Long validate(Object value) throws InvalidClaimException {
     if (value instanceof Long) {
-      return value;
+      return (Long) value;
     } // convert Integer to Long.
     if (value instanceof Integer) {
       return ((Integer) value).longValue();

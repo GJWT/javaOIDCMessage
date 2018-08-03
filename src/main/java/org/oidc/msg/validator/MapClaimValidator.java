@@ -16,25 +16,30 @@
 
 package org.oidc.msg.validator;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.oidc.msg.InvalidClaimException;
 
-public class MapClaimValidator implements ClaimValidator {
+/**
+ * A {@link ClaimValidator} for a {@link Map} containing string keys.
+ */
+public class MapClaimValidator implements ClaimValidator<Map<String, Object>> {
 
   @Override
-  public Object validate(Object value) throws InvalidClaimException {
+  public Map<String, Object> validate(Object value) throws InvalidClaimException {
     if (value instanceof Map) {
       Map<?, ?> map = (Map<?, ?>) value;
       if (map.isEmpty()) {
-        return value;
+        return new HashMap<String, Object>();
       }
       Object key = map.keySet().iterator().next();
       if (!(key instanceof String)) {
         throw new InvalidClaimException("Unexpected key type in the map: " + key.getClass());
       }
-      return map;
+      return (Map<String, Object>) map;
     }
     throw new InvalidClaimException(String.format("Parameter '%s' is not of expected type", value));
   }
+
 }

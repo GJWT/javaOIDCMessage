@@ -18,8 +18,24 @@ package org.oidc.msg.validator;
 
 import org.oidc.msg.InvalidClaimException;
 
-public interface ClaimValidator {
+/**
+ * The claim validators (1) checks whether the given {@link Object} contains a value that can be
+ * transformed into target object format and (2) transforms them.
+ *
+ * @param <T>
+ *          The target object format.
+ */
+public interface ClaimValidator<T> {
 
-  public Object validate(Object value) throws InvalidClaimException;
+  /**
+   * Validates and possibly transforms the value into the target format.
+   * 
+   * @param value
+   *          The value to be validated (and transformed).
+   * @return The validated value in target format.
+   * @throws InvalidClaimException
+   *           If the transformation cannot be done.
+   */
+  public T validate(Object value) throws InvalidClaimException;
 
 }

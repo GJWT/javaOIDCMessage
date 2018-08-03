@@ -23,10 +23,14 @@ import java.util.Map;
 import org.oidc.msg.InvalidClaimException;
 import org.oidc.msg.oidc.Link;
 
-public class LinksClaimValidator implements ClaimValidator {
+/**
+ * A {@link ClaimValidator} for {@link Link}s. They are expected to be found in a {@link List},
+ * containing either {@link Map}s or {@link Link}s.
+ */
+public class LinksClaimValidator implements ClaimValidator<List<Link>> {
 
   @Override
-  public Object validate(Object value) throws InvalidClaimException {
+  public List<Link> validate(Object value) throws InvalidClaimException {
     if (value instanceof List) {
       List<?> list = (List<?>) value;
       List<Link> links = new ArrayList<Link>();
@@ -42,9 +46,9 @@ public class LinksClaimValidator implements ClaimValidator {
           throw new InvalidClaimException(
               String.format("Parameter '%s' is not of expected type", value));
         }
-        // TODO: this is just for initiating verify()
-        link.getClaims();
-        links.add(link);
+        if (link.verify()) {
+          links.add(link);
+        }
       }
       return links;
     }

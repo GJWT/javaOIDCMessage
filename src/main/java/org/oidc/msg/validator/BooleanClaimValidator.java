@@ -18,15 +18,23 @@ package org.oidc.msg.validator;
 
 import org.oidc.msg.InvalidClaimException;
 
-public class BooleanClaimValidator implements ClaimValidator {
+/**
+ * A {@link ClaimValidator} for booleans.
+ */
+public class BooleanClaimValidator implements ClaimValidator<Boolean> {
 
   @Override
-  public Object validate(Object value) throws InvalidClaimException {
+  public Boolean validate(Object value) throws InvalidClaimException {
+    if (value instanceof String) {
+      if ("false".equalsIgnoreCase((String) value) || "true".equalsIgnoreCase((String) value)) {
+        return Boolean.valueOf((String) value);
+      }
+    }
     if (!(value instanceof Boolean)) {
       throw new InvalidClaimException(
           String.format("Parameter '%s' is not of expected type", value));
     }
-    return value;
+    return (Boolean) value;
   }
 
 }

@@ -20,12 +20,16 @@ import java.util.Date;
 
 import org.oidc.msg.InvalidClaimException;
 
-public class DateClaimValidator implements ClaimValidator {
+/**
+ * A {@link ClaimValidator} for {̛@link Date}s. The source value can be in {@link Date},
+ * {@link Integer} or {@link Long}. The latter two formats are expected to be in epoch seconds.
+ */
+public class DateClaimValidator implements ClaimValidator<Date> {
 
   @Override
-  public Object validate(Object value) throws InvalidClaimException {
+  public Date validate(Object value) throws InvalidClaimException {
     if (value instanceof Date) {
-      return value;
+      return (Date) value;
     } // Convert Integer and Long to Date if possible.
     if (value instanceof Integer) {
       return new Date(((Integer) value).longValue() * 1000L);

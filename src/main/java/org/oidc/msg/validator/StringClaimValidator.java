@@ -18,14 +18,18 @@ package org.oidc.msg.validator;
 
 import org.oidc.msg.InvalidClaimException;
 
-public class StringClaimValidator implements ClaimValidator {
+/**
+ * A {@link ClaimValidator} for strings.
+ */
+public class StringClaimValidator implements ClaimValidator<String> {
 
   @Override
-  public Object validate(Object value) throws InvalidClaimException {
+  public String validate(Object value) throws InvalidClaimException {
     if (!(value instanceof String)) {
       throw new InvalidClaimException(
           String.format("Parameter '%s' is not of expected type", value));
     }
-    return value;
+    return (String) value;
   }
+
 }

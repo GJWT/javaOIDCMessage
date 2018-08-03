@@ -16,24 +16,33 @@
 
 package org.oidc.msg.validator;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import org.oidc.msg.InvalidClaimException;
 
-public class ListClaimValidator implements ClaimValidator {
+import com.google.common.base.Strings;
+
+/**
+ * A {@link ClaimValidator} for a list of strings.
+ */
+public class ListClaimValidator implements ClaimValidator<List<String>> {
 
   @Override
-  public Object validate(Object value) throws InvalidClaimException {
+  public List<String> validate(Object value) throws InvalidClaimException {
     if (value instanceof List) {
       List<?> list = (List<?>) value;
-      if (list.isEmpty() || (list.get(0) instanceof String)) {
-        return value;
+      if (list.isEmpty())
+        return new ArrayList<String>();
+      if (list.get(0) instanceof String) {
+        return (List<String>) value;
       }
     }
-    if (value instanceof String) {
-      return Arrays.asList(value);
+    if (value instanceof String && !Strings.isNullOrEmpty((String) value)) {
+      return Arrays.asList((String) value);
     }
     throw new InvalidClaimException(String.format("Parameter '%s' is not of expected type", value));
   }
+
 }

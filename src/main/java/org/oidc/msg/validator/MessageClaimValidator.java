@@ -19,15 +19,18 @@ package org.oidc.msg.validator;
 import org.oidc.msg.InvalidClaimException;
 import org.oidc.msg.Message;
 
-/** General validator for claims type of message. */
-public class MessageClaimValidator implements ClaimValidator {
+/**
+ * A {@link ClaimValidator} for {@link Message}s.
+ */
+public class MessageClaimValidator implements ClaimValidator<Message> {
 
   @Override
-  public Object validate(Object value) throws InvalidClaimException {
+  public Message validate(Object value) throws InvalidClaimException {
     if (!(value instanceof Message)) {
       throw new InvalidClaimException(
           String.format("Parameter '%s' is not of expected type", value));
     }
-    return value;
+    return (Message) value;
   }
+
 }

@@ -18,12 +18,15 @@ package org.oidc.msg.validator;
 
 import org.oidc.msg.InvalidClaimException;
 
-public class ArrayClaimValidator implements ClaimValidator {
+/**
+ * A {@link ClaimValidator} for an array of strings or space separated strings.
+ */
+public class ArrayClaimValidator implements ClaimValidator<String> {
 
   @Override
-  public Object validate(Object value) throws InvalidClaimException {
+  public String validate(Object value) throws InvalidClaimException {
     if (value instanceof String) {
-      return value;
+      return (String) value;
     }
     if (!(value instanceof String[]) || ((String[]) value).length == 0) {
       throw new InvalidClaimException(
@@ -35,4 +38,5 @@ public class ArrayClaimValidator implements ClaimValidator {
     }
     return spaceSeparatedString;
   }
+
 }

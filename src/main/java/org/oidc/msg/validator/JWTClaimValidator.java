@@ -20,11 +20,14 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.exceptions.JWTDecodeException;
 import org.oidc.msg.InvalidClaimException;
 
-/** General validator for claims type of id token. */
-public class JWTClaimValidator implements ClaimValidator {
+/**
+ * A {@link ClaimValidator} for JWTs in {@link String}. The strings are tested whether they can be
+ * decoded into {@link JWT}, but they are kept as {@link String}s without transformation.
+ */
+public class JWTClaimValidator implements ClaimValidator<String> {
 
   @Override
-  public Object validate(Object value) throws InvalidClaimException {
+  public String validate(Object value) throws InvalidClaimException {
     if (!(value instanceof String)) {
       throw new InvalidClaimException(
           String.format("Parameter '%s' is not of expected type", value));
@@ -34,6 +37,7 @@ public class JWTClaimValidator implements ClaimValidator {
     } catch (JWTDecodeException e) {
       throw new InvalidClaimException(String.format("Parameter '%s' is not JWT", value));
     }
-    return value;
+    return (String) value;
   }
+
 }
