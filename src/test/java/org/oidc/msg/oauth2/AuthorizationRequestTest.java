@@ -28,7 +28,7 @@ import org.oidc.msg.InvalidClaimException;
 import org.oidc.msg.oauth2.AuthorizationRequest;
 
 public class AuthorizationRequestTest extends BaseMessageTest<AuthorizationRequest> {
-  
+
   @Before
   public void setup() {
     message = new AuthorizationRequest();

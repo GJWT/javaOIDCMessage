@@ -26,12 +26,12 @@ import org.oidc.msg.InvalidClaimException;
  * Unit tests for {@link AuthorizationErrorResponse}.
  */
 public class AuthorizationErrorResponseTest extends BaseMessageTest<AuthorizationErrorResponse> {
-  
+
   @Before
   public void setup() {
     message = new AuthorizationErrorResponse();
   }
-  
+
   @Test
   public void testValidError() throws InvalidClaimException {
     message.addClaim("error", "invalid_request");

@@ -25,7 +25,7 @@ import org.oidc.msg.BaseMessageTest;
 import org.oidc.msg.InvalidClaimException;
 
 public class AuthorizationResponseTest extends BaseMessageTest<AuthorizationResponse> {
-  
+
   Map<String, Object> claims = new HashMap<String, Object>();
 
   /**
@@ -44,7 +44,7 @@ public class AuthorizationResponseTest extends BaseMessageTest<AuthorizationResp
     message.verify();
     Assert.assertEquals("FOOCODEBAR", message.getClaims().get("code"));
   }
-  
+
   @Test
   public void testSuccessOptionalParameters() throws InvalidClaimException {
     claims.put("state", "FOOSTATEBAR");
@@ -58,19 +58,19 @@ public class AuthorizationResponseTest extends BaseMessageTest<AuthorizationResp
     Assert.assertEquals("FOOISSBAR", req.getClaims().get("iss"));
     Assert.assertEquals("FOOCLIENTBAR", req.getClaims().get("client_id"));
   }
-  
+
   @Test(expected = InvalidClaimException.class)
   public void testFailVerifyIssuerValue() throws InvalidClaimException {
     claims.put("iss", "FOOISSBAR");
     message = new AuthorizationResponse(claims);
     message.verify();
   }
-  
+
   @Test(expected = InvalidClaimException.class)
   public void testFailVerifyClientValue() throws InvalidClaimException {
     claims.put("client_id", "FOOCLIENTBAR");
     message = new AuthorizationResponse(claims);
     message.verify();
   }
-  
+
 }
