@@ -67,8 +67,7 @@ public class AuthenticationResponse extends AuthorizationResponse {
    *          that form the response as detailed in
    *          http://openid.net/specs/openid-connect-core-1_0.html#AuthResponse,
    *          http://openid.net/specs/openid-connect-core-1_0.html#ImplicitAuthResponse,
-   *          http://openid.net/specs/openid-connect-core-1_0.html#HybridAuthResponse or a error
-   *          response for the used flow.
+   *          http://openid.net/specs/openid-connect-core-1_0.html#HybridAuthResponse.
    */
   public AuthenticationResponse(Map<String, Object> claims) {
     super(claims);
