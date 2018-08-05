@@ -32,6 +32,7 @@ import org.junit.Test;
 import org.oidc.msg.BaseMessageTest;
 import org.oidc.msg.InvalidClaimException;
 import org.oidc.msg.SerializationException;
+import org.oidc.msg.oidc.util.TokenHash;
 
 public class AuthenticationResponseTest extends BaseMessageTest<AuthenticationResponse> {
 
@@ -103,6 +104,88 @@ public class AuthenticationResponseTest extends BaseMessageTest<AuthenticationRe
     idToken.verify();
     // Finally assert we really have the same jwt
     Assert.assertEquals(jwt, (String) respParsed.getClaims().get("id_token"));
+  }
+
+  @Test(expected = InvalidClaimException.class)
+  public void testCHashMissingFailure() throws InvalidClaimException, IllegalArgumentException,
+      ImportException, UnknownKeyType, ValueError, IOException, SerializationException {
+    String code = "AUTHORIZATION_CODE";
+    Key key = getKeyJarPrv().getSigningKey(KeyType.RSA.name(), keyOwner, null, null).get(0);
+    HashMap<String, Object> claims = new HashMap<String, Object>();
+    String jwt = generateIdTokenNow(claims, key, "RS256");
+    AuthenticationResponse resp = new AuthenticationResponse();
+    resp.addClaim("code", code);
+    resp.addClaim("id_token", jwt);
+    resp.verify();
+  }
+
+  @Test(expected = InvalidClaimException.class)
+  public void testCHashInvalidFailure() throws InvalidClaimException, IllegalArgumentException,
+      ImportException, UnknownKeyType, ValueError, IOException, SerializationException {
+    String code = "AUTHORIZATION_CODE";
+    Key key = getKeyJarPrv().getSigningKey(KeyType.RSA.name(), keyOwner, null, null).get(0);
+    HashMap<String, Object> claims = new HashMap<String, Object>();
+    claims.put("c_hash", "BADGUESS");
+    String jwt = generateIdTokenNow(claims, key, "RS256");
+    AuthenticationResponse resp = new AuthenticationResponse();
+    resp.addClaim("code", code);
+    resp.addClaim("id_token", jwt);
+    resp.verify();
+  }
+
+  @Test
+  public void testCHashSuccess() throws InvalidClaimException, IllegalArgumentException,
+      ImportException, UnknownKeyType, ValueError, IOException, SerializationException {
+    String code = "AUTHORIZATION_CODE";
+    Key key = getKeyJarPrv().getSigningKey(KeyType.RSA.name(), keyOwner, null, null).get(0);
+    HashMap<String, Object> claims = new HashMap<String, Object>();
+    claims.put("c_hash", TokenHash.compute(code, "RS256"));
+    String jwt = generateIdTokenNow(claims, key, "RS256");
+    AuthenticationResponse resp = new AuthenticationResponse();
+    resp.addClaim("code", code);
+    resp.addClaim("id_token", jwt);
+    resp.verify();
+  }
+
+  @Test(expected = InvalidClaimException.class)
+  public void testAtHashMissingFailure() throws InvalidClaimException, IllegalArgumentException,
+      ImportException, UnknownKeyType, ValueError, IOException, SerializationException {
+    String accessToken = "ACCESS_TOKEN";
+    Key key = getKeyJarPrv().getSigningKey(KeyType.RSA.name(), keyOwner, null, null).get(0);
+    HashMap<String, Object> claims = new HashMap<String, Object>();
+    String jwt = generateIdTokenNow(claims, key, "RS256");
+    AuthenticationResponse resp = new AuthenticationResponse();
+    resp.addClaim("access_token", accessToken);
+    resp.addClaim("id_token", jwt);
+    resp.verify();
+  }
+
+  @Test(expected = InvalidClaimException.class)
+  public void testAtHashInvalidFailure() throws InvalidClaimException, IllegalArgumentException,
+      ImportException, UnknownKeyType, ValueError, IOException, SerializationException {
+    String accessToken = "ACCESS_TOKEN";
+    Key key = getKeyJarPrv().getSigningKey(KeyType.RSA.name(), keyOwner, null, null).get(0);
+    HashMap<String, Object> claims = new HashMap<String, Object>();
+    claims.put("at_hash", "BADGUESS");
+    String jwt = generateIdTokenNow(claims, key, "RS256");
+    AuthenticationResponse resp = new AuthenticationResponse();
+    resp.addClaim("access_token", accessToken);
+    resp.addClaim("id_token", jwt);
+    resp.verify();
+  }
+
+  @Test
+  public void testAtHashSuccess() throws InvalidClaimException, IllegalArgumentException,
+      ImportException, UnknownKeyType, ValueError, IOException, SerializationException {
+    String accessToken = "ACCESS_TOKEN";
+    Key key = getKeyJarPrv().getSigningKey(KeyType.RSA.name(), keyOwner, null, null).get(0);
+    HashMap<String, Object> claims = new HashMap<String, Object>();
+    claims.put("at_hash", TokenHash.compute(accessToken, "RS256"));
+    String jwt = generateIdTokenNow(claims, key, "RS256");
+    AuthenticationResponse resp = new AuthenticationResponse();
+    resp.addClaim("access_token", accessToken);
+    resp.addClaim("id_token", jwt);
+    resp.verify();
   }
 
 }
