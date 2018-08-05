@@ -21,13 +21,12 @@ import com.auth0.jwt.exceptions.oicmsg_exceptions.UnknownKeyType;
 import com.auth0.jwt.exceptions.oicmsg_exceptions.ValueError;
 import com.auth0.msg.Key;
 import com.auth0.msg.KeyType;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -69,14 +68,13 @@ public class AuthenticationRequestTest extends BaseMessageTest<AuthenticationReq
     message.verify();
   }
 
-  @SuppressWarnings("unchecked")
   @Test
   public void testSuccessOfflineAccess() throws InvalidClaimException {
     claims.put("scope", "openid offline_access");
     claims.put("prompt", "consent");
     message = new AuthenticationRequest(claims);
     message.verify();
-    Assert.assertEquals("consent", ((List<String>) message.getClaims().get("prompt")).get(0));
+    Assert.assertEquals("consent",  message.getClaims().get("prompt"));
     Assert.assertEquals("openid offline_access", message.getClaims().get("scope"));
   }
 
@@ -159,11 +157,16 @@ public class AuthenticationRequestTest extends BaseMessageTest<AuthenticationReq
     message.verify();
   }
 
+  /**
+   * Form complete authentication request, url encode and decode it, verify you have the same
+   * content.
+   */
   @Test
-  public void testAllParametersAndUrlEncodingSuccess()
+  public void testUrlEncodingSuccess()
       throws InvalidClaimException, IllegalArgumentException, ImportException, UnknownKeyType,
-      ValueError, JsonProcessingException, SerializationException {
+      ValueError, SerializationException, MalformedURLException, IOException {
     claims.clear();
+    //Form complete message   
     claims.put("scope", "openid email profile");
     claims.put("response_type", "id_token token");
     claims.put("client_id", "CLIENT_ID_010101010");
@@ -172,10 +175,10 @@ public class AuthenticationRequestTest extends BaseMessageTest<AuthenticationReq
     claims.put("response_mode", "query");
     claims.put("nonce", "NONCE_010101010");
     claims.put("display", "page");
-    // TODO: Verify type of the prompt, should it really be list
-    List<String> prompt = new ArrayList<String>();
-    prompt.add("login");
-    prompt.add("consent");
+    // TODO: Verify type of prompt, sp sepatated list or json array like audience.
+    String[] prompt = new String[2];
+    prompt[0] = "login";
+    prompt[1] = "consent";
     claims.put("prompt", prompt);
     claims.put("max_age", 60);
     String[] locales = new String[3];
@@ -198,8 +201,46 @@ public class AuthenticationRequestTest extends BaseMessageTest<AuthenticationReq
     claims.put("request", requestObject.toJwt(keysSign.get(0), "RS256"));
     message = new AuthenticationRequest(claims);
     message.verify();
-    // Assert.assertThat(message.toUrlEncoded(), CoreMatchers.is("test"));
-
+    AuthenticationRequest messageParsed = new AuthenticationRequest();
+    //Parse authentication request from url encoded message
+    messageParsed.fromUrlEncoded(message.toUrlEncoded());
+    messageParsed.verify();
+    //Verify the content is the same
+    IDToken idTokenHintParsed = new IDToken();
+    idTokenHintParsed.fromJwt((String) messageParsed.getClaims().get("id_token_hint"),
+        getKeyJarPub(), keyOwner);
+    idTokenHintParsed.verify();
+    RequestObject requestObjectParsed = new RequestObject(claims);
+    requestObjectParsed.fromJwt((String) messageParsed.getClaims().get("request"), getKeyJarPub(),
+        keyOwner);
+    requestObjectParsed.verify();
+    ClaimsRequest claimsRequestParsed = new ClaimsRequest();
+    claimsRequestParsed.fromJson((String) messageParsed.getClaims().get("claims"));
+    Assert.assertEquals(claimsRequestParsed.toJson(), getClaimsRequest().toJson());
+    Assert.assertEquals((String) message.getClaims().get("scope"),
+        (String) messageParsed.getClaims().get("scope"));
+    Assert.assertEquals((String) message.getClaims().get("response_type"),
+        (String) messageParsed.getClaims().get("response_type"));
+    Assert.assertEquals((String) message.getClaims().get("client_id"),
+        (String) messageParsed.getClaims().get("client_id"));
+    Assert.assertEquals((String) message.getClaims().get("redirect_uri"),
+        (String) messageParsed.getClaims().get("redirect_uri"));
+    Assert.assertEquals((String) message.getClaims().get("state"),
+        (String) messageParsed.getClaims().get("state"));
+    Assert.assertEquals((String) message.getClaims().get("response_mode"),
+        (String) messageParsed.getClaims().get("response_mode"));
+    Assert.assertEquals((String) message.getClaims().get("nonce"),
+        (String) messageParsed.getClaims().get("nonce"));
+    Assert.assertEquals((String) message.getClaims().get("display"),
+        (String) messageParsed.getClaims().get("display"));
+    Assert.assertEquals((String) message.getClaims().get("prompt"),
+        (String) messageParsed.getClaims().get("prompt"));
+    Assert.assertEquals((String) message.getClaims().get("ui_locales"),
+        (String) messageParsed.getClaims().get("ui_locales"));
+    Assert.assertEquals((String) message.getClaims().get("login_hint"),
+        (String) messageParsed.getClaims().get("login_hint"));
+    Assert.assertEquals((String) message.getClaims().get("acr_values"),
+        (String) messageParsed.getClaims().get("acr_values"));
   }
 
   private IDToken getIDTokenHint() throws InvalidClaimException {
