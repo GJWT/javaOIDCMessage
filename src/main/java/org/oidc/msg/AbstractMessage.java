@@ -436,8 +436,11 @@ public abstract class AbstractMessage implements Message {
           checked = false;
         }
         if (value instanceof String) {
-          if (!(allowed.get(0) instanceof String) || !allowed.contains(value)) {
-            checked = false;
+          String[] values=((String)value).split(" ");
+          for (String item:values ) {
+            if (!(allowed.get(0) instanceof String) || !allowed.contains(item)) {
+              checked = false;
+            }  
           }
         } else if (value instanceof Long) {
           if (!(allowed.get(0) instanceof Long) || !allowed.contains(value)) {
