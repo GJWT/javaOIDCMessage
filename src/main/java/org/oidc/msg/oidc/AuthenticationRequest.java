@@ -40,7 +40,7 @@ public class AuthenticationRequest extends AuthorizationRequest {
     paramVerDefs.put("redirect_uri", ParameterVerification.SINGLE_REQUIRED_STRING.getValue());
     paramVerDefs.put("nonce", ParameterVerification.SINGLE_OPTIONAL_STRING.getValue());
     paramVerDefs.put("display", ParameterVerification.SINGLE_OPTIONAL_STRING.getValue());
-    paramVerDefs.put("prompt", ParameterVerification.OPTIONAL_LIST_OF_STRINGS.getValue());
+    paramVerDefs.put("prompt", ParameterVerification.OPTIONAL_LIST_OF_SP_SEP_STRINGS.getValue());
     paramVerDefs.put("max_age", ParameterVerification.SINGLE_OPTIONAL_INT.getValue());
     paramVerDefs.put("claims", ParameterVerification.SINGLE_OPTIONAL_STRING.getValue());
     paramVerDefs.put("ui_locales",
@@ -144,18 +144,21 @@ public class AuthenticationRequest extends AuthorizationRequest {
       getError().getMessages().add("Nonce is mandatory if response type contains id_token");
     }
 
-    List<String> prompt = ((List<String>) getClaims().get("prompt"));
-    if (prompt != null && prompt.contains("none") && prompt.size() > 1) {
+    String spaceSeparatedPrompts = ((String) getClaims().get("prompt"));
+    if (spaceSeparatedPrompts != null
+        && Pattern.compile("\\bnone\\b").matcher(spaceSeparatedPrompts).find()
+        && spaceSeparatedPrompts.split(" ").length > 1) {
       getError().getMessages().add("Prompt value none must not be used with other values");
     }
 
     if (Pattern.compile("\\boffline_access\\b").matcher(spaceSeparatedScopes).find()) {
-      if (prompt == null || !prompt.contains("consent")) {
+      if (spaceSeparatedPrompts == null
+          || !Pattern.compile("\\bconsent\\b").matcher(spaceSeparatedPrompts).find()) {
         getError().getMessages()
             .add("When offline_access scope is used prompt must have value consent");
       }
     }
-
+    
     if (getError().getMessages().size() > 0) {
       this.setVerified(false);
       throw new InvalidClaimException(
