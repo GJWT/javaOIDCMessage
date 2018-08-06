@@ -42,10 +42,10 @@ public class UserInfoErrorResponseTest extends BaseMessageTest<UserInfoErrorResp
     message = new UserInfoErrorResponse(claims);
   }
 
-  @Test(expected = InvalidClaimException.class)
+  @Test
   public void testInvalidError() throws InvalidClaimException {
     message.addClaim("error", "invalid_state_value");
-    Assert.assertTrue(message.verify());
+    Assert.assertFalse(message.verify());
   }
 
 }

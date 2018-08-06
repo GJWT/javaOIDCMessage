@@ -51,7 +51,7 @@ public class IDTokenTest extends BaseMessageTest<IDToken> {
   @Test
   public void testSuccessMandatoryParameters() throws InvalidClaimException {
     message = new IDToken(claims);
-    message.verify();
+    Assert.assertTrue(message.verify());
     Assert.assertEquals("issuer", message.getClaims().get("iss"));
     Assert.assertEquals("subject", message.getClaims().get("sub"));
     Assert.assertTrue(((List<String>) message.getClaims().get("aud")).contains("clientid"));
@@ -59,38 +59,38 @@ public class IDTokenTest extends BaseMessageTest<IDToken> {
     Assert.assertEquals(now*1000, ((Date)message.getClaims().get("iat")).getTime());
   }
 
-  @Test(expected = InvalidClaimException.class)
+  @Test
   public void testFailMissingMandatoryParameter() throws InvalidClaimException {
     claims.remove("iss");
     message = new IDToken(claims);
-    message.verify();
+    Assert.assertFalse(message.verify());
   }
 
-  @Test(expected = InvalidClaimException.class)
+  @Test
   public void testWrongIssuer() throws InvalidClaimException {
     message = new IDToken(claims);
     message.setIssuer("other_issuer");
-    message.verify();
+    Assert.assertFalse(message.verify());
   }
 
-  @Test(expected = InvalidClaimException.class)
+  @Test
   public void testWrongClientId() throws InvalidClaimException {
     message = new IDToken(claims);
     message.setClientId("other_clientid");
-    message.verify();
+    Assert.assertFalse(message.verify());
   }
 
-  @Test(expected = InvalidClaimException.class)
+  @Test
   public void testMissingAzp() throws InvalidClaimException {
     List<String> aud = new ArrayList<String>();
     aud.add("clientid");
     aud.add("other_clientid");
     claims.put("aud", aud);
     message = new IDToken(claims);
-    message.verify();
+    Assert.assertFalse(message.verify());
   }
 
-  @Test(expected = InvalidClaimException.class)
+  @Test
   public void testFailAzpExistsNotMatchingAud() throws InvalidClaimException {
     List<String> aud = new ArrayList<String>();
     aud.add("clientid");
@@ -98,7 +98,7 @@ public class IDTokenTest extends BaseMessageTest<IDToken> {
     claims.put("aud", aud);
     claims.put("azp", "notmatching");
     message = new IDToken(claims);
-    message.verify();
+    Assert.assertFalse(message.verify());
   }
 
   @Test
@@ -109,10 +109,10 @@ public class IDTokenTest extends BaseMessageTest<IDToken> {
     claims.put("aud", aud);
     claims.put("azp", "other_clientid");
     message = new IDToken(claims);
-    message.verify();
+    Assert.assertTrue(message.verify());
   }
 
-  @Test(expected = InvalidClaimException.class)
+  @Test
   public void testFailAzpExistsNotMatchingClientId() throws InvalidClaimException {
     List<String> aud = new ArrayList<String>();
     aud.add("clientid");
@@ -121,7 +121,7 @@ public class IDTokenTest extends BaseMessageTest<IDToken> {
     claims.put("azp", "other_clientid");
     message = new IDToken(claims);
     message.setClientId("third_clientId");
-    message.verify();
+    Assert.assertFalse(message.verify());
   }
 
   @Test
@@ -133,14 +133,15 @@ public class IDTokenTest extends BaseMessageTest<IDToken> {
     claims.put("azp", "other_clientid");
     message = new IDToken(claims);
     message.setClientId("other_clientid");
-    message.verify();
+    Assert.assertTrue(message.verify());
   }
 
-  @Test(expected = InvalidClaimException.class)
+  @Test
   public void testFailExp() throws InvalidClaimException {
     claims.put("exp", now - 5);
     message = new IDToken(claims);
     message.verify();
+    Assert.assertFalse(message.verify());
   }
 
   @Test
@@ -148,15 +149,15 @@ public class IDTokenTest extends BaseMessageTest<IDToken> {
     claims.put("exp", now - 1);
     message = new IDToken(claims);
     message.setSkew(5);
-    message.verify();
+    Assert.assertTrue(message.verify());
   }
 
-  @Test(expected = InvalidClaimException.class)
+  @Test
   public void testFailIat() throws InvalidClaimException {
     claims.put("iat", now - 10);
     message = new IDToken(claims);
     message.setStorageTime(5);
-    message.verify();
+    Assert.assertFalse(message.verify());
   }
 
   @Test
@@ -164,15 +165,15 @@ public class IDTokenTest extends BaseMessageTest<IDToken> {
     claims.put("iat", now - 100);
     message = new IDToken(claims);
     message.setStorageTime(110);
-    message.verify();
+    Assert.assertTrue(message.verify());
   }
   
-  @Test(expected = InvalidClaimException.class)
+  @Test
   public void testFailNonceVerification() throws InvalidClaimException {
     claims.put("nonce", "nonce1");
     message = new IDToken(claims);
     message.setNonce("nonce2");
-    message.verify();
+    Assert.assertFalse(message.verify());
   }
   
   @Test
@@ -180,7 +181,7 @@ public class IDTokenTest extends BaseMessageTest<IDToken> {
     claims.put("nonce", "nonce");
     message = new IDToken(claims);
     message.setNonce("nonce");
-    message.verify();
+    Assert.assertTrue(message.verify());
   }
 
 }

@@ -19,11 +19,11 @@ package org.oidc.msg.oidc;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import org.oidc.msg.InvalidClaimException;
+import org.oidc.msg.ErrorDetails;
+import org.oidc.msg.ErrorType;
 import org.oidc.msg.ParameterVerification;
 import org.oidc.msg.oauth2.AuthorizationRequest;
 
@@ -79,35 +79,26 @@ public class AuthenticationRequest extends AuthorizationRequest {
     super(claims);
   }
 
-  /**
-   * Verifies the presence of required message parameters. Verifies the the format of message
-   * parameters.
-   * 
-   * @return true if parameters are successfully verified.
-   * @throws InvalidClaimException
-   *           if verification fails.
-   */
-  @SuppressWarnings("unchecked")
-  public boolean verify() throws InvalidClaimException {
-    super.verify();
-
+  /** {@inheritDoc} */
+  @Override
+  protected void doVerify() {
     String request = ((String) getClaims().get("request"));
     if (request != null) {
       RequestObject requestObject = new RequestObject();
       try {
         // TODO: set keyjar and owner
         requestObject.fromJwt(request, null, null);
-      } catch (IOException e) {
-        getError().getMessages()
-            .add(String.format("Unable to parse request object from '%s'", request));
-      }
-      try {
-        requestObject.verify();
-      } catch (InvalidClaimException e) {
-        for (String errorDesc : requestObject.getError().getMessages()) {
-          getError().getMessages()
-              .add(String.format("request parameter verification failed: '%s'", errorDesc));
+        if (!requestObject.verify()) {
+          for (ErrorDetails requestErrorDetails : requestObject.getError().getDetails()) {
+            ErrorDetails details = new ErrorDetails("request", requestErrorDetails.getErrorType(),
+                requestErrorDetails.getErrorMessage(), requestErrorDetails.getErrorCause());
+            getError().getDetails().add(details);
+          }
         }
+      } catch (IOException e) {
+        ErrorDetails details = new ErrorDetails("request", ErrorType.INVALID_VALUE_FORMAT,
+            String.format("Unable to parse request object from '%s'", request));
+        error.getDetails().add(details);
       }
     }
 
@@ -118,53 +109,51 @@ public class AuthenticationRequest extends AuthorizationRequest {
       try {
         // TODO: set keyjar and owner
         idToken.fromJwt(idTokenHint, null, null);
-      } catch (IOException e) {
-        getError().getMessages()
-            .add(String.format("Unable to parse id_token_hint from '%s'", idTokenHint));
-      }
-      try {
-        idToken.verify();
-      } catch (InvalidClaimException e) {
-        for (String errorDesc : idToken.getError().getMessages()) {
-          getError().getMessages()
-              .add(String.format("id_token_hint parameter verification failed: '%s'", errorDesc));
+        if (!idToken.verify()) {
+          for (ErrorDetails idTokenErrorDetails : idToken.getError().getDetails()) {
+            ErrorDetails details = new ErrorDetails("id_token_hint",
+                idTokenErrorDetails.getErrorType(), idTokenErrorDetails.getErrorMessage(),
+                idTokenErrorDetails.getErrorCause());
+            getError().getDetails().add(details);
+          }
         }
+      } catch (IOException e) {
+        ErrorDetails details = new ErrorDetails("id_token_hint", ErrorType.INVALID_VALUE_FORMAT,
+            String.format("Unable to parse id_token_hint from '%s'", idTokenHint));
+        error.getDetails().add(details);
       }
     }
 
     String spaceSeparatedScopes = ((String) getClaims().get("scope"));
     if (spaceSeparatedScopes == null
         || !Pattern.compile("\\bopenid\\b").matcher(spaceSeparatedScopes).find()) {
-      getError().getMessages().add("Parameter scope must exist and contain value openid");
+      getError().getDetails().add(new ErrorDetails("scope", ErrorType.VALUE_NOT_ALLOWED,
+          "Parameter scope must exist and contain value openid"));
     }
 
     String responseType = (String) getClaims().get("response_type");
-    if (Pattern.compile("\\bid_token\\b").matcher(responseType).find()
-        && (getClaims().get("nonce") == null || ((String) getClaims().get("nonce")).isEmpty())) {
-      getError().getMessages().add("Nonce is mandatory if response type contains id_token");
+    if (responseType != null && (Pattern.compile("\\bid_token\\b").matcher(responseType).find()
+        && (getClaims().get("nonce") == null || ((String) getClaims().get("nonce")).isEmpty()))) {
+      getError().getDetails().add(new ErrorDetails("nonce", ErrorType.MISSING_REQUIRED_VALUE,
+          "Nonce is mandatory if response type contains id_token"));
     }
 
     String spaceSeparatedPrompts = ((String) getClaims().get("prompt"));
     if (spaceSeparatedPrompts != null
         && Pattern.compile("\\bnone\\b").matcher(spaceSeparatedPrompts).find()
         && spaceSeparatedPrompts.split(" ").length > 1) {
-      getError().getMessages().add("Prompt value none must not be used with other values");
+      getError().getDetails().add(new ErrorDetails("prompt", ErrorType.MISSING_REQUIRED_VALUE,
+          "Prompt value none must not be used with other values"));
     }
 
-    if (Pattern.compile("\\boffline_access\\b").matcher(spaceSeparatedScopes).find()) {
+    if (spaceSeparatedScopes != null
+        && Pattern.compile("\\boffline_access\\b").matcher(spaceSeparatedScopes).find()) {
       if (spaceSeparatedPrompts == null
           || !Pattern.compile("\\bconsent\\b").matcher(spaceSeparatedPrompts).find()) {
-        getError().getMessages()
-            .add("When offline_access scope is used prompt must have value consent");
+        getError().getDetails().add(new ErrorDetails("prompt", ErrorType.MISSING_REQUIRED_VALUE,
+            "When offline_access scope is used prompt must have value consent"));
       }
     }
-    
-    if (getError().getMessages().size() > 0) {
-      this.setVerified(false);
-      throw new InvalidClaimException(
-          "Message parameter verification failed. See Error object for details");
-    }
-    return hasError();
   }
 
 }

@@ -21,7 +21,8 @@ import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.oidc.msg.InvalidClaimException;
+import org.oidc.msg.ErrorDetails;
+import org.oidc.msg.ErrorType;
 import org.oidc.msg.ParameterVerification;
 import org.oidc.msg.oauth2.ResponseMessage;
 
@@ -62,7 +63,7 @@ public class OpenIDSchema extends ResponseMessage {
   public OpenIDSchema() {
     this(new HashMap<String, Object>());
   }
-  
+
   /**
    * Constructor.
    * 
@@ -73,16 +74,9 @@ public class OpenIDSchema extends ResponseMessage {
     super(claims);
   }
 
-  /**
-   * Verifies the presence of required message parameters. Verifies the the format of message
-   * parameters.
-   * 
-   * @return true if parameters are successfully verified.
-   * @throws InvalidClaimException
-   *           if verification fails.
-   */
-  public boolean verify() throws InvalidClaimException {
-    super.verify();
+  /** {@inheritDoc} */
+  @Override
+  protected void doVerify() {
     String date = (String) getClaims().get("birthdate");
     if (date != null) {
       try {
@@ -93,21 +87,16 @@ public class OpenIDSchema extends ResponseMessage {
           SimpleDateFormat sdf = new SimpleDateFormat("yyyy");
           sdf.parse(date);
         } catch (ParseException e1) {
-          getError().getMessages()
-              .add(String.format("birthdate '%s' should be of YYYY-MM-DD or YYYY format.", date));
+          getError().getDetails().add(new ErrorDetails("birthdate", ErrorType.VALUE_NOT_ALLOWED,
+              String.format("birthdate '%s' should be of YYYY-MM-DD or YYYY format.", date)));
         }
       }
     }
     for (String key : getClaims().keySet()) {
       if (getClaims().get(key) == null) {
-        getError().getMessages().add(String.format("Value of '%s' is null.", key));
+        getError().getDetails().add(new ErrorDetails(key, ErrorType.VALUE_NOT_ALLOWED,
+            String.format("Value of '%s' is null.", key)));
       }
     }
-    if (getError().getMessages().size() > 0) {
-      this.setVerified(false);
-      throw new InvalidClaimException(
-          "Message parameter verification failed. See Error object for details");
-    }
-    return hasError();
   }
 }

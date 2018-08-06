@@ -38,10 +38,10 @@ public class AuthorizationErrorResponseTest extends BaseMessageTest<Authorizatio
     Assert.assertTrue(message.verify());
   }
 
-  @Test(expected = InvalidClaimException.class)
+  @Test
   public void testInvalidError() throws InvalidClaimException {
     message.addClaim("error", "invalid_state_value");
-    Assert.assertTrue(message.verify());
+    Assert.assertFalse(message.verify());
   }
 
 }

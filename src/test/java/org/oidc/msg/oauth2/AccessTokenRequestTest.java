@@ -36,21 +36,21 @@ public class AccessTokenRequestTest extends BaseMessageTest<AccessTokenRequest> 
   public void testSuccessMandatoryParameters() throws InvalidClaimException {
     message.addClaim("code", "mockCode");
     message.addClaim("redirect_uri", "mockUri");
-    message.verify();
+    Assert.assertTrue(message.verify());
     Assert.assertEquals("mockCode", message.getClaims().get("code"));
     Assert.assertEquals("mockUri", message.getClaims().get("redirect_uri"));
   }
 
-  @Test(expected = InvalidClaimException.class)
+  @Test
   public void testFailureMissingCodeMandatoryParameter() throws InvalidClaimException {
     message.addClaim("redirect_uri", "mockUri");
-    message.verify();
+    Assert.assertFalse(message.verify());
   }
 
-  @Test(expected = InvalidClaimException.class)
+  @Test
   public void testFailureMissingRedirectUriMandatoryParameter() throws InvalidClaimException {
     message.addClaim("code", "mockCode");
-    message.verify();
+    Assert.assertFalse(message.verify());
   }
 
 }

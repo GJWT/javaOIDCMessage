@@ -76,21 +76,11 @@ public abstract class BaseMessageTest<T extends AbstractMessage> {
         containsRequired = true;
       }
     }
-    boolean verifiedAsExpected = false;
     if (containsRequired) {
-      try {
-        Assert.assertFalse(message.verify());
-      } catch (InvalidClaimException e) {
-        verifiedAsExpected = true;
-      }
+      Assert.assertFalse(message.verify());
     } else {
-      try {
-        Assert.assertTrue(message.verify());
-        verifiedAsExpected = true;
-      } catch (InvalidClaimException e) {
-      }
+      Assert.assertTrue(message.verify());
     }
-    Assert.assertTrue(verifiedAsExpected);
   }
 
   @Test

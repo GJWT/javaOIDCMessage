@@ -21,20 +21,21 @@ import java.util.List;
 
 /** Error class for message verification failures. */
 public class Error {
-  private List<String> messages = new ArrayList<String>();
+  private List<ErrorDetails> details;
 
   /**
    * Constructor.
    */
   public Error() {
+    details = new ArrayList<ErrorDetails>();
   }
 
   /**
-   * Get Message verification failure messages.
+   * Get Message verification failure details.
    * 
-   * @return message verification failure messages
+   * @return message verification failure details
    */
-  public List<String> getMessages() {
-    return this.messages;
+  public List<ErrorDetails> getDetails() {
+    return this.details;
   }
 }

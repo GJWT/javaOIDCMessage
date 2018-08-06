@@ -41,7 +41,7 @@ public class AuthorizationResponseTest extends BaseMessageTest<AuthorizationResp
   @Test
   public void testSuccessMandatoryParameters() throws InvalidClaimException {
     message = new AuthorizationResponse(claims);
-    message.verify();
+    Assert.assertTrue(message.verify());
     Assert.assertEquals("FOOCODEBAR", message.getClaims().get("code"));
   }
 
@@ -50,27 +50,29 @@ public class AuthorizationResponseTest extends BaseMessageTest<AuthorizationResp
     claims.put("state", "FOOSTATEBAR");
     claims.put("iss", "FOOISSBAR");
     claims.put("client_id", "FOOCLIENTBAR");
-    AuthorizationResponse req = new AuthorizationResponse(claims);
-    req.setClientId("FOOCLIENTBAR");
-    req.setIssuer("FOOISSBAR");
-    req.verify();
-    Assert.assertEquals("FOOSTATEBAR", req.getClaims().get("state"));
-    Assert.assertEquals("FOOISSBAR", req.getClaims().get("iss"));
-    Assert.assertEquals("FOOCLIENTBAR", req.getClaims().get("client_id"));
+    message = new AuthorizationResponse(claims);
+    message.setClientId("FOOCLIENTBAR");
+    message.setIssuer("FOOISSBAR");
+    Assert.assertTrue(message.verify());
+    Assert.assertEquals("FOOSTATEBAR", message.getClaims().get("state"));
+    Assert.assertEquals("FOOISSBAR", message.getClaims().get("iss"));
+    Assert.assertEquals("FOOCLIENTBAR", message.getClaims().get("client_id"));
   }
 
-  @Test(expected = InvalidClaimException.class)
+  @Test
   public void testFailVerifyIssuerValue() throws InvalidClaimException {
     claims.put("iss", "FOOISSBAR");
     message = new AuthorizationResponse(claims);
-    message.verify();
+    Assert.assertFalse(message.verify());
+    Assert.assertEquals("iss", message.getError().getDetails().get(0).getParameterName());
   }
 
-  @Test(expected = InvalidClaimException.class)
+  @Test
   public void testFailVerifyClientValue() throws InvalidClaimException {
     claims.put("client_id", "FOOCLIENTBAR");
     message = new AuthorizationResponse(claims);
-    message.verify();
+    Assert.assertFalse(message.verify());
+    Assert.assertEquals("client_id", message.getError().getDetails().get(0).getParameterName());
   }
 
 }

@@ -22,7 +22,9 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.oidc.msg.InvalidClaimException;
+
+import org.oidc.msg.ErrorDetails;
+import org.oidc.msg.ErrorType;
 import org.oidc.msg.ParameterVerification;
 import org.oidc.msg.oauth2.AuthorizationResponse;
 import org.oidc.msg.oidc.util.TokenHash;
@@ -93,22 +95,14 @@ public class AuthenticationResponse extends AuthorizationResponse {
     this.keyOwner = keyOwner;
   }
 
-  /**
-   * Verifies the presence of required message parameters. Verifies the the format of message
-   * parameters.
-   * 
-   * @return true if parameters are successfully verified.
-   * @throws InvalidClaimException
-   *           if verification fails.
-   */
-  @SuppressWarnings("unchecked")
-  public boolean verify() throws InvalidClaimException {
-    super.verify();
-
+  /** {@inheritDoc} */
+  @Override
+  protected void doVerify() {
     if (getClaims().get("aud") != null && getClientId() != null) {
       List<String> aud = (List<String>) getClaims().get("aud");
       if (!aud.contains(getClientId())) {
-        getError().getMessages().add("Client ID not included in audience");
+        getError().getDetails().add(new ErrorDetails("aud", ErrorType.MISSING_REQUIRED_VALUE,
+            "Client ID not included in audience"));
       }
     }
 
@@ -122,44 +116,44 @@ public class AuthenticationResponse extends AuthorizationResponse {
       IDToken idToken = new IDToken();
       try {
         idToken.fromJwt((String) getClaims().get("id_token"), keyJar, keyOwner);
-        idToken.verify();
+        if (!idToken.verify()) {
+          for (ErrorDetails idTokenErrorDetails : idToken.getError().getDetails()) {
+            ErrorDetails details = new ErrorDetails("id_token", idTokenErrorDetails.getErrorType(),
+                idTokenErrorDetails.getErrorMessage(), idTokenErrorDetails.getErrorCause());
+            getError().getDetails().add(details);
+          }
+        }
       } catch (IOException e) {
-        getError().getMessages().add("Unable to verify id token signature");
+        getError().getDetails().add(new ErrorDetails("id_token", ErrorType.INVALID_VALUE_FORMAT,
+            "Unable to verify id token signature", e));
       }
 
       if (getClaims().get("access_token") != null) {
         if (idToken.getClaims().get("at_hash") == null) {
-          getError().getMessages().add("at_hash must be in id token if returned with access token");
+          getError().getDetails().add(new ErrorDetails("at_hash", ErrorType.MISSING_REQUIRED_VALUE,
+              "at_hash must be in id token if returned with access token"));
         } else {
           String atHash = TokenHash.compute((String) getClaims().get("access_token"),
               JWT.decode((String) getClaims().get("id_token")).getAlgorithm());
           if (!((String) idToken.getClaims().get("at_hash")).equals(atHash)) {
-            getError().getMessages()
-                .add(String.format("at_hash in id token not same as expected value '%s'", atHash));
+            getError().getDetails().add(new ErrorDetails("at_hash", ErrorType.VALUE_NOT_ALLOWED,
+                String.format("at_hash in id token not same as expected value '%s'", atHash)));
           }
         }
       }
       if (getClaims().get("code") != null) {
         if (idToken.getClaims().get("c_hash") == null) {
-          getError().getMessages()
-              .add("c_hash must be in id token if returned with authorization code");
+          getError().getDetails().add(new ErrorDetails("c_hash", ErrorType.MISSING_REQUIRED_VALUE,
+              "c_hash must be in id token if returned with authorization code"));
         } else {
           String codeHash = TokenHash.compute((String) getClaims().get("code"),
               JWT.decode((String) getClaims().get("id_token")).getAlgorithm());
           if (!((String) idToken.getClaims().get("c_hash")).equals(codeHash)) {
-            getError().getMessages()
-                .add(String.format("c_hash in id token not same as expected value '%s'", codeHash));
+            getError().getDetails().add(new ErrorDetails("c_hash", ErrorType.VALUE_NOT_ALLOWED,
+                String.format("c_hash in id token not same as expected value '%s'", codeHash)));
           }
         }
       }
     }
-
-    if (getError().getMessages().size() > 0) {
-      this.setVerified(false);
-      throw new InvalidClaimException(
-          "Message parameter verification failed. See Error object for details");
-    }
-    return hasError();
   }
-
 }

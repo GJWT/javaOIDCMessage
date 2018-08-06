@@ -322,30 +322,30 @@ public abstract class AbstractMessage implements Message {
     Algorithm algorithm = null;
     try {
       switch (alg) {
-        case "none":
-          algorithm = Algorithm.none();
-          break;
-        case "RS256":
-          algorithm = Algorithm.RSA256(null, (RSAPrivateKey) key.getKey(true));
-          break;
-        case "RS384":
-          algorithm = Algorithm.RSA384(null, (RSAPrivateKey) key.getKey(true));
-          break;
-        case "RS512":
-          algorithm = Algorithm.RSA512(null, (RSAPrivateKey) key.getKey(true));
-          break;
-        case "ES256":
-          algorithm = Algorithm.ECDSA256(null, (ECPrivateKey) key.getKey(true));
-          break;
-        case "ES384":
-          algorithm = Algorithm.ECDSA384(null, (ECPrivateKey) key.getKey(true));
-          break;
-        case "ES512":
-          algorithm = Algorithm.ECDSA512(null, (ECPrivateKey) key.getKey(true));
-          break;
-        default:
-          break;
-        // TODO: HMAC algorithms
+      case "none":
+        algorithm = Algorithm.none();
+        break;
+      case "RS256":
+        algorithm = Algorithm.RSA256(null, (RSAPrivateKey) key.getKey(true));
+        break;
+      case "RS384":
+        algorithm = Algorithm.RSA384(null, (RSAPrivateKey) key.getKey(true));
+        break;
+      case "RS512":
+        algorithm = Algorithm.RSA512(null, (RSAPrivateKey) key.getKey(true));
+        break;
+      case "ES256":
+        algorithm = Algorithm.ECDSA256(null, (ECPrivateKey) key.getKey(true));
+        break;
+      case "ES384":
+        algorithm = Algorithm.ECDSA384(null, (ECPrivateKey) key.getKey(true));
+        break;
+      case "ES512":
+        algorithm = Algorithm.ECDSA512(null, (ECPrivateKey) key.getKey(true));
+        break;
+      default:
+        break;
+      // TODO: HMAC algorithms
       }
     } catch (IllegalArgumentException | ValueError e) {
       // TODO: This is not Decoding exception, replace it.
@@ -358,7 +358,7 @@ public abstract class AbstractMessage implements Message {
           String.format("Not able to initialize algorithm '%s' to sign JWT", alg));
     }
     JWTCreator.Builder newBuilder = JWT.create().withHeader(this.header);
-    
+
     for (String claimName : claims.keySet()) {
       Object value = claims.get(claimName);
       if (value instanceof Boolean) {
@@ -379,7 +379,7 @@ public abstract class AbstractMessage implements Message {
 
     }
     return newBuilder.sign(algorithm);
-    
+
   }
 
   /**
@@ -395,25 +395,25 @@ public abstract class AbstractMessage implements Message {
 
   /**
    * Verifies the presence of required message parameters. Verifies the the format of message
-   * parameters.
+   * parameters. If any messages extending this class wants to do any additional verifications, they
+   * should implement it in the doVerify() method.
    * 
    * @return true if parameters are successfully verified.
-   * @throws InvalidClaimException
-   *           if verification fails.
    */
-  public boolean verify() throws InvalidClaimException {
-    error.getMessages().clear();
+  public final boolean verify() {
+    error.getDetails().clear();
+    verified = true;
 
     Map<String, ParameterVerificationDefinition> paramVerDefs = getParameterVerificationDefinitions();
     if (paramVerDefs == null || paramVerDefs.isEmpty()) {
-      verified = true;
       return true;
     }
     for (String paramName : paramVerDefs.keySet()) {
       // If parameter is defined as REQUIRED, it must exist.
       if (paramVerDefs.get(paramName).isRequired()
           && (!claims.containsKey(paramName) || claims.get(paramName) == null)) {
-        error.getMessages().add(String.format("Required parameter '%s' is missing", paramName));
+        ErrorDetails details = new ErrorDetails(paramName, ErrorType.MISSING_REQUIRED_VALUE);
+        error.getDetails().add(details);
       }
       Object value = claims.get(paramName);
       if (value == null) {
@@ -424,7 +424,8 @@ public abstract class AbstractMessage implements Message {
         Object transformed = paramVerDefs.get(paramName).getClaimValidator().validate(value);
         claims.put(paramName, transformed);
       } catch (InvalidClaimException e) {
-        error.getMessages().add(String.format("Parameter '%s' is not of expected type", paramName));
+        ErrorDetails details = new ErrorDetails(paramName, ErrorType.INVALID_VALUE_FORMAT, e);
+        error.getDetails().add(details);
       }
     }
     for (String paramName : allowedValues.keySet()) {
@@ -436,11 +437,11 @@ public abstract class AbstractMessage implements Message {
           checked = false;
         }
         if (value instanceof String) {
-          String[] values=((String)value).split(" ");
-          for (String item:values ) {
+          String[] values = ((String) value).split(" ");
+          for (String item : values) {
             if (!(allowed.get(0) instanceof String) || !allowed.contains(item)) {
               checked = false;
-            }  
+            }
           }
         } else if (value instanceof Long) {
           if (!(allowed.get(0) instanceof Long) || !allowed.contains(value)) {
@@ -457,16 +458,40 @@ public abstract class AbstractMessage implements Message {
           checked = false;
         }
         if (!checked) {
-          error.getMessages()
-              .add(String.format("Parameter '%s' does not have expected value", paramName));
+          ErrorDetails details = new ErrorDetails(paramName, ErrorType.VALUE_NOT_ALLOWED);
+          error.getDetails().add(details);
         }
       }
     }
-    if (error.getMessages().size() > 0) {
-      throw new InvalidClaimException(
-          "Message parameter verification failed. See Error object for details");
+    if (error.getDetails().size() > 0) {
+      if (!isValidStructure()) {
+        verified = false;
+        return false;
+      }
     }
-    verified = true;
+    doVerify();
+    setVerified(!hasError());
+    return !hasError();
+  }
+
+  /**
+   * Extension point for any extending classes to add further verifications to the message. If any
+   * errors are found, the implementations must add the details to the list getError().getDetails().
+   */
+  protected void doVerify() {
+  }
+
+  /**
+   * Tests if the structure is valid, i.e. parameters are not having unexpected format in the value.
+   *
+   * @return true if structure is verified.
+   */
+  protected boolean isValidStructure() {
+    for (ErrorDetails details : error.getDetails()) {
+      if (ErrorType.INVALID_VALUE_FORMAT.equals(details.getErrorType())) {
+        return false;
+      }
+    }
     return true;
   }
 
@@ -516,7 +541,7 @@ public abstract class AbstractMessage implements Message {
    * @return boolean for whether there is an error in verification.
    */
   public boolean hasError() {
-    return error.getMessages() != null;
+    return !error.getDetails().isEmpty();
   }
 
   /**

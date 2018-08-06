@@ -19,7 +19,8 @@ package org.oidc.msg.oidc;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.oidc.msg.InvalidClaimException;
+import org.oidc.msg.ErrorDetails;
+import org.oidc.msg.ErrorType;
 import org.oidc.msg.ParameterVerification;
 import org.oidc.msg.oauth2.ResponseMessage;
 
@@ -47,24 +48,21 @@ public class RegistrationResponse extends ResponseMessage {
     super(claims);
   }
 
+  /** {@inheritDoc} */
   @Override
-  public boolean verify() throws InvalidClaimException {
-    boolean verify = false;
-    try {
-      verify = super.verify();
-    } catch (InvalidClaimException e) {
-      // carry on, possibly populate more error messages
-    }
+  protected void doVerify() {
     boolean hasRegUri = getClaims().containsKey("registration_client_uri");
     boolean hasRegAt = getClaims().containsKey("registration_access_token");
     if (hasRegUri != hasRegAt) {
-      error.getMessages()
-          .add("Only one of registration_client_uri and registration_access_token present");
+      if (hasRegUri) {
+        getError().getDetails().add(new ErrorDetails("registration_access_token",
+            ErrorType.MISSING_REQUIRED_VALUE,
+            "'registration_access_token' must exists when 'registration_client_uri' is defined"));
+      } else {
+        getError().getDetails().add(new ErrorDetails("registration_client_uri",
+            ErrorType.MISSING_REQUIRED_VALUE,
+            "'registration_client_uri' must exists when 'registration_access_token' is defined"));
+      }
     }
-    if (error.getMessages().size() > 0) {
-      throw new InvalidClaimException(
-          "Message parameter verification failed. See Error object for details");
-    }
-    return verify;
   }
 }

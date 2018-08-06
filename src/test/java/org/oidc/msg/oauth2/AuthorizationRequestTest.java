@@ -44,27 +44,27 @@ public class AuthorizationRequestTest extends BaseMessageTest<AuthorizationReque
     claims.put("response_type", responseType);
     claims.put("client_id", "value");
     message = new AuthorizationRequest(claims);
-    message.verify();
+    Assert.assertTrue(message.verify());
     Assert.assertEquals("id_token token", message.getClaims().get("response_type"));
     Assert.assertEquals("value", message.getClaims().get("client_id"));
   }
 
-  @Test(expected = InvalidClaimException.class)
+  @Test
   public void testFailureMissingResponseTypeMandatoryParameter() throws InvalidClaimException {
     Map<String, Object> claims = new HashMap<String, Object>();
     claims.put("client_id", "value");
     message = new AuthorizationRequest(claims);
-    message.verify();
+    Assert.assertFalse(message.verify());
   }
 
-  @Test(expected = InvalidClaimException.class)
+  @Test
   public void testFailureMissingClientIdMandatoryParameter() throws InvalidClaimException {
     Map<String, Object> claims = new HashMap<String, Object>();
     List<String> responseType = new ArrayList<String>();
     responseType.add("code");
     claims.put("response_type", responseType);
     message = new AuthorizationRequest(claims);
-    message.verify();
+    Assert.assertFalse(message.verify());
   }
 
 }

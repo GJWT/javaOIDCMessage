@@ -18,7 +18,9 @@ package org.oidc.msg.oidc;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.oidc.msg.InvalidClaimException;
+
+import org.oidc.msg.ErrorDetails;
+import org.oidc.msg.ErrorType;
 
 /**
  * Class implementing Request Object as in
@@ -44,28 +46,17 @@ public class RequestObject extends AuthenticationRequest {
     super(claims);
   }
 
-  /**
-   * Verifies the presence of required message parameters. Verifies the the format of message
-   * parameters.
-   * 
-   * @return true if parameters are successfully verified.
-   * @throws InvalidClaimException
-   *           if verification fails.
-   */
-  public boolean verify() throws InvalidClaimException {
-    super.verify();
+  /** {@inheritDoc} */
+  @Override
+  protected void doVerify() {
     if (getClaims().containsKey("request")) {
-      getError().getMessages().add("request parameter not allowed");
+      getError().getDetails().add(new ErrorDetails("request", ErrorType.VALUE_NOT_ALLOWED,
+          "request parameter not allowed"));
     }
     if (getClaims().containsKey("request_uri")) {
-      getError().getMessages().add("request_uri parameter not allowed");
+      getError().getDetails().add(new ErrorDetails("request_uri", ErrorType.VALUE_NOT_ALLOWED,
+          "request_uri parameter not allowed"));
     }
-    if (getError().getMessages().size() > 0) {
-      this.setVerified(false);
-      throw new InvalidClaimException(
-          "Message parameter verification failed. See Error object for details");
-    }
-    return hasError();
   }
 
 }

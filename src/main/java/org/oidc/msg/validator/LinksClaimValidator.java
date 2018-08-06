@@ -48,6 +48,9 @@ public class LinksClaimValidator implements ClaimValidator<List<Link>> {
         }
         if (link.verify()) {
           links.add(link);
+        } else {
+          throw new InvalidClaimException(
+              String.format("Parameter '%s' is not a valid link", value));          
         }
       }
       return links;

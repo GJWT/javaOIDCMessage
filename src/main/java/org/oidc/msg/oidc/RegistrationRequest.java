@@ -22,7 +22,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.oidc.msg.AbstractMessage;
-import org.oidc.msg.InvalidClaimException;
+import org.oidc.msg.ErrorDetails;
+import org.oidc.msg.ErrorType;
 import org.oidc.msg.ParameterVerification;
 
 public class RegistrationRequest extends AbstractMessage {
@@ -92,19 +93,14 @@ public class RegistrationRequest extends AbstractMessage {
     addDefaultValues();
   }
 
+  /** {@inheritDoc} */
   @Override
-  public boolean verify() throws InvalidClaimException {
-    boolean verify = false;
-    try {
-      verify = super.verify();
-    } catch (InvalidClaimException e) {
-      // carry on, possibly populate more error messages
-    }
-
+  protected void doVerify() {
     if (getClaims().containsKey("initiate_login_uri")) {
       String uri = (String) getClaims().get("initiate_login_uri");
       if (uri.startsWith("https:")) {
-        error.getMessages().add("'initiate_login_uri' has an invalid scheme");
+        getError().getDetails().add(new ErrorDetails("initiate_login_uri",
+            ErrorType.VALUE_NOT_ALLOWED, "'initiate_login_uri' has an invalid scheme"));
       }
     }
     List<String> prefixes = Arrays.asList("request_object_encryption",
@@ -118,21 +114,16 @@ public class RegistrationRequest extends AbstractMessage {
         }
       }
       if (getClaims().containsKey(encParam) && !getClaims().containsKey(algParam)) {
-        error.getMessages().add("Required parameter '" + algParam + "' is missing");
+        error.getDetails().add(new ErrorDetails(algParam, ErrorType.MISSING_REQUIRED_VALUE,
+            "Parameter '" + algParam + "' is required when '" + encParam + "' is defined"));
       }
     }
 
     if (getClaims().containsKey("token_endpoint_auth_signing_alg")) {
       if ("none".equalsIgnoreCase((String) getClaims().get("token_endpoint_auth_signing_alg"))) {
-        error.getMessages().add("'none' is not allowed for 'token_endpoint_auth_signing_alg'");
+        getError().getDetails().add(new ErrorDetails("token_endpoint_auth_signing_alg",
+            ErrorType.VALUE_NOT_ALLOWED, "'none' is not allowed"));
       }
     }
-
-    if (error.getMessages().size() > 0) {
-      throw new InvalidClaimException(
-          "Message parameter verification failed. See Error object for details");
-    }
-
-    return verify;
   }
 }

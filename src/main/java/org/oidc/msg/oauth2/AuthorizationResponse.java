@@ -19,7 +19,8 @@ package org.oidc.msg.oauth2;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.oidc.msg.InvalidClaimException;
+import org.oidc.msg.ErrorDetails;
+import org.oidc.msg.ErrorType;
 import org.oidc.msg.ParameterVerification;
 
 /**
@@ -49,7 +50,7 @@ public class AuthorizationResponse extends ResponseMessage {
   public AuthorizationResponse() {
     this(new HashMap<String, Object>());
   }
-  
+
   /**
    * Constructor.
    * 
@@ -80,7 +81,7 @@ public class AuthorizationResponse extends ResponseMessage {
   public void setClientId(String clientId) {
     this.clientId = clientId;
   }
-  
+
   /**
    * Get Client ID to use when verifying response.
    * 
@@ -91,35 +92,22 @@ public class AuthorizationResponse extends ResponseMessage {
     return clientId;
   }
 
-  /**
-   * Verifies the presence of required message parameters. Verifies the the format of message
-   * parameters.
-   * 
-   * @return true if parameters are successfully verified.
-   * @throws InvalidClaimException
-   *           if verification fails.
-   */
-  public boolean verify() throws InvalidClaimException {
-    super.verify();
+  /** {@inheritDoc} */
+  @Override
+  protected void doVerify() {
     // TODO: If iss and client_id contents are checked on this level, why is state content not?
     if (getClaims().get("client_id") != null
         && !((String) getClaims().get("client_id")).equals(clientId)) {
-      getError().getMessages()
-          .add(String.format(
-              "Response parameter client_id has value '%s' but expected value is '%s'",
+      ErrorDetails details = new ErrorDetails("client_id", ErrorType.VALUE_NOT_ALLOWED,
+          String.format("Response parameter client_id has value '%s' but expected value is '%s'",
               (String) getClaims().get("client_id"), clientId));
+      error.getDetails().add(details);
     }
     if (getClaims().get("iss") != null && !((String) getClaims().get("iss")).equals(issuer)) {
-      getError().getMessages()
-          .add(String.format("Response parameter iss has value '%s' but expected value is '%s'",
+      ErrorDetails details = new ErrorDetails("iss", ErrorType.VALUE_NOT_ALLOWED,
+          String.format("Response parameter iss has value '%s' but expected value is '%s'",
               (String) getClaims().get("iss"), issuer));
+      error.getDetails().add(details);
     }
-
-    if (getError().getMessages().size() > 0) {
-      this.setVerified(false);
-      throw new InvalidClaimException(
-          "Message parameter verification failed. See Error object for details");
-    }
-    return hasError();
   }
 }

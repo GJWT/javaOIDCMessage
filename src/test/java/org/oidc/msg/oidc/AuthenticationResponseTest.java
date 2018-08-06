@@ -54,7 +54,7 @@ public class AuthenticationResponseTest extends BaseMessageTest<AuthenticationRe
     aud.add("client");
     claims.put("aud", aud);
     AuthenticationResponse resp = new AuthenticationResponse(claims);
-    resp.verify();
+    Assert.assertTrue(resp.verify());
     Assert.assertEquals("client", ((List<String>) resp.getClaims().get("aud")).get(0));
   }
 
@@ -66,18 +66,18 @@ public class AuthenticationResponseTest extends BaseMessageTest<AuthenticationRe
     claims.put("aud", aud);
     AuthenticationResponse resp = new AuthenticationResponse(claims);
     resp.setClientId("client");
-    resp.verify();
+    Assert.assertTrue(resp.verify());
     Assert.assertEquals("client", ((List<String>) resp.getClaims().get("aud")).get(0));
   }
 
-  @Test(expected = InvalidClaimException.class)
+  @Test
   public void testFailureAudienceNotMatchingClientIdParameter() throws InvalidClaimException {
     List<String> aud = new ArrayList<String>();
     aud.add("client");
     claims.put("aud", aud);
     AuthenticationResponse resp = new AuthenticationResponse(claims);
     resp.setClientId("client_not_matching");
-    resp.verify();
+    Assert.assertFalse(resp.verify());
   }
 
   @Test
@@ -88,25 +88,25 @@ public class AuthenticationResponseTest extends BaseMessageTest<AuthenticationRe
     String jwt = generateIdTokenNow(new HashMap<String, Object>(), key, "RS256");
     AuthenticationResponse resp = new AuthenticationResponse();
     resp.addClaim("id_token", jwt);
-    resp.verify();
+    Assert.assertTrue(resp.verify());
     // Now from RP point of view, parse the response and validate also the id token while validating
     // response
     AuthenticationResponse respParsed = new AuthenticationResponse();
     respParsed.fromUrlEncoded(resp.toUrlEncoded());
     respParsed.setKeyOwner(keyOwner);
     respParsed.setKeyJar(getKeyJarPub());
-    respParsed.verify();
+    Assert.assertTrue(respParsed.verify());
     // Second approach, validate id token after getting it from response
     respParsed.fromUrlEncoded(resp.toUrlEncoded());
     respParsed.verify();
     IDToken idToken = new IDToken();
     idToken.fromJwt((String) respParsed.getClaims().get("id_token"), getKeyJarPub(), keyOwner);
-    idToken.verify();
+    Assert.assertTrue(idToken.verify());
     // Finally assert we really have the same jwt
     Assert.assertEquals(jwt, (String) respParsed.getClaims().get("id_token"));
   }
 
-  @Test(expected = InvalidClaimException.class)
+  @Test
   public void testCHashMissingFailure() throws InvalidClaimException, IllegalArgumentException,
       ImportException, UnknownKeyType, ValueError, IOException, SerializationException {
     String code = "AUTHORIZATION_CODE";
@@ -116,10 +116,10 @@ public class AuthenticationResponseTest extends BaseMessageTest<AuthenticationRe
     AuthenticationResponse resp = new AuthenticationResponse();
     resp.addClaim("code", code);
     resp.addClaim("id_token", jwt);
-    resp.verify();
+    Assert.assertFalse(resp.verify());
   }
 
-  @Test(expected = InvalidClaimException.class)
+  @Test
   public void testCHashInvalidFailure() throws InvalidClaimException, IllegalArgumentException,
       ImportException, UnknownKeyType, ValueError, IOException, SerializationException {
     String code = "AUTHORIZATION_CODE";
@@ -130,7 +130,7 @@ public class AuthenticationResponseTest extends BaseMessageTest<AuthenticationRe
     AuthenticationResponse resp = new AuthenticationResponse();
     resp.addClaim("code", code);
     resp.addClaim("id_token", jwt);
-    resp.verify();
+    Assert.assertFalse(resp.verify());
   }
 
   @Test
@@ -144,10 +144,10 @@ public class AuthenticationResponseTest extends BaseMessageTest<AuthenticationRe
     AuthenticationResponse resp = new AuthenticationResponse();
     resp.addClaim("code", code);
     resp.addClaim("id_token", jwt);
-    resp.verify();
+    Assert.assertTrue(resp.verify());
   }
 
-  @Test(expected = InvalidClaimException.class)
+  @Test
   public void testAtHashMissingFailure() throws InvalidClaimException, IllegalArgumentException,
       ImportException, UnknownKeyType, ValueError, IOException, SerializationException {
     String accessToken = "ACCESS_TOKEN";
@@ -157,10 +157,10 @@ public class AuthenticationResponseTest extends BaseMessageTest<AuthenticationRe
     AuthenticationResponse resp = new AuthenticationResponse();
     resp.addClaim("access_token", accessToken);
     resp.addClaim("id_token", jwt);
-    resp.verify();
+    Assert.assertFalse(resp.verify());
   }
 
-  @Test(expected = InvalidClaimException.class)
+  @Test
   public void testAtHashInvalidFailure() throws InvalidClaimException, IllegalArgumentException,
       ImportException, UnknownKeyType, ValueError, IOException, SerializationException {
     String accessToken = "ACCESS_TOKEN";
@@ -171,7 +171,7 @@ public class AuthenticationResponseTest extends BaseMessageTest<AuthenticationRe
     AuthenticationResponse resp = new AuthenticationResponse();
     resp.addClaim("access_token", accessToken);
     resp.addClaim("id_token", jwt);
-    resp.verify();
+    Assert.assertFalse(resp.verify());
   }
 
   @Test
@@ -185,7 +185,7 @@ public class AuthenticationResponseTest extends BaseMessageTest<AuthenticationRe
     AuthenticationResponse resp = new AuthenticationResponse();
     resp.addClaim("access_token", accessToken);
     resp.addClaim("id_token", jwt);
-    resp.verify();
+    Assert.assertTrue(resp.verify());
   }
 
 }

@@ -36,30 +36,30 @@ public class RefreshAccessTokenRequestTest extends BaseMessageTest<RefreshAccess
   public void testSuccessMandatoryParameters() throws InvalidClaimException {
     message.addClaim("grant_type", "refresh_token");
     message.addClaim("refresh_token", "mockRefreshToken");
-    message.verify();
+    Assert.assertTrue(message.verify());
     Assert.assertEquals("refresh_token", message.getClaims().get("grant_type"));
     Assert.assertEquals("mockRefreshToken", message.getClaims().get("refresh_token"));
   }
 
-  @Test(expected = InvalidClaimException.class)
+  @Test
   public void testFailureInvalidGrantTypeMandatoryParameter() throws InvalidClaimException {
     message.addClaim("grant_type", "not_refresh_token");
     message.addClaim("refresh_token", "mockRefreshToken");
-    message.verify();
+    Assert.assertFalse(message.verify());
   }
 
-  @Test(expected = InvalidClaimException.class)
+  @Test
   public void testFailureMissingRefreshTokenMandatoryParameter() throws InvalidClaimException {
     message.addClaim("grant_type", "refresh_token");
-    message.verify();
+    Assert.assertFalse(message.verify());
   }
 
-  @Test(expected = InvalidClaimException.class)
+  @Test
   public void testFailureGrantTypeMissingMandatoryParameter() throws InvalidClaimException {
     // remove because default value is added automatically
     message.getClaims().remove("grant_type");
     message.addClaim("refresh_token", "mockRefreshToken");
-    message.verify();
+    Assert.assertFalse(message.verify());
   }
 
 }

@@ -16,6 +16,7 @@
 
 package org.oidc.msg.oidc;
 
+import com.auth0.jwt.exceptions.JWTDecodeException;
 import com.auth0.jwt.exceptions.oicmsg_exceptions.ImportException;
 import com.auth0.jwt.exceptions.oicmsg_exceptions.UnknownKeyType;
 import com.auth0.jwt.exceptions.oicmsg_exceptions.ValueError;
@@ -54,18 +55,18 @@ public class AuthenticationRequestTest extends BaseMessageTest<AuthenticationReq
   @Test
   public void testSuccessMandatoryParameters() throws InvalidClaimException {
     message = new AuthenticationRequest(claims);
-    message.verify();
+    Assert.assertTrue(message.verify());
     Assert.assertEquals("code", message.getClaims().get("response_type"));
     Assert.assertEquals("value", message.getClaims().get("client_id"));
     Assert.assertEquals("value", message.getClaims().get("redirect_uri"));
     Assert.assertEquals("openid", message.getClaims().get("scope"));
   }
 
-  @Test(expected = InvalidClaimException.class)
+  @Test
   public void testFailMissingOpenidScopeParameter() throws InvalidClaimException {
     claims.put("scope", "profile");
     message = new AuthenticationRequest(claims);
-    message.verify();
+    Assert.assertFalse(message.verify());
   }
 
   @Test
@@ -73,7 +74,7 @@ public class AuthenticationRequestTest extends BaseMessageTest<AuthenticationReq
     claims.put("scope", "openid offline_access");
     claims.put("prompt", "consent");
     message = new AuthenticationRequest(claims);
-    message.verify();
+    Assert.assertTrue(message.verify());
     Assert.assertEquals("consent",  message.getClaims().get("prompt"));
     Assert.assertEquals("openid offline_access", message.getClaims().get("scope"));
   }
@@ -83,55 +84,55 @@ public class AuthenticationRequestTest extends BaseMessageTest<AuthenticationReq
     claims.put("response_type", "id_token token");
     claims.put("nonce", "DFHGFG");
     message = new AuthenticationRequest(claims);
-    message.verify();
+    Assert.assertTrue(message.verify());
     Assert.assertEquals("DFHGFG", (String) message.getClaims().get("nonce"));
     Assert.assertEquals("id_token token", message.getClaims().get("response_type"));
   }
 
-  @Test(expected = InvalidClaimException.class)
+  @Test
   public void testFailResponseTypeIdTokenMissingNonce() throws InvalidClaimException {
     claims.put("response_type", "id_token token");
     message = new AuthenticationRequest(claims);
-    message.verify();
+    Assert.assertFalse(message.verify());
   }
 
-  @Test(expected = InvalidClaimException.class)
+  @Test
   public void testFailOfflineAccessNoConsent() throws InvalidClaimException {
     claims.put("scope", "openid offline_access");
     message = new AuthenticationRequest(claims);
-    message.verify();
+    Assert.assertFalse(message.verify());
   }
 
-  @Test(expected = InvalidClaimException.class)
+  @Test
   public void testFailureMissingResponseTypeMandatoryParameters() throws InvalidClaimException {
     Map<String, Object> claims = new HashMap<String, Object>();
     claims.remove("client_id");
     message = new AuthenticationRequest(claims);
-    message.verify();
+    Assert.assertFalse(message.verify());
   }
 
-  @Test(expected = InvalidClaimException.class)
+  @Test
   public void testFailInvalidPromptCombination() throws InvalidClaimException {
     List<String> prompt = new ArrayList<String>();
     prompt.add("none");
     prompt.add("consent");
     claims.put("prompt", prompt);
     message = new AuthenticationRequest(claims);
-    message.verify();
+    Assert.assertFalse(message.verify());
   }
 
-  @Test(expected = InvalidClaimException.class)
+  @Test
   public void testFailUnAllowedPromptValue() throws InvalidClaimException {
     claims.put("prompt", "notlisted");
     message = new AuthenticationRequest(claims);
-    message.verify();
+    Assert.assertFalse(message.verify());
   }
 
-  @Test(expected = InvalidClaimException.class)
+  @Test
   public void testFailUnAllowedDisplayValue() throws InvalidClaimException {
     claims.put("display", "notlisted");
     message = new AuthenticationRequest(claims);
-    message.verify();
+    Assert.assertFalse(message.verify());
   }
 
   @Test
@@ -141,7 +142,7 @@ public class AuthenticationRequestTest extends BaseMessageTest<AuthenticationReq
     List<Key> keysSign = getKeyJarPrv().getSigningKey(KeyType.RSA.name(), keyOwner, null, null);
     claims.put("id_token_hint", idTokenHint.toJwt(keysSign.get(0), "RS256"));
     AuthenticationRequest req = new AuthenticationRequest(claims);
-    req.verify();
+    Assert.assertTrue(req.verify());
     IDToken idTokenHintFromJwt = new IDToken();
     idTokenHintFromJwt.fromJwt((String) req.getClaims().get("id_token_hint"), getKeyJarPub(),
         keyOwner);
@@ -149,12 +150,12 @@ public class AuthenticationRequestTest extends BaseMessageTest<AuthenticationReq
         (String) idTokenHint.getClaims().get("iss"));
   }
 
-  @Test(expected = Exception.class)
+  @Test(expected = JWTDecodeException.class)
   public void testFailIdTokenHintInvalid() throws InvalidClaimException {
     String idToken = "notparsableasidtoken";
     claims.put("id_token_hint", idToken);
     message = new AuthenticationRequest(claims);
-    message.verify();
+    Assert.assertFalse(message.verify());
   }
 
   /**
@@ -197,23 +198,23 @@ public class AuthenticationRequestTest extends BaseMessageTest<AuthenticationReq
     ClaimsRequest claimsRequest = getClaimsRequest();
     claims.put("claims", claimsRequest.toJson());
     RequestObject requestObject = new RequestObject(claims);
-    requestObject.verify();
+    Assert.assertTrue(requestObject.verify());
     claims.put("request", requestObject.toJwt(keysSign.get(0), "RS256"));
     message = new AuthenticationRequest(claims);
     message.verify();
     AuthenticationRequest messageParsed = new AuthenticationRequest();
     //Parse authentication request from url encoded message
     messageParsed.fromUrlEncoded(message.toUrlEncoded());
-    messageParsed.verify();
+    Assert.assertTrue(messageParsed.verify());
     //Verify the content is the same
     IDToken idTokenHintParsed = new IDToken();
     idTokenHintParsed.fromJwt((String) messageParsed.getClaims().get("id_token_hint"),
         getKeyJarPub(), keyOwner);
-    idTokenHintParsed.verify();
+    Assert.assertTrue(idTokenHintParsed.verify());
     RequestObject requestObjectParsed = new RequestObject(claims);
     requestObjectParsed.fromJwt((String) messageParsed.getClaims().get("request"), getKeyJarPub(),
         keyOwner);
-    requestObjectParsed.verify();
+    Assert.assertTrue(requestObjectParsed.verify());
     ClaimsRequest claimsRequestParsed = new ClaimsRequest();
     claimsRequestParsed.fromJson((String) messageParsed.getClaims().get("claims"));
     Assert.assertEquals(claimsRequestParsed.toJson(), getClaimsRequest().toJson());

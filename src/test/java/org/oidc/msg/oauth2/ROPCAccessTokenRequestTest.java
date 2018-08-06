@@ -35,13 +35,13 @@ public class ROPCAccessTokenRequestTest extends BaseMessageTest<ROPCAccessTokenR
   @Test
   public void testSuccessMandatoryParameters() throws InvalidClaimException {
     message.addClaim("grant_type", "mockGrantType");
-    message.verify();
+    Assert.assertTrue(message.verify());
     Assert.assertEquals("mockGrantType", message.getClaims().get("grant_type"));
   }
 
-  @Test(expected = InvalidClaimException.class)
+  @Test
   public void testFailureGrantTypeMissingMandatoryParameter() throws InvalidClaimException {
-    message.verify();
+    Assert.assertFalse(message.verify());
   }
 
 }

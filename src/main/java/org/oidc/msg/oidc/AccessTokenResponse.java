@@ -16,16 +16,23 @@
 
 package org.oidc.msg.oidc;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.oidc.msg.InvalidClaimException;
+import org.oidc.msg.ErrorDetails;
+import org.oidc.msg.ErrorType;
 import org.oidc.msg.ParameterVerification;
 
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.interfaces.DecodedJWT;
+import com.auth0.msg.KeyJar;
 
 public class AccessTokenResponse extends org.oidc.msg.oauth2.AccessTokenResponse {
+  
+  /** Key Jar for performing keys performing JWT verification. */
+  private KeyJar keyJar;
+  /** Owner of the verification key in the Key Jar. */
+  private String keyOwner;
+
   
   { // Set parameter requirements for message.
     paramVerDefs.put("id_token", ParameterVerification.SINGLE_OPTIONAL_JWT.getValue());
@@ -39,12 +46,45 @@ public class AccessTokenResponse extends org.oidc.msg.oauth2.AccessTokenResponse
     super(claims);
   }
   
-  public boolean verify() throws InvalidClaimException {
-    boolean result = super.verify();
+  /**
+   * Set Key Jar for JWT verification keys. If not set verification is not done.
+   * 
+   * @param keyJar
+   *          Key Jar for JWT verification keys.
+   */
+  public void setKeyJar(KeyJar keyJar) {
+    this.keyJar = keyJar;
+  }
+
+  /**
+   * Set Owner of the JWT verification keys in Key Jar.
+   * 
+   * @param keyOwner
+   *          Owner of the JWT verification keys in Key Jar.
+   */
+  public void setKeyOwner(String keyOwner) {
+    this.keyOwner = keyOwner;
+  }
+
+  
+  /** {@inheritDoc} */
+  @Override
+  protected void doVerify() {
     if (getClaims().containsKey("id_token")) {
-      DecodedJWT idToken = JWT.decode((String) getClaims().get("id_token"));
-      //TODO: verify the signature & al.
+      IDToken idToken = new IDToken();
+      try {
+        idToken.fromJwt((String) getClaims().get("id_token"), keyJar, keyOwner);
+        if (!idToken.verify()) {
+          for (ErrorDetails idTokenErrorDetails : idToken.getError().getDetails()) {
+            ErrorDetails details = new ErrorDetails("id_token", idTokenErrorDetails.getErrorType(),
+                idTokenErrorDetails.getErrorMessage(), idTokenErrorDetails.getErrorCause());
+            getError().getDetails().add(details);
+          }
+        }
+      } catch (IOException e) {
+        getError().getDetails().add(new ErrorDetails("id_token", ErrorType.INVALID_VALUE_FORMAT,
+            "Unable to verify id token signature", e));
+      }  
     }
-    return result;
   }
 }

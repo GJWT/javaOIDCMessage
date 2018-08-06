@@ -39,7 +39,7 @@ public class ASConfigurationResponseTest extends BaseMessageTest<ASConfiguration
     message.addClaim("issuer", "mockIssuer");
     message.addClaim("response_types_supported", Arrays.asList("mockResponseType"));
     message.addClaim("grant_types_supported", Arrays.asList("mockGrantType"));
-    message.verify();
+    Assert.assertTrue(message.verify());
     Assert.assertEquals("mockIssuer", message.getClaims().get("issuer"));
     Assert.assertEquals(Arrays.asList("mockResponseType"),
         message.getClaims().get("response_types_supported"));
@@ -47,24 +47,24 @@ public class ASConfigurationResponseTest extends BaseMessageTest<ASConfiguration
         message.getClaims().get("grant_types_supported"));
   }
 
-  @Test(expected = InvalidClaimException.class)
+  @Test
   public void testFailureMissingIssuerMandatoryParameter() throws InvalidClaimException {
     message.addClaim("response_types_supported", Arrays.asList("mockResponseType"));
     message.addClaim("grant_types_supported", Arrays.asList("mockGrantType"));
-    message.verify();
+    Assert.assertFalse(message.verify());
   }
 
-  @Test(expected = InvalidClaimException.class)
+  @Test
   public void testFailureMissingGrantTypesMandatoryParameter() throws InvalidClaimException {
     message.addClaim("issuer", "mockIssuer");
     message.addClaim("response_types_supported", Arrays.asList("mockResponseType"));
-    message.verify();
+    Assert.assertFalse(message.verify());
   }
 
-  @Test(expected = InvalidClaimException.class)
+  @Test
   public void testFailureMissingResponseTypesMandatoryParameter() throws InvalidClaimException {
     message.addClaim("issuer", "mockIssuer");
     message.addClaim("grant_types_supported", Arrays.asList("mockGrantType"));
-    message.verify();
+    Assert.assertFalse(message.verify());
   }
 }

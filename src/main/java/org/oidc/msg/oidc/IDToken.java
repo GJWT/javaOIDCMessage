@@ -21,7 +21,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.oidc.msg.InvalidClaimException;
+import org.oidc.msg.ErrorDetails;
+import org.oidc.msg.ErrorType;
 import org.oidc.msg.ParameterVerification;
 
 /** ID Token as in http://openid.net/specs/openid-connect-core-1_0.html#IDToken. */
@@ -134,65 +135,58 @@ public class IDToken extends OpenIDSchema {
     this.storageTime = storageTime * 1000;
   }
 
-  /**
-   * Verifies the presence of required message parameters. Verifies the the format of message
-   * parameters.
-   * 
-   * @return true if parameters are successfully verified.
-   * @throws InvalidClaimException
-   *           if verification fails.
-   */
-  @SuppressWarnings("unchecked")
-  public boolean verify() throws InvalidClaimException {
-    super.verify();
-
+  /** {@inheritDoc} */
+  @Override
+  protected void doVerify() {
     if (issuer != null && !issuer.equals(getClaims().get("iss"))) {
-      getError().getMessages()
-          .add(String.format(
-              "Issuer mismatch, expected value '%s' for iss claim but got '%s' instead", issuer,
-              getClaims().get("iss")));
+      getError().getDetails()
+          .add(new ErrorDetails("iss", ErrorType.VALUE_NOT_ALLOWED,
+              String.format(
+                  "Issuer mismatch, expected value '%s' for iss claim but got '%s' instead", issuer,
+                  getClaims().get("iss"))));
     }
 
-    if (clientId != null && !((List<String>) getClaims().get("aud")).contains(clientId)) {
-      getError().getMessages()
-          .add(String.format("Client ID '%s' is not listed in the aud claim", clientId));
+    List<String> aud = (List<String>) getClaims().get("aud");
+    if (clientId != null && (aud == null || !aud.contains(clientId))) {
+      getError().getDetails().add(new ErrorDetails("aud", ErrorType.MISSING_REQUIRED_VALUE,
+          String.format("Client ID '%s' is not listed in the aud claim", clientId)));
     }
 
-    if (((List<String>) getClaims().get("aud")).size() > 1 && (getClaims().get("azp") == null
-        || !((List<String>) getClaims().get("aud")).contains(getClaims().get("azp")))) {
-      getError().getMessages()
-          .add("If claim aud has multiple values one of them must have value of azp claim.");
+    if (aud != null && aud.size() > 1 && ((getClaims().get("azp") == null)
+        || !aud.contains(getClaims().get("azp")))) {
+      getError().getDetails().add(new ErrorDetails("azp", ErrorType.MISSING_REQUIRED_VALUE,
+          "If claim aud has multiple values one of them must have value of azp claim."));
     }
 
     if (getClaims().get("azp") != null && clientId != null
         && !clientId.equals((String) getClaims().get("azp"))) {
-      getError().getMessages().add(String.format(
-          "Client ID '%s' should equal to azp claim value '%s'", clientId, getClaims().get("azp")));
+      getError().getDetails()
+          .add(new ErrorDetails("azp", ErrorType.VALUE_NOT_ALLOWED,
+              String.format("Client ID '%s' should equal to azp claim value '%s'", clientId,
+                  getClaims().get("azp"))));
     }
 
     long now = System.currentTimeMillis();
-    long exp = ((Date) getClaims().get("exp")).getTime();
-    if (now - skew > exp) {
-      getError().getMessages().add("Claim exp is in the past");
+    if (getClaims().containsKey("exp")) {
+      long exp = ((Date) getClaims().get("exp")).getTime();
+      if (now - skew > exp) {
+        getError().getDetails()
+            .add(new ErrorDetails("exp", ErrorType.VALUE_NOT_ALLOWED, "Claim exp is in the past"));
+      }
     }
 
-    long iat = ((Date) getClaims().get("iat")).getTime();
-    if (iat + storageTime < now - skew) {
-      getError().getMessages().add("id token has been issued too long ago");
+    if (getClaims().containsKey("iat")) {
+      long iat = ((Date) getClaims().get("iat")).getTime();
+      if (iat + storageTime < now - skew) {
+        getError().getDetails().add(new ErrorDetails("iat", ErrorType.VALUE_NOT_ALLOWED,
+            "id token has been issued too long ago"));
+      }
     }
 
     if (nonce != null && getClaims().get("nonce") != null
         && !nonce.equals(getClaims().get("nonce"))) {
-      getError().getMessages().add("nonce mismatch");
+      getError().getDetails()
+          .add(new ErrorDetails("nonce", ErrorType.VALUE_NOT_ALLOWED, "nonce mismatch"));
     }
-
-    if (getError().getMessages().size() > 0) {
-      this.setVerified(false);
-      throw new InvalidClaimException(
-          "Message parameter verification failed. See Error object for details");
-    }
-
-    return hasError();
-
   }
 }

@@ -41,7 +41,7 @@ public class WebfingerRequestTest extends BaseMessageTest<WebfingerRequest> {
     claims.put("resource", "value");
     message = new WebfingerRequest();
     message.addClaim("resource", "value");
-    message.verify();
+    Assert.assertTrue(message.verify());
     Map<String, Object> msgClaims = message.getClaims();
     Assert.assertEquals(2, msgClaims.size());
     Assert.assertEquals("value", msgClaims.get("resource"));
@@ -54,18 +54,18 @@ public class WebfingerRequestTest extends BaseMessageTest<WebfingerRequest> {
     claims.put("resource", "value");
     claims.put("rel", "relValue");
     message = new WebfingerRequest(claims);
-    message.verify();
+    Assert.assertTrue(message.verify());
     Map<String, Object> msgClaims = message.getClaims();
     Assert.assertEquals("value", msgClaims.get("resource"));
     Assert.assertEquals("relValue", msgClaims.get("rel"));
   }
 
-  @Test(expected = InvalidClaimException.class)
+  @Test
   public void testFailureMissingResponseTypeMandatoryParameters() throws InvalidClaimException {
     Map<String, Object> claims = new HashMap<String, Object>();
     claims.put("custom", "value");
     message = new WebfingerRequest(claims);
-    message.verify();
+    Assert.assertFalse(message.verify());
   }
 
 }

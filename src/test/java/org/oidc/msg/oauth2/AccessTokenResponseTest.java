@@ -36,21 +36,21 @@ public class AccessTokenResponseTest extends BaseMessageTest<AccessTokenResponse
   public void testSuccessMandatoryParameters() throws InvalidClaimException {
     message.addClaim("access_token", "mockToken");
     message.addClaim("token_type", "mockType");
-    message.verify();
+    Assert.assertTrue(message.verify());
     Assert.assertEquals("mockToken", message.getClaims().get("access_token"));
     Assert.assertEquals("mockType", message.getClaims().get("token_type"));
   }
 
-  @Test(expected = InvalidClaimException.class)
+  @Test
   public void testFailureMissingTokenTypeMandatoryParameter() throws InvalidClaimException {
     message.addClaim("access_token", "mockToken");
-    message.verify();
+    Assert.assertFalse(message.verify());
   }
 
-  @Test(expected = InvalidClaimException.class)
+  @Test
   public void testFailureMissingAccessTokenMandatoryParameter() throws InvalidClaimException {
     message.addClaim("token_type", "mockType");
-    message.verify();
+    Assert.assertFalse(message.verify());
   }
 
 }

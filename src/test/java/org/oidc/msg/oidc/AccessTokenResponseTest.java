@@ -16,15 +16,24 @@
 
 package org.oidc.msg.oidc;
 
+import java.util.HashMap;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.oidc.msg.BaseMessageTest;
 import org.oidc.msg.InvalidClaimException;
+
+import com.auth0.jwt.exceptions.oicmsg_exceptions.ImportException;
+import com.auth0.jwt.exceptions.oicmsg_exceptions.UnknownKeyType;
+import com.auth0.jwt.exceptions.oicmsg_exceptions.ValueError;
+import com.auth0.msg.Key;
+import com.auth0.msg.KeyType;
 
 /**
  * Unit tests for {@link AccessTokenResponse}.
  */
-public class AccessTokenResponseTest extends org.oidc.msg.oauth2.AccessTokenResponseTest {
+public class AccessTokenResponseTest extends BaseMessageTest<AccessTokenResponse> {
   
   @Before
   public void setup() {
@@ -32,24 +41,27 @@ public class AccessTokenResponseTest extends org.oidc.msg.oauth2.AccessTokenResp
   }
 
   @Test
-  public void testValidIdToken() throws InvalidClaimException {
+  public void testValidIdToken() throws InvalidClaimException, IllegalArgumentException, ImportException, UnknownKeyType, ValueError {
     //TODO: check JWT signature also
     message.addClaim("access_token", "mockToken");
     message.addClaim("token_type", "mockType");
-    String jwt = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
+    Key key = getKeyJarPrv().getSigningKey(KeyType.RSA.name(), keyOwner, null, null).get(0);
+    String jwt = generateIdTokenNow(new HashMap<String, Object>(), key, "RS256");
+    message.setKeyOwner(keyOwner);
+    message.setKeyJar(getKeyJarPub());
     message.addClaim("id_token", jwt);
-    message.verify();
+    Assert.assertTrue(message.verify());
     Assert.assertEquals("mockToken", message.getClaims().get("access_token"));
     Assert.assertEquals("mockType", message.getClaims().get("token_type"));
     Assert.assertEquals(jwt, message.getClaims().get("id_token"));
   }
 
-  @Test(expected = InvalidClaimException.class)
+  @Test
   public void testInvalidIdToken() throws InvalidClaimException {
     message.addClaim("access_token", "mockToken");
     message.addClaim("token_type", "mockType");
     message.addClaim("id_token", "not_jwt");
-    message.verify();
+    Assert.assertFalse(message.verify());
   }
 
 }

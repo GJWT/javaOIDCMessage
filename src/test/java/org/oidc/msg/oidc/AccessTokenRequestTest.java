@@ -32,12 +32,12 @@ public class AccessTokenRequestTest extends org.oidc.msg.oauth2.AccessTokenReque
     message = new AccessTokenRequest();
   }
 
-  @Test(expected = InvalidClaimException.class)
+  @Test
   public void testInvalidClientAssertionType() throws InvalidClaimException {
     message.addClaim("code", "mockCode");
     message.addClaim("redirect_uri", "mockUri");
     message.addClaim("client_assertion_type", "invalid_value");
-    message.verify();
+    Assert.assertFalse(message.verify());
   }
 
   @Test

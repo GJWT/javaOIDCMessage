@@ -35,21 +35,21 @@ public class CCAccessTokenRequestTest extends BaseMessageTest<CCAccessTokenReque
   @Test
   public void testSuccessMandatoryParameters() throws InvalidClaimException {
     message.addClaim("grant_type", "client_credentials");
-    message.verify();
+    Assert.assertTrue(message.verify());
     Assert.assertEquals("client_credentials", message.getClaims().get("grant_type"));
   }
 
-  @Test(expected = InvalidClaimException.class)
+  @Test
   public void testFailureInvalidMandatoryParameter() throws InvalidClaimException {
     message.addClaim("grant_type", "not_client_credentials");
-    message.verify();
+    Assert.assertFalse(message.verify());
   }
 
-  @Test(expected = InvalidClaimException.class)
+  @Test
   public void testFailureMissingMandatoryParameter() throws InvalidClaimException {
     // remove because default value is added automatically
     message.getClaims().remove("grant_type");
-    message.verify();
+    Assert.assertFalse(message.verify());
   }
 
 }

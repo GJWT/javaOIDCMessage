@@ -41,40 +41,40 @@ public class OpenIDSchemaTest extends BaseMessageTest<OpenIDSchema> {
   @Test
   public void testSuccessMandatoryParameters() throws InvalidClaimException {
     message = new OpenIDSchema(claims);
-    message.verify();
+    Assert.assertTrue(message.verify());
     Assert.assertEquals("foo", message.getClaims().get("sub"));
   }
 
-  @Test(expected = InvalidClaimException.class)
+  @Test
   public void testFailMissingOpenidScopeParameter() throws InvalidClaimException {
     claims.remove("sub");
     message = new OpenIDSchema(claims);
-    message.verify();
+    Assert.assertFalse(message.verify());
   }
 
   @Test
   public void testSuccessDateFormats() throws InvalidClaimException {
     message = new OpenIDSchema(claims);
     claims.put("birthdate", "1990-12-31");
-    message.verify();
+    Assert.assertTrue(message.verify());
     claims.put("birthdate", "0000-12-31");
-    message.verify();
+    Assert.assertTrue(message.verify());
     claims.put("birthdate", "1990");
-    message.verify();
+    Assert.assertTrue(message.verify());
   }
 
-  @Test(expected = InvalidClaimException.class)
+  @Test
   public void testFailDateFormats() throws InvalidClaimException {
     claims.put("birthdate", "X-1555-15");
     message = new OpenIDSchema(claims);
-    message.verify();
+    Assert.assertFalse(message.verify());
   }
 
-  @Test(expected = InvalidClaimException.class)
+  @Test
   public void testFailNullValue() throws InvalidClaimException {
     claims.put("any", null);
     message = new OpenIDSchema(claims);
-    message.verify();
+    Assert.assertFalse(message.verify());
   }
 
 }
