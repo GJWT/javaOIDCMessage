@@ -46,7 +46,8 @@ public abstract class BaseMessageTest<T extends AbstractMessage> {
 
   private static final String PRIVATE_KEY_FILE = "src/test/resources/rsa-private.pem";
   private static final String PUBLIC_KEY_FILE = "src/test/resources/rsa-public.pem";
-  protected String keyOwner = "https://issuer.example.com";
+  //TODO: return keyOwner to https://issuer.example.com once edmund explains how parameter is used in getJWTVerifyKeys 
+  protected String keyOwner = "";//"https://issuer.example.com";
   protected KeyJar keyJarOfPrivateKeys = null;
   protected KeyJar keyJarOfPublicKeys = null;
   protected String signedJwt = null;

@@ -188,6 +188,23 @@ public abstract class AbstractMessage implements Message {
   }
 
   /**
+   * Constructs message from JWT. If JWT has no kid defined, allows to try with any otherwise
+   * matching key in the bundle. Allows extending the keyjar by JKU.
+   * 
+   * @param jwt
+   *          the jwt String representation of a message
+   * @param keyJar
+   *          KeyJar having a key for verifying the signature. If null, signature is not verified.
+   * @param keyOwner
+   *          For whom the key belongs to.
+   * @throws IOException
+   *           thrown if message parameters do not match the message requirements.
+   */
+  public void fromJwt(String jwt, KeyJar keyJar, String keyOwner) throws IOException {
+    fromJwt(jwt, keyJar, keyOwner, null, true, true);
+  }
+  
+  /**
    * Constructs message from JWT.
    * 
    * @param jwt
@@ -196,11 +213,20 @@ public abstract class AbstractMessage implements Message {
    *          KeyJar having a key for verifying the signature. If null, signature is not verified.
    * @param keyOwner
    *          For whom the key belongs to.
+   * @param noKidIssuers
+   *          If jwt is missing kid, set the list of allowed kids in keyjar to verify jwt. if
+   *          allowMissingKid is set to true, list is not used.
+   * @param allowMissingKid
+   *          If jwt is missing kid, try any of the owners keys to verify jwt.
+   * @param trustJKU
+   *          Whether extending keyjar by JKU is allowed or not.
    * @throws InvalidClaimException
    *           thrown if message parameters do not match the message requirements.
    */
   @SuppressWarnings("unchecked")
-  public void fromJwt(String jwt, KeyJar keyJar, String keyOwner) throws IOException {
+  public void fromJwt(String jwt, KeyJar keyJar, String keyOwner,
+      Map<String, List<String>> noKidIssuers, boolean allowMissingKid, boolean trustJKU)
+      throws IOException {
     String[] parts = MessageUtil.splitToken(jwt);
     String headerJson;
     String payloadJson;
@@ -230,57 +256,36 @@ public abstract class AbstractMessage implements Message {
       verifier.verify(jwt);
       return;
     }
-
-    Map<String, String> args = new HashMap<String, String>();
-    args.put("alg", alg);
-    if (header.get("kid") != null && !(header.get("alg") instanceof String)) {
-      throw new JWTDecodeException("JWT header field kid has to be string");
-    }
-    // Get matching keys
-    String kid = (String) header.get("kid");
-    List<Key> keys = null;
-    switch (alg) {
-    case "RS256":
-    case "RS384":
-    case "RS512":
-      keys = keyJar.getVerifyKey(KeyType.RSA.name(), keyOwner, kid, args);
-      break;
-    case "ES256":
-    case "ES384":
-    case "ES512":
-      keys = keyJar.getVerifyKey(KeyType.EC.name(), keyOwner, kid, args);
-      break;
-    default:
-      break;
-    }
+    List<java.security.Key> keys = keyJar.getJWTVerifyKeys(jwt, keyOwner, noKidIssuers,
+        allowMissingKid, trustJKU);
     if (keys == null || keys.size() == 0) {
       throw new JWTDecodeException("Not able to locate keys to verify JWT");
     }
     // We try each located key
     try {
-      for (Key key : keys) {
+      for (java.security.Key key : keys) {
         Algorithm algorithm = null;
         switch (alg) {
-        case "RS256":
-          algorithm = Algorithm.RSA256((RSAPublicKey) key.getKey(false), null);
-          break;
-        case "RS384":
-          algorithm = Algorithm.RSA384((RSAPublicKey) key.getKey(false), null);
-          break;
-        case "RS512":
-          algorithm = Algorithm.RSA512((RSAPublicKey) key.getKey(false), null);
-          break;
-        case "ES256":
-          algorithm = Algorithm.ECDSA256((ECPublicKey) key.getKey(false), null);
-          break;
-        case "ES384":
-          algorithm = Algorithm.ECDSA384((ECPublicKey) key.getKey(false), null);
-          break;
-        case "ES512":
-          algorithm = Algorithm.ECDSA512((ECPublicKey) key.getKey(false), null);
-          break;
-        default:
-          break;
+          case "RS256":
+            algorithm = Algorithm.RSA256((RSAPublicKey) key, null);
+            break;
+          case "RS384":
+            algorithm = Algorithm.RSA384((RSAPublicKey) key, null);
+            break;
+          case "RS512":
+            algorithm = Algorithm.RSA512((RSAPublicKey) key, null);
+            break;
+          case "ES256":
+            algorithm = Algorithm.ECDSA256((ECPublicKey) key, null);
+            break;
+          case "ES384":
+            algorithm = Algorithm.ECDSA384((ECPublicKey) key, null);
+            break;
+          case "ES512":
+            algorithm = Algorithm.ECDSA512((ECPublicKey) key, null);
+            break;
+          default:
+            break;
         }
         if (algorithm == null) {
           throw new JWTDecodeException("Not able to initialize algorithm to verify JWT");
@@ -294,7 +299,7 @@ public abstract class AbstractMessage implements Message {
           continue;
         }
       }
-    } catch (IllegalArgumentException | ValueError e) {
+    } catch (IllegalArgumentException e) {
       throw new JWTDecodeException("Key handling exception");
     }
     throw new JWTDecodeException("Not able to verify JWT with any of the keys provided");
@@ -322,30 +327,30 @@ public abstract class AbstractMessage implements Message {
     Algorithm algorithm = null;
     try {
       switch (alg) {
-      case "none":
-        algorithm = Algorithm.none();
-        break;
-      case "RS256":
-        algorithm = Algorithm.RSA256(null, (RSAPrivateKey) key.getKey(true));
-        break;
-      case "RS384":
-        algorithm = Algorithm.RSA384(null, (RSAPrivateKey) key.getKey(true));
-        break;
-      case "RS512":
-        algorithm = Algorithm.RSA512(null, (RSAPrivateKey) key.getKey(true));
-        break;
-      case "ES256":
-        algorithm = Algorithm.ECDSA256(null, (ECPrivateKey) key.getKey(true));
-        break;
-      case "ES384":
-        algorithm = Algorithm.ECDSA384(null, (ECPrivateKey) key.getKey(true));
-        break;
-      case "ES512":
-        algorithm = Algorithm.ECDSA512(null, (ECPrivateKey) key.getKey(true));
-        break;
-      default:
-        break;
-      // TODO: HMAC algorithms
+        case "none":
+          algorithm = Algorithm.none();
+          break;
+        case "RS256":
+          algorithm = Algorithm.RSA256(null, (RSAPrivateKey) key.getKey(true));
+          break;
+        case "RS384":
+          algorithm = Algorithm.RSA384(null, (RSAPrivateKey) key.getKey(true));
+          break;
+        case "RS512":
+          algorithm = Algorithm.RSA512(null, (RSAPrivateKey) key.getKey(true));
+          break;
+        case "ES256":
+          algorithm = Algorithm.ECDSA256(null, (ECPrivateKey) key.getKey(true));
+          break;
+        case "ES384":
+          algorithm = Algorithm.ECDSA384(null, (ECPrivateKey) key.getKey(true));
+          break;
+        case "ES512":
+          algorithm = Algorithm.ECDSA512(null, (ECPrivateKey) key.getKey(true));
+          break;
+        default:
+          break;
+      // TODO: HMAC algorithms, are getting client secret also from key jar?
       }
     } catch (IllegalArgumentException | ValueError e) {
       // TODO: This is not Decoding exception, replace it.

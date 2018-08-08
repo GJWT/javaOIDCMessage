@@ -23,6 +23,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -75,13 +76,27 @@ public interface Message {
       throws MalformedURLException, IOException, InvalidClaimException;
 
   /**
-   *
-   * @param input
+   * Constructs message from JWT.
+   * 
+   * @param jwt
    *          the jwt String representation of a message
-   * @param KeyJar
-   *          that might contain the necessary key
+   * @param keyJar
+   *          KeyJar having a key for verifying the signature. If null, signature is not verified.
+   * @param keyOwner
+   *          For whom the key belongs to.
+   * @param noKidIssuers
+   *          If jwt is missing kid, set the list of allowed kids in keyjar to verify jwt. if
+   *          allowMissingKid is set to true, list is not used.
+   * @param allowMissingKid
+   *          If jwt is missing kid, try any of the owners keys to verify jwt.
+   * @param trustJKU
+   *          Whether extending keyjat by JKU is allowed or not.
+   * @throws InvalidClaimException
+   *           thrown if message parameters do not match the message requirements.
    */
-  void fromJwt(String input, KeyJar keyJar, String keyOwner) throws IOException;
+  @SuppressWarnings("unchecked")
+  public void fromJwt(String jwt, KeyJar keyJar, String keyOwner,
+      Map<String, List<String>> noKidIssuers, boolean allowMissingKid, boolean trustJKU) throws IOException;
 
   /**
    *
