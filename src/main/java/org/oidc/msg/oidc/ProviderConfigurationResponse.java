@@ -26,7 +26,6 @@ import java.util.regex.Pattern;
 
 import org.oidc.msg.ErrorDetails;
 import org.oidc.msg.ErrorType;
-import org.oidc.msg.InvalidClaimException;
 import org.oidc.msg.ParameterVerification;
 
 public class ProviderConfigurationResponse extends org.oidc.msg.oauth2.ASConfigurationResponse {
@@ -131,23 +130,27 @@ public class ProviderConfigurationResponse extends org.oidc.msg.oauth2.ASConfigu
             "Parameter 'scopes_supported' does not contain expected value 'openid'"));
       }
     }
-    try {
-      URI uri = new URI((String) getClaims().get("issuer"));
-      if (!"https".equals(uri.getScheme()) || uri.getQuery() != null || uri.getFragment() != null) {
+    if (getClaims().get("issuer") != null) {
+      try {
+        URI uri = new URI((String) getClaims().get("issuer"));
+        if (!"https".equals(uri.getScheme()) || uri.getQuery() != null || uri.getFragment() != null) {
+          error.getDetails().add(new ErrorDetails("issuer", ErrorType.VALUE_NOT_ALLOWED,
+              "Parameter 'issuer' has an invalid value: " + uri.toString()));
+        }
+      } catch (URISyntaxException e) {
         error.getDetails().add(new ErrorDetails("issuer", ErrorType.VALUE_NOT_ALLOWED,
-            "Parameter 'issuer' has an invalid value: " + uri.toString()));
+            "Parameter 'issuer' is not a valid URL"));
       }
-    } catch (URISyntaxException e) {
-      error.getDetails().add(new ErrorDetails("issuer", ErrorType.VALUE_NOT_ALLOWED,
-          "Parameter 'issuer' is not a valid URL"));
     }
     @SuppressWarnings("unchecked")
     List<String> rts = (List<String>) getClaims().get("response_types_supported");
-    for (String rt : rts) {
-      if (Pattern.compile("\\bcode\\b").matcher(rt).find()) {
-        if (!getClaims().containsKey("token_endpoint")) {
-          error.getDetails().add(new ErrorDetails("token_endpoint", ErrorType.MISSING_REQUIRED_VALUE,
-              "'token_endpoint' is required when code response_type is supported"));
+    if (rts != null) {
+      for (String rt : rts) {
+        if (Pattern.compile("\\bcode\\b").matcher(rt).find()) {
+          if (!getClaims().containsKey("token_endpoint")) {
+            error.getDetails().add(new ErrorDetails("token_endpoint", ErrorType.MISSING_REQUIRED_VALUE,
+                "'token_endpoint' is required when code response_type is supported"));
+          }
         }
       }
     }
