@@ -16,6 +16,8 @@
 
 package org.oidc.msg.oidc;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -97,10 +99,15 @@ public class RegistrationRequest extends AbstractMessage {
   @Override
   protected void doVerify() {
     if (getClaims().containsKey("initiate_login_uri")) {
-      String uri = (String) getClaims().get("initiate_login_uri");
-      if (uri.startsWith("https:")) {
-        getError().getDetails().add(new ErrorDetails("initiate_login_uri",
-            ErrorType.VALUE_NOT_ALLOWED, "'initiate_login_uri' has an invalid scheme"));
+      try {
+        URI uri = new URI((String) getClaims().get("initiate_login_uri"));
+        if (!"https".equals(uri.getScheme())) {
+          error.getDetails().add(new ErrorDetails("initiate_login_uri", ErrorType.VALUE_NOT_ALLOWED,
+              "Parameter 'initiate_login_uri' has an invalid scheme: " + uri.toString()));
+        }
+      } catch (URISyntaxException e) {
+        error.getDetails().add(new ErrorDetails("initiate_login_uri", ErrorType.VALUE_NOT_ALLOWED,
+            "Parameter 'initiate_login_uri' is not a valid URL"));
       }
     }
     List<String> prefixes = Arrays.asList("request_object_encryption",
