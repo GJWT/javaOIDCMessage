@@ -4,8 +4,20 @@ version '1.0-SNAPSHOT'
 apply plugin: 'java'
 apply plugin: 'idea'
 apply plugin: 'checkstyle'
+apply plugin: 'net.saliman.cobertura'
 
 sourceCompatibility = 1.7
+
+buildscript {
+  repositories {
+    maven {
+      url "https://plugins.gradle.org/m2/"
+    }
+  }
+  dependencies {
+    classpath "net.saliman:gradle-cobertura-plugin:2.5.4"
+  }
+}
 
 repositories {
     mavenLocal()
@@ -19,6 +31,7 @@ dependencies {
     compile group: 'com.auth0', name: 'jawa-jwt', version: '3.2.0-SNAPSHOT'
     compile 'com.fasterxml.jackson.core:jackson-databind:2.9.2'
     compile 'commons-validator:commons-validator:1.6'
+    compile 'org.bouncycastle:bcprov-jdk15on:1.58'
     compile group: 'commons-codec', name: 'commons-codec', version: '1.11'
 
     testCompile group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5'
