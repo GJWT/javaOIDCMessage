@@ -19,12 +19,15 @@ package org.oidc.msg;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.oicmsg_exceptions.ImportException;
+import com.auth0.jwt.exceptions.oicmsg_exceptions.JWKException;
 import com.auth0.jwt.exceptions.oicmsg_exceptions.UnknownKeyType;
 import com.auth0.jwt.exceptions.oicmsg_exceptions.ValueError;
 import com.auth0.msg.Key;
 import com.auth0.msg.KeyBundle;
 import com.auth0.msg.KeyJar;
 import com.auth0.msg.KeyType;
+
+import java.io.IOException;
 import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.RSAPrivateKey;
 import java.util.ArrayList;
@@ -97,10 +100,12 @@ public abstract class BaseMessageTest<T extends AbstractMessage> {
    * @param alg
    *          slg to use.
    * @return simple jwt.
+   * @throws JWKException 
+   * @throws IOException 
    * 
    */
   protected String getSignedJwt(String alg)
-      throws IllegalArgumentException, ImportException, UnknownKeyType, ValueError {
+      throws IllegalArgumentException, ImportException, UnknownKeyType, ValueError, IOException, JWKException {
     List<Key> keys = null;
     switch (alg) {
       case "RS256":
@@ -150,10 +155,12 @@ public abstract class BaseMessageTest<T extends AbstractMessage> {
    * Creates if needed one keyjar with one private rsa key.
    * 
    * @return keyjar
+   * @throws JWKException 
+   * @throws IOException 
    * 
    */
   protected KeyJar getKeyJarPrv()
-      throws ImportException, UnknownKeyType, IllegalArgumentException, ValueError {
+      throws ImportException, UnknownKeyType, IllegalArgumentException, ValueError, IOException, JWKException {
     if (keyJarOfPrivateKeys != null) {
       return keyJarOfPrivateKeys;
     }
@@ -170,10 +177,12 @@ public abstract class BaseMessageTest<T extends AbstractMessage> {
    * Creates if needed one keyjar with one public rsa key.
    * 
    * @return keyjar
+   * @throws JWKException 
+   * @throws IOException 
    * 
    */
   protected KeyJar getKeyJarPub()
-      throws ImportException, UnknownKeyType, IllegalArgumentException, ValueError {
+      throws ImportException, UnknownKeyType, IllegalArgumentException, ValueError, IOException, JWKException {
     if (keyJarOfPublicKeys != null) {
       return keyJarOfPublicKeys;
     }

@@ -22,10 +22,10 @@ import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTDecodeException;
 import com.auth0.jwt.exceptions.JWTVerificationException;
+import com.auth0.jwt.exceptions.oicmsg_exceptions.JWKException;
 import com.auth0.jwt.exceptions.oicmsg_exceptions.ValueError;
 import com.auth0.msg.Key;
 import com.auth0.msg.KeyJar;
-import com.auth0.msg.KeyType;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -220,7 +220,7 @@ public abstract class AbstractMessage implements Message {
    *          If jwt is missing kid, try any of the owners keys to verify jwt.
    * @param trustJKU
    *          Whether extending keyjar by JKU is allowed or not.
-   * @throws InvalidClaimException
+   * @throws JWTDecodeException
    *           thrown if message parameters do not match the message requirements.
    */
   @SuppressWarnings("unchecked")
@@ -256,8 +256,15 @@ public abstract class AbstractMessage implements Message {
       verifier.verify(jwt);
       return;
     }
-    List<java.security.Key> keys = keyJar.getJWTVerifyKeys(jwt, keyOwner, noKidIssuers,
-        allowMissingKid, trustJKU);
+    List<java.security.Key> keys;
+    try {
+      keys = keyJar.getJWTVerifyKeys(jwt, keyOwner, noKidIssuers, allowMissingKid, trustJKU);
+    } catch (JWKException | ValueError e) {
+      // TODO: Replace JWTDecodeException with better exception. Generic note to this class and this
+      // method.
+      throw new JWTDecodeException(
+          String.format("Not able to locate keys to verify JWT, '%s'", e.getMessage()));
+    }
     if (keys == null || keys.size() == 0) {
       throw new JWTDecodeException("Not able to locate keys to verify JWT");
     }

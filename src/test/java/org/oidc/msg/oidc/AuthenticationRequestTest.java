@@ -18,6 +18,7 @@ package org.oidc.msg.oidc;
 
 import com.auth0.jwt.exceptions.JWTDecodeException;
 import com.auth0.jwt.exceptions.oicmsg_exceptions.ImportException;
+import com.auth0.jwt.exceptions.oicmsg_exceptions.JWKException;
 import com.auth0.jwt.exceptions.oicmsg_exceptions.UnknownKeyType;
 import com.auth0.jwt.exceptions.oicmsg_exceptions.ValueError;
 import com.auth0.msg.Key;
@@ -137,7 +138,7 @@ public class AuthenticationRequestTest extends BaseMessageTest<AuthenticationReq
 
   @Test
   public void testSuccessIdTokenHint() throws InvalidClaimException, IllegalArgumentException,
-      ImportException, UnknownKeyType, ValueError, IOException {
+      ImportException, UnknownKeyType, ValueError, IOException, JWKException {
     IDToken idTokenHint = getIDTokenHint();
     List<Key> keysSign = getKeyJarPrv().getSigningKey(KeyType.RSA.name(), keyOwner, null, null);
     claims.put("id_token_hint", idTokenHint.toJwt(keysSign.get(0), "RS256"));
@@ -161,11 +162,12 @@ public class AuthenticationRequestTest extends BaseMessageTest<AuthenticationReq
   /**
    * Form complete authentication request, url encode and decode it, verify you have the same
    * content.
+   * @throws JWKException 
    */
   @Test
   public void testUrlEncodingSuccess()
       throws InvalidClaimException, IllegalArgumentException, ImportException, UnknownKeyType,
-      ValueError, SerializationException, MalformedURLException, IOException {
+      ValueError, SerializationException, MalformedURLException, IOException, JWKException {
     claims.clear();
     //Form complete message   
     claims.put("scope", "openid email profile");

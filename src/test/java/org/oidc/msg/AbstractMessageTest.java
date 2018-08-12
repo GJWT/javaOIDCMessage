@@ -20,6 +20,7 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.oicmsg_exceptions.ImportException;
+import com.auth0.jwt.exceptions.oicmsg_exceptions.JWKException;
 import com.auth0.jwt.exceptions.oicmsg_exceptions.UnknownKeyType;
 import com.auth0.jwt.exceptions.oicmsg_exceptions.ValueError;
 import com.auth0.jwt.interfaces.DecodedJWT;
@@ -141,7 +142,7 @@ public class AbstractMessageTest extends BaseMessageTest<AbstractMessage> {
   @Test
   public void testSuccessToJWTSignRS()
       throws IllegalArgumentException, ImportException, UnknownKeyType, ValueError,
-      JsonProcessingException, SerializationException, InvalidClaimException {
+      SerializationException, InvalidClaimException, IOException, JWKException {
     List<Key> keysSign = getKeyJarPrv().getSigningKey(KeyType.RSA.name(), keyOwner, null, null);
     List<Key> keysVerify = getKeyJarPub().getVerifyKey(KeyType.RSA.name(), keyOwner, null, null);
     HashMap<String, Object> claims = new HashMap<String, Object>();
@@ -187,7 +188,7 @@ public class AbstractMessageTest extends BaseMessageTest<AbstractMessage> {
   
   @Test
   public void testSuccessFromJWTSignVerifyNone() throws InvalidClaimException, IllegalArgumentException,
-      IOException, ImportException, UnknownKeyType, ValueError {
+      IOException, ImportException, UnknownKeyType, ValueError, JWKException {
     HashMap<String, Object> claims = new HashMap<>();
     MockMessage mockMessage = new MockMessage(claims);
     String jwt = getSignedJwt("none");
@@ -198,7 +199,7 @@ public class AbstractMessageTest extends BaseMessageTest<AbstractMessage> {
 
   @Test
   public void testSuccessFromJWTSignVerifyRS() throws InvalidClaimException, IllegalArgumentException,
-      IOException, ImportException, UnknownKeyType, ValueError {
+      IOException, ImportException, UnknownKeyType, ValueError, JWKException {
     HashMap<String, Object> claims = new HashMap<>();
     MockMessage mockMessage = new MockMessage(claims);
     String jwt = getSignedJwt("RS256");

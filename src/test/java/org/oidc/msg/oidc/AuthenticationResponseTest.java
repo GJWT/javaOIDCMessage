@@ -17,6 +17,7 @@
 package org.oidc.msg.oidc;
 
 import com.auth0.jwt.exceptions.oicmsg_exceptions.ImportException;
+import com.auth0.jwt.exceptions.oicmsg_exceptions.JWKException;
 import com.auth0.jwt.exceptions.oicmsg_exceptions.UnknownKeyType;
 import com.auth0.jwt.exceptions.oicmsg_exceptions.ValueError;
 import com.auth0.msg.Key;
@@ -82,7 +83,7 @@ public class AuthenticationResponseTest extends BaseMessageTest<AuthenticationRe
 
   @Test
   public void testSuccessValidIdToken() throws InvalidClaimException, IllegalArgumentException,
-      ImportException, UnknownKeyType, ValueError, IOException, SerializationException {
+      ImportException, UnknownKeyType, ValueError, IOException, SerializationException, JWKException {
     // Add id token to response as OP would propably add
     Key key = getKeyJarPrv().getSigningKey(KeyType.RSA.name(), keyOwner, null, null).get(0);
     String jwt = generateIdTokenNow(new HashMap<String, Object>(), key, "RS256");
@@ -108,7 +109,7 @@ public class AuthenticationResponseTest extends BaseMessageTest<AuthenticationRe
 
   @Test
   public void testCHashMissingFailure() throws InvalidClaimException, IllegalArgumentException,
-      ImportException, UnknownKeyType, ValueError, IOException, SerializationException {
+      ImportException, UnknownKeyType, ValueError, IOException, SerializationException, JWKException {
     String code = "AUTHORIZATION_CODE";
     Key key = getKeyJarPrv().getSigningKey(KeyType.RSA.name(), keyOwner, null, null).get(0);
     HashMap<String, Object> claims = new HashMap<String, Object>();
@@ -121,7 +122,7 @@ public class AuthenticationResponseTest extends BaseMessageTest<AuthenticationRe
 
   @Test
   public void testCHashInvalidFailure() throws InvalidClaimException, IllegalArgumentException,
-      ImportException, UnknownKeyType, ValueError, IOException, SerializationException {
+      ImportException, UnknownKeyType, ValueError, IOException, SerializationException, JWKException {
     String code = "AUTHORIZATION_CODE";
     Key key = getKeyJarPrv().getSigningKey(KeyType.RSA.name(), keyOwner, null, null).get(0);
     HashMap<String, Object> claims = new HashMap<String, Object>();
@@ -135,7 +136,7 @@ public class AuthenticationResponseTest extends BaseMessageTest<AuthenticationRe
 
   @Test
   public void testCHashSuccess() throws InvalidClaimException, IllegalArgumentException,
-      ImportException, UnknownKeyType, ValueError, IOException, SerializationException {
+      ImportException, UnknownKeyType, ValueError, IOException, SerializationException, JWKException {
     String code = "AUTHORIZATION_CODE";
     Key key = getKeyJarPrv().getSigningKey(KeyType.RSA.name(), keyOwner, null, null).get(0);
     HashMap<String, Object> claims = new HashMap<String, Object>();
@@ -149,7 +150,7 @@ public class AuthenticationResponseTest extends BaseMessageTest<AuthenticationRe
 
   @Test
   public void testAtHashMissingFailure() throws InvalidClaimException, IllegalArgumentException,
-      ImportException, UnknownKeyType, ValueError, IOException, SerializationException {
+      ImportException, UnknownKeyType, ValueError, IOException, SerializationException, JWKException {
     String accessToken = "ACCESS_TOKEN";
     Key key = getKeyJarPrv().getSigningKey(KeyType.RSA.name(), keyOwner, null, null).get(0);
     HashMap<String, Object> claims = new HashMap<String, Object>();
@@ -162,7 +163,7 @@ public class AuthenticationResponseTest extends BaseMessageTest<AuthenticationRe
 
   @Test
   public void testAtHashInvalidFailure() throws InvalidClaimException, IllegalArgumentException,
-      ImportException, UnknownKeyType, ValueError, IOException, SerializationException {
+      ImportException, UnknownKeyType, ValueError, IOException, SerializationException, JWKException {
     String accessToken = "ACCESS_TOKEN";
     Key key = getKeyJarPrv().getSigningKey(KeyType.RSA.name(), keyOwner, null, null).get(0);
     HashMap<String, Object> claims = new HashMap<String, Object>();
@@ -176,7 +177,7 @@ public class AuthenticationResponseTest extends BaseMessageTest<AuthenticationRe
 
   @Test
   public void testAtHashSuccess() throws InvalidClaimException, IllegalArgumentException,
-      ImportException, UnknownKeyType, ValueError, IOException, SerializationException {
+      ImportException, UnknownKeyType, ValueError, IOException, SerializationException, JWKException {
     String accessToken = "ACCESS_TOKEN";
     Key key = getKeyJarPrv().getSigningKey(KeyType.RSA.name(), keyOwner, null, null).get(0);
     HashMap<String, Object> claims = new HashMap<String, Object>();

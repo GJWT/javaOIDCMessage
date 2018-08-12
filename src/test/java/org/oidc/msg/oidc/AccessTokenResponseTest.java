@@ -16,19 +16,21 @@
 
 package org.oidc.msg.oidc;
 
+import com.auth0.jwt.exceptions.oicmsg_exceptions.ImportException;
+import com.auth0.jwt.exceptions.oicmsg_exceptions.JWKException;
+import com.auth0.jwt.exceptions.oicmsg_exceptions.UnknownKeyType;
+import com.auth0.jwt.exceptions.oicmsg_exceptions.ValueError;
+import com.auth0.msg.Key;
+import com.auth0.msg.KeyType;
+import java.io.IOException;
 import java.util.HashMap;
-
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.oidc.msg.BaseMessageTest;
 import org.oidc.msg.InvalidClaimException;
 
-import com.auth0.jwt.exceptions.oicmsg_exceptions.ImportException;
-import com.auth0.jwt.exceptions.oicmsg_exceptions.UnknownKeyType;
-import com.auth0.jwt.exceptions.oicmsg_exceptions.ValueError;
-import com.auth0.msg.Key;
-import com.auth0.msg.KeyType;
+
 
 /**
  * Unit tests for {@link AccessTokenResponse}.
@@ -41,7 +43,7 @@ public class AccessTokenResponseTest extends BaseMessageTest<AccessTokenResponse
   }
 
   @Test
-  public void testValidIdToken() throws InvalidClaimException, IllegalArgumentException, ImportException, UnknownKeyType, ValueError {
+  public void testValidIdToken() throws InvalidClaimException, IllegalArgumentException, ImportException, UnknownKeyType, ValueError, IOException, JWKException {
     //TODO: check JWT signature also
     message.addClaim("access_token", "mockToken");
     message.addClaim("token_type", "mockType");
