@@ -16,12 +16,12 @@
 
 package org.oidc.msg.oidc;
 
+import com.auth0.msg.KeyJar;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
-
 import org.oidc.msg.ErrorDetails;
 import org.oidc.msg.ErrorType;
 import org.oidc.msg.ParameterVerification;
@@ -32,6 +32,11 @@ import org.oidc.msg.oauth2.AuthorizationRequest;
  * http://openid.net/specs/openid-connect-core-1_0.html.
  */
 public class AuthenticationRequest extends AuthorizationRequest {
+
+  /** Key Jar for performing keys performing JWT verification. */
+  private KeyJar keyJar;
+  /** Owner of the verification key in the Key Jar. */
+  private String keyOwner;
 
   {
     // Updating parameter requirements.
@@ -79,6 +84,26 @@ public class AuthenticationRequest extends AuthorizationRequest {
     super(claims);
   }
 
+  /**
+   * Set Key Jar for JWT verification keys. If not set verification is not done.
+   * 
+   * @param keyJar
+   *          Key Jar for JWT verification keys.
+   */
+  public void setKeyJar(KeyJar keyJar) {
+    this.keyJar = keyJar;
+  }
+
+  /**
+   * Set Owner of the JWT verification keys in Key Jar.
+   * 
+   * @param keyOwner
+   *          Owner of the JWT verification keys in Key Jar.
+   */
+  public void setKeyOwner(String keyOwner) {
+    this.keyOwner = keyOwner;
+  }
+
   /** {@inheritDoc} */
   @Override
   protected void doVerify() {
@@ -86,8 +111,7 @@ public class AuthenticationRequest extends AuthorizationRequest {
     if (request != null) {
       RequestObject requestObject = new RequestObject();
       try {
-        // TODO: set keyjar and owner
-        requestObject.fromJwt(request, null, null);
+        requestObject.fromJwt(request, keyJar, keyOwner);
         if (!requestObject.verify()) {
           for (ErrorDetails requestErrorDetails : requestObject.getError().getDetails()) {
             ErrorDetails details = new ErrorDetails("request", requestErrorDetails.getErrorType(),
@@ -102,13 +126,13 @@ public class AuthenticationRequest extends AuthorizationRequest {
       }
     }
 
-    // TODO: verify from Rolands code the case ''Nonce in id_token not matching nonce in authz'
+    // TODO: Missing from Rolands version the case ''Nonce in id_token not matching nonce in authz'
+
     String idTokenHint = ((String) getClaims().get("id_token_hint"));
     if (idTokenHint != null) {
       IDToken idToken = new IDToken();
       try {
-        // TODO: set keyjar and owner
-        idToken.fromJwt(idTokenHint, null, null);
+        idToken.fromJwt(idTokenHint, keyJar, keyOwner);
         if (!idToken.verify()) {
           for (ErrorDetails idTokenErrorDetails : idToken.getError().getDetails()) {
             ErrorDetails details = new ErrorDetails("id_token_hint",
