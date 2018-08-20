@@ -194,7 +194,7 @@ public class AbstractMessageTest extends BaseMessageTest<AbstractMessage> {
     String jwt = getSignedJwt("none");
     KeyJar keyJar = getKeyJarPub();
     mockMessage.fromJwt(jwt, keyJar, keyOwner);
-    Assert.assertEquals(mockMessage.getClaims().get("iss"), "op");
+    Assert.assertEquals(mockMessage.getClaims().get("iss"), keyOwner);
   }
 
   @Test
@@ -209,7 +209,7 @@ public class AbstractMessageTest extends BaseMessageTest<AbstractMessage> {
     mockMessage.fromJwt(jwt, keyJar, keyOwner);
     jwt = getSignedJwt("RS512");
     mockMessage.fromJwt(jwt, keyJar, keyOwner);
-    Assert.assertEquals(mockMessage.getClaims().get("iss"), "op");
+    Assert.assertEquals(mockMessage.getClaims().get("iss"), keyOwner);
   }
   
   @Test

@@ -248,7 +248,7 @@ public class AuthenticationRequestTest extends BaseMessageTest<AuthenticationReq
 
   private IDToken getIDTokenHint() throws InvalidClaimException {
     Map<String, Object> idTokenClaims = new HashMap<String, Object>();
-    idTokenClaims.put("iss", "issuer");
+    idTokenClaims.put("iss", keyOwner);
     idTokenClaims.put("sub", "subject");
     idTokenClaims.put("aud", "clientid");
     long now = System.currentTimeMillis() / 1000;

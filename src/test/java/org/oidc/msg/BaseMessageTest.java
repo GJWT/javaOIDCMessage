@@ -50,7 +50,7 @@ public abstract class BaseMessageTest<T extends AbstractMessage> {
   private static final String PRIVATE_KEY_FILE = "src/test/resources/rsa-private.pem";
   private static final String PUBLIC_KEY_FILE = "src/test/resources/rsa-public.pem";
   //TODO: return keyOwner to https://issuer.example.com once edmund explains how parameter is used in getJWTVerifyKeys 
-  protected String keyOwner = "";//"https://issuer.example.com";
+  protected String keyOwner = "https://issuer.example.com";
   protected KeyJar keyJarOfPrivateKeys = null;
   protected KeyJar keyJarOfPublicKeys = null;
   protected String signedJwt = null;
@@ -148,7 +148,7 @@ public abstract class BaseMessageTest<T extends AbstractMessage> {
       default:
         break;
     }
-    return JWT.create().withIssuer("op").sign(algorithm);
+    return JWT.create().withIssuer(keyOwner).sign(algorithm);
   }
 
   /**
@@ -209,7 +209,7 @@ public abstract class BaseMessageTest<T extends AbstractMessage> {
    */
   protected String generateIdTokenNow(Map<String, Object> claims, Key key, String algo)
       throws InvalidClaimException {
-    claims.put("iss", "issuer");
+    claims.put("iss", keyOwner);
     claims.put("sub", "subject");
     claims.put("aud", "clientid");
     claims.put("exp", (System.currentTimeMillis() / 1000) + 5);
