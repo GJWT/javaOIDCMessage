@@ -22,6 +22,9 @@ import java.util.Map;
 
 import org.oidc.msg.ParameterVerification;
 
+/**
+ * An authorization error response message.
+ */
 public class AuthorizationErrorResponse extends ResponseMessage {
   
   { // Set parameter requirements for message.
@@ -35,10 +38,17 @@ public class AuthorizationErrorResponse extends ResponseMessage {
         "temporarily_unavailable"));
   }
   
+  /**
+   * Constructor.
+   */
   public AuthorizationErrorResponse() {
     this(new HashMap<String, Object>());
   }
 
+  /**
+   * Constructor.
+   * @param claims The message parameters.
+   */
   public AuthorizationErrorResponse(Map<String, Object> claims) {
     super(claims);
   }

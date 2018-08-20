@@ -20,11 +20,11 @@ import org.oidc.msg.validator.ArrayClaimValidator;
 import org.oidc.msg.validator.BooleanClaimValidator;
 import org.oidc.msg.validator.DateClaimValidator;
 import org.oidc.msg.validator.IntClaimValidator;
+import org.oidc.msg.validator.JWTClaimValidator;
 import org.oidc.msg.validator.ListClaimValidator;
 import org.oidc.msg.validator.MapClaimValidator;
-import org.oidc.msg.validator.StringClaimValidator;
 import org.oidc.msg.validator.MessageClaimValidator;
-import org.oidc.msg.validator.JWTClaimValidator;
+import org.oidc.msg.validator.StringClaimValidator;
 
 
 /** Enum for expressing parameter verification definitions. */

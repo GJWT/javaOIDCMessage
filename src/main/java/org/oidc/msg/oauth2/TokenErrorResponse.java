@@ -30,10 +30,17 @@ public class TokenErrorResponse extends ResponseMessage {
         "unauthorized_client", "unsupported_grant_type", "invalid_scope"));
   }
 
+  /**
+   * Constructor.
+   */
   public TokenErrorResponse() {
     this(new HashMap<String, Object>());
   }
 
+  /**
+   * Constructor.
+   * @param claims The message parameters.
+   */
   public TokenErrorResponse(Map<String, Object> claims) {
     super(claims);
   }

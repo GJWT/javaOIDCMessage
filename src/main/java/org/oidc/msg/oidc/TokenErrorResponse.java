@@ -19,12 +19,22 @@ package org.oidc.msg.oidc;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * An OIDC token error response message.
+ */
 public class TokenErrorResponse extends org.oidc.msg.oauth2.TokenErrorResponse {
   
+  /**
+   * Constructor.
+   */
   public TokenErrorResponse() {
     this(new HashMap<String, Object>());
   }
 
+  /**
+   * Constructor.
+   * @param claims The message parameters.
+   */
   public TokenErrorResponse(Map<String, Object> claims) {
     super(claims);
   }

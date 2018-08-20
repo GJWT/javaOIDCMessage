@@ -16,21 +16,32 @@
 
 package org.oidc.msg;
 
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.ser.std.StdSerializer;
+
 import java.io.IOException;
 import java.util.Date;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.ser.std.StdSerializer;
-
+/**
+ * A Jackson serializer for messages.
+ */
+@SuppressWarnings("serial")
 public class MessageSerializer extends StdSerializer<AbstractMessage> {
 
+  /**
+   * Constructor.
+   */
   public MessageSerializer() {
     this(null);
   }
 
+  /**
+   * Constructor.
+   * @param t The type for this serializer.
+   */
   public MessageSerializer(Class<AbstractMessage> t) {
     super(t);
   }

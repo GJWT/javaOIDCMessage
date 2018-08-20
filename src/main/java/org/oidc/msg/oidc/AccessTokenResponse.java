@@ -16,16 +16,20 @@
 
 package org.oidc.msg.oidc;
 
-import java.io.IOException;
+import com.auth0.jwt.exceptions.JWTDecodeException;
+import com.auth0.msg.KeyJar;
+
 import java.util.HashMap;
 import java.util.Map;
 
+import org.oidc.msg.DeserializationException;
 import org.oidc.msg.ErrorDetails;
 import org.oidc.msg.ErrorType;
 import org.oidc.msg.ParameterVerification;
 
-import com.auth0.msg.KeyJar;
-
+/**
+ * An OIDC access token response message.
+ */
 public class AccessTokenResponse extends org.oidc.msg.oauth2.AccessTokenResponse {
   
   /** Key Jar for performing keys performing JWT verification. */
@@ -38,10 +42,17 @@ public class AccessTokenResponse extends org.oidc.msg.oauth2.AccessTokenResponse
     paramVerDefs.put("id_token", ParameterVerification.SINGLE_OPTIONAL_JWT.getValue());
   }
   
+  /**
+   * Constructor.
+   */
   public AccessTokenResponse() {
     this(new HashMap<String, Object>());
   }
   
+  /**
+   * Constructor.
+   * @param claims The message parameters.
+   */
   public AccessTokenResponse(Map<String, Object> claims) {
     super(claims);
   }
@@ -65,7 +76,6 @@ public class AccessTokenResponse extends org.oidc.msg.oauth2.AccessTokenResponse
   public void setKeyOwner(String keyOwner) {
     this.keyOwner = keyOwner;
   }
-
   
   /** {@inheritDoc} */
   @Override
@@ -81,7 +91,7 @@ public class AccessTokenResponse extends org.oidc.msg.oauth2.AccessTokenResponse
             getError().getDetails().add(details);
           }
         }
-      } catch (IOException e) {
+      } catch (DeserializationException | JWTDecodeException e) {
         getError().getDetails().add(new ErrorDetails("id_token", ErrorType.INVALID_VALUE_FORMAT,
             "Unable to verify id token signature", e));
       }  

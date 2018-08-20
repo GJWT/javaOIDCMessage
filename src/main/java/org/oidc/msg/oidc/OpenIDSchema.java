@@ -60,6 +60,9 @@ public class OpenIDSchema extends ResponseMessage {
 
   }
 
+  /**
+   * Constructor.
+   */
   public OpenIDSchema() {
     this(new HashMap<String, Object>());
   }

@@ -21,6 +21,8 @@ import java.util.List;
 
 /** Error class for message verification failures. */
 public class Error {
+  
+  /** The message failure details. */
   private List<ErrorDetails> details;
 
   /**

@@ -16,12 +16,10 @@
 
 package org.oidc.msg;
 
-import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.JWTDecodeException;
 import com.auth0.msg.Key;
 import com.auth0.msg.KeyJar;
-import com.fasterxml.jackson.core.JsonProcessingException;
 
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.List;
 import java.util.Map;
@@ -32,21 +30,20 @@ import java.util.Map;
 public interface Message {
 
   /**
-   * Serialize the content of this instance (the claims map) into a JSON object
+   * Serialize the content of this instance (the claims map) into a JSON object.
    * 
    * @return a JSON String representation of the message
-   * @throws SerializationException
+   * @throws SerializationException Thrown if message cannot be serialized.
    */
-  String toJson() throws SerializationException, JsonProcessingException, InvalidClaimException;
+  String toJson() throws SerializationException;
 
   /**
-   * Serialize the content of the claims map into an UrlEncoded string
+   * Serialize the content of the claims map into an UrlEncoded string.
    * 
    * @return a urlEncoded string
-   * @throws SerializationException
+   * @throws SerializationException Thrown if message cannot be serialized.
    */
-  String toUrlEncoded()
-      throws SerializationException, JsonProcessingException, InvalidClaimException;
+  String toUrlEncoded() throws SerializationException;
 
   /**
    * Serialize the content of this instance (the claims map) into a jwt string.
@@ -56,24 +53,26 @@ public interface Message {
    * @param alg
    *          signing algorithm
    * @return message as jwt string.
+   * @throws SerializationException Thrown if message cannot be serialized.
    */
-  String toJwt(Key key, String alg)
-      throws SerializationException, JsonProcessingException, InvalidClaimException;
+  String toJwt(Key key, String alg) throws SerializationException;
 
   /**
-   * Logic to extract from the string the values
+   * Constructs a message from the JSON string.
    * 
-   * @param input
-   *          The JSON String representation of a message
+   * @param input The JSON String representation of a message
+   * @throws DeserializationException Thrown if the message content is invalid.
    */
-  void fromJson(String input) throws InvalidClaimException;
+  void fromJson(String input) throws DeserializationException;
 
   /**
-   * @param input
-   *          the urlEncoded String representation of a message
+   * Constructs a message from the URL string.
+   * 
+   * @param input The urlEncoded String representation of a message.
+   * @throws MalformedURLException Thrown if the message cannot be parsed from the input.
+   * @throws DeserializationException Thrown if the message content is invalid.
    */
-  void fromUrlEncoded(String input)
-      throws MalformedURLException, IOException, InvalidClaimException;
+  void fromUrlEncoded(String input) throws MalformedURLException, DeserializationException;
 
   /**
    * Constructs message from JWT.
@@ -91,14 +90,14 @@ public interface Message {
    *          If jwt is missing kid, try any of the owners keys to verify jwt.
    * @param trustJKU
    *          Whether extending keyjat by JKU is allowed or not.
-   * @throws InvalidClaimException
-   *           thrown if message parameters do not match the message requirements.
+   * @throws DeserializationException Thrown if the message content is invalid.
+   * @throws JWTDecodeException Thrown if the JWT cannot be decoded.
    */
-  @SuppressWarnings("unchecked")
   public void fromJwt(String jwt, KeyJar keyJar, String keyOwner,
-      Map<String, List<String>> noKidIssuers, boolean allowMissingKid, boolean trustJKU) throws IOException;
+      Map<String, List<String>> noKidIssuers, boolean allowMissingKid, boolean trustJKU) throws DeserializationException, JWTDecodeException;
 
   /**
+   * Adds a new claim to the message.
    *
    * @param name
    *          of the claim
@@ -132,16 +131,22 @@ public interface Message {
   Map<String, Object> getClaims();
 
   /**
+   * Get the verification error details.
+   * 
    * @return the error object representing an error in verification
    */
   Error getError();
 
   /**
+   * Whether the message has any verification errors.
+   * 
    * @return boolean for whether there is an error in verification
    */
   boolean hasError();
   
   /**
+   * Get the message parameter requirements.
+   * 
    * @return Parameter requirements.
    */
   Map<String, ParameterVerificationDefinition> getParameterVerificationDefinitions();

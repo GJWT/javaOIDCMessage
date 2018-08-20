@@ -19,12 +19,22 @@ package org.oidc.msg.oidc;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * An OIDC refresh access token request message.
+ */
 public class RefreshAccessTokenRequest extends org.oidc.msg.oauth2.RefreshAccessTokenRequest {
   
+  /**
+   * Constructor.
+   */
   public RefreshAccessTokenRequest() {
     this(new HashMap<String, Object>());
   }
   
+  /**
+   * Constructor.
+   * @param claims The message parameters.
+   */
   public RefreshAccessTokenRequest(Map<String, Object> claims) {
     super(claims);
   }

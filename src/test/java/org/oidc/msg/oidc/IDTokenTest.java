@@ -27,6 +27,9 @@ import org.junit.Test;
 import org.oidc.msg.BaseMessageTest;
 import org.oidc.msg.InvalidClaimException;
 
+/**
+ * Unit tests for {@link IDToken}.
+ */
 public class IDTokenTest extends BaseMessageTest<IDToken> {
 
   Map<String, Object> claims = new HashMap<String, Object>();

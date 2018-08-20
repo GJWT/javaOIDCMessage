@@ -16,13 +16,13 @@
 
 package org.oidc.msg.validator;
 
+import com.google.common.base.Strings;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import org.oidc.msg.InvalidClaimException;
-
-import com.google.common.base.Strings;
 
 /**
  * A {@link ClaimValidator} for a list of strings.
@@ -30,11 +30,13 @@ import com.google.common.base.Strings;
 public class ListClaimValidator implements ClaimValidator<List<String>> {
 
   @Override
+  @SuppressWarnings("unchecked")
   public List<String> validate(Object value) throws InvalidClaimException {
     if (value instanceof List) {
       List<?> list = (List<?>) value;
-      if (list.isEmpty())
+      if (list.isEmpty()) {
         return new ArrayList<String>();
+      }
       if (list.get(0) instanceof String) {
         return (List<String>) value;
       }

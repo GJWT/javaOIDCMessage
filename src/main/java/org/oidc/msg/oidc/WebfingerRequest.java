@@ -22,6 +22,9 @@ import java.util.Map;
 import org.oidc.msg.AbstractMessage;
 import org.oidc.msg.ParameterVerification;
 
+/**
+ * A web finger request message.
+ */
 public class WebfingerRequest extends AbstractMessage {
 
   { // Set parameter requirements for message.
@@ -30,10 +33,17 @@ public class WebfingerRequest extends AbstractMessage {
     defaultValues.put("rel", "http://openid.net/specs/connect/1.0/issuer");
   }
 
+  /**
+   * Constructor.
+   */
   public WebfingerRequest() {
     this(new HashMap<String, Object>());
   }
 
+  /**
+   * Constructor.
+   * @param claims The message parameters.
+   */
   public WebfingerRequest(Map<String, Object> claims) {
     super(claims);
     addDefaultValues();

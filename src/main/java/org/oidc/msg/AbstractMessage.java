@@ -86,13 +86,14 @@ public abstract class AbstractMessage implements Message {
   }
 
   /**
-   * Constructs message from urlEncoded String representation of a message.
+   * Constructs a message from the URL string.
    * 
-   * @param input
-   *          the urlEncoded String representation of a message
+   * @param input The urlEncoded String representation of a message.
+   * @throws MalformedURLException Thrown if the message cannot be parsed from the input.
+   * @throws InvalidClaimException Thrown if the message content is invalid.
    */
   public void fromUrlEncoded(String input)
-      throws MalformedURLException, IOException, InvalidClaimException {
+      throws MalformedURLException, DeserializationException {
     if (Strings.isNullOrEmpty(input)) {
       return;
     }
@@ -101,8 +102,15 @@ public abstract class AbstractMessage implements Message {
     while (paramTokenizer.hasMoreTokens()) {
       String pair = paramTokenizer.nextToken();
       StringTokenizer pairTokenizer = new StringTokenizer(pair, "=");
-      String key = URLDecoder.decode(pairTokenizer.nextToken(), "UTF-8");
-      String value = URLDecoder.decode(pairTokenizer.nextToken(), "UTF-8");
+ 
+      String key;
+      String value;
+      try {
+        key = URLDecoder.decode(pairTokenizer.nextToken(), "UTF-8");
+        value = URLDecoder.decode(pairTokenizer.nextToken(), "UTF-8");
+      } catch (UnsupportedEncodingException e) {
+        throw new MalformedURLException("The parameters cannot be decoded using UTF-8");
+      }
       jsonBuilder.append("\"" + key + "\" : ");
       jsonBuilder.append(
           value.startsWith("{") || value.startsWith("[") ? "\"" + value.replace("\"", "\\\"") + "\""
@@ -119,11 +127,10 @@ public abstract class AbstractMessage implements Message {
    * urlEncoded string.
    *
    * @return an urlEncoded string
-   * @throws InvalidClaimException
-   *           if the message is invalid
+   * @throws SerializationException Thrown if message cannot be serialized.
    */
   public String toUrlEncoded()
-      throws SerializationException, JsonProcessingException, InvalidClaimException {
+      throws SerializationException {
     if (claims.size() == 0) {
       return "";
     }
@@ -154,18 +161,18 @@ public abstract class AbstractMessage implements Message {
   }
 
   /**
-   * Constructs message from JSON string values.
+   * Constructs a message from the JSON string.
    * 
-   * @param input
-   *          The JSON String representation of a message
+   * @param input The JSON String representation of a message
+   * @throws InvalidClaimException Thrown if the message content is invalid.
    */
-  public void fromJson(String input) throws InvalidClaimException {
+  public void fromJson(String input) throws DeserializationException {
     Map<String, Object> newClaims;
     try {
       newClaims = mapper.readValue(input, new TypeReference<Map<String, Object>>() {
       });
     } catch (IOException e) {
-      throw new InvalidClaimException(String.format("Unable to parse message from '%s'", input));
+      throw new DeserializationException(String.format("Unable to parse message from '%s'", input));
     }
     this.claims = newClaims;
     verified = false;
@@ -176,15 +183,17 @@ public abstract class AbstractMessage implements Message {
    * json string.
    *
    * @return a JSON String representation in the form of a hashMap mapping string -> string
-   * @throws InvalidClaimException
-   *           thrown if message parameters do not match the message requirements.
+   * @throws SerializationException Thrown if message cannot be serialized.
    */
-  public String toJson() throws JsonProcessingException, InvalidClaimException {
+  public String toJson() throws SerializationException {
     SimpleModule module = new SimpleModule();
     module.addSerializer(AbstractMessage.class, new MessageSerializer());
     mapper.registerModule(module);
-    String jsonMsg = mapper.writeValueAsString(this);
-    return jsonMsg;
+    try {
+      return mapper.writeValueAsString(this);
+    } catch (JsonProcessingException e) {
+      throw new SerializationException("Could not serialize to JSON", e);
+    }
   }
 
   /**
@@ -200,7 +209,7 @@ public abstract class AbstractMessage implements Message {
    * @throws IOException
    *           thrown if message parameters do not match the message requirements.
    */
-  public void fromJwt(String jwt, KeyJar keyJar, String keyOwner) throws IOException {
+  public void fromJwt(String jwt, KeyJar keyJar, String keyOwner) throws DeserializationException {
     fromJwt(jwt, keyJar, keyOwner, null, true, true);
   }
   
@@ -220,13 +229,13 @@ public abstract class AbstractMessage implements Message {
    *          If jwt is missing kid, try any of the owners keys to verify jwt.
    * @param trustJKU
    *          Whether extending keyjar by JKU is allowed or not.
-   * @throws JWTDecodeException
-   *           thrown if message parameters do not match the message requirements.
+   * @throws DeserializationException Thrown if the message content is invalid.
+   * @throws JWTDecodeException Thrown if the JWT cannot be decoded.
    */
   @SuppressWarnings("unchecked")
   public void fromJwt(String jwt, KeyJar keyJar, String keyOwner,
       Map<String, List<String>> noKidIssuers, boolean allowMissingKid, boolean trustJKU)
-      throws IOException {
+      throws DeserializationException, JWTDecodeException {
     String[] parts = MessageUtil.splitToken(jwt);
     String headerJson;
     String payloadJson;
@@ -237,8 +246,12 @@ public abstract class AbstractMessage implements Message {
       throw new JWTDecodeException("The UTF-8 Charset isn't initialized.", e);
     }
 
-    this.header = mapper.readValue(headerJson, Map.class);
-    this.claims = mapper.readValue(payloadJson, Map.class);
+    try {
+      this.header = mapper.readValue(headerJson, Map.class);
+      this.claims = mapper.readValue(payloadJson, Map.class);
+    } catch (IOException e) {
+      throw new DeserializationException("Could not read the JWT contents", e);
+    }
     verified = false;
 
     if (keyJar == null) {
@@ -259,9 +272,7 @@ public abstract class AbstractMessage implements Message {
     List<java.security.Key> keys;
     try {
       keys = keyJar.getJWTVerifyKeys(jwt, keyOwner, noKidIssuers, allowMissingKid, trustJKU);
-    } catch (JWKException | ValueError e) {
-      // TODO: Replace JWTDecodeException with better exception. Generic note to this class and this
-      // method.
+    } catch (JWKException | ValueError | IOException e) {
       throw new JWTDecodeException(
           String.format("Not able to locate keys to verify JWT, '%s'", e.getMessage()));
     }
@@ -322,7 +333,7 @@ public abstract class AbstractMessage implements Message {
    *          signing algorithm
    * @return message as jwt string.
    */
-  public String toJwt(Key key, String alg) {
+  public String toJwt(Key key, String alg) throws SerializationException {
 
     header = new HashMap<String, Object>();
     header.put("alg", alg);
@@ -360,13 +371,11 @@ public abstract class AbstractMessage implements Message {
       // TODO: HMAC algorithms, are getting client secret also from key jar?
       }
     } catch (IllegalArgumentException | ValueError e) {
-      // TODO: This is not Decoding exception, replace it.
-      throw new JWTDecodeException(String
+      throw new SerializationException(String
           .format("Not able to initialize algorithm '%s' to sign JWT, '%s'", alg, e.getMessage()));
     }
     if (algorithm == null) {
-      // TODO: This is not Decoding exception, replace it.
-      throw new JWTDecodeException(
+      throw new SerializationException(
           String.format("Not able to initialize algorithm '%s' to sign JWT", alg));
     }
     JWTCreator.Builder newBuilder = JWT.create().withHeader(this.header);

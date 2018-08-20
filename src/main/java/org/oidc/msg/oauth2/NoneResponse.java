@@ -27,10 +27,17 @@ public class NoneResponse extends ResponseMessage {
     paramVerDefs.put("state", ParameterVerification.SINGLE_OPTIONAL_STRING.getValue());
   }
   
+  /**
+   * Constructor.
+   */
   public NoneResponse() {
     this(new HashMap<String, Object>());
   }
   
+  /**
+   * Constructor.
+   * @param claims The message parameters.
+   */
   public NoneResponse(Map<String, Object> claims) {
     super(claims);
   }

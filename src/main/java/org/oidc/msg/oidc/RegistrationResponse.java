@@ -24,6 +24,9 @@ import org.oidc.msg.ErrorType;
 import org.oidc.msg.ParameterVerification;
 import org.oidc.msg.oauth2.ResponseMessage;
 
+/**
+ * An OIDC dynamic registration response message.
+ */
 public class RegistrationResponse extends ResponseMessage {
 
   { // Set parameter requirements for message.
@@ -40,10 +43,17 @@ public class RegistrationResponse extends ResponseMessage {
     paramVerDefs.putAll(new RegistrationRequest().getParameterVerificationDefinitions());
   }
 
+  /**
+   * Constructor.
+   */
   public RegistrationResponse() {
     this(new HashMap<String, Object>());
   }
 
+  /**
+   * Constructor.
+   * @param claims The message parameters.
+   */
   public RegistrationResponse(Map<String, Object> claims) {
     super(claims);
   }

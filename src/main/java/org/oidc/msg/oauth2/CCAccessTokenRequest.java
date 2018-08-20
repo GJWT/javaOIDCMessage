@@ -37,10 +37,17 @@ public class CCAccessTokenRequest extends AbstractMessage {
     allowedValues.put("grant_type", Arrays.asList("client_credentials"));
   }
   
+  /**
+   * Constructor.
+   */
   public CCAccessTokenRequest() {
     this(new HashMap<String, Object>());
   }
   
+  /**
+   * Constructor.
+   * @param claims The message parameters.
+   */
   public CCAccessTokenRequest(Map<String, Object> claims) {
     super(claims);
     addDefaultValues();

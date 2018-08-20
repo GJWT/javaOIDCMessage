@@ -27,6 +27,9 @@ import org.oidc.msg.BaseMessageTest;
 import org.oidc.msg.InvalidClaimException;
 import org.oidc.msg.oauth2.AuthorizationRequest;
 
+/**
+ * Unit tests for {@link AuthorizationRequest}.
+ */
 public class AuthorizationRequestTest extends BaseMessageTest<AuthorizationRequest> {
 
   @Before

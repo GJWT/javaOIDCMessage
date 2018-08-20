@@ -23,6 +23,9 @@ import java.util.Map;
 import org.oidc.msg.AbstractMessage;
 import org.oidc.msg.ParameterVerification;
 
+/**
+ * A refresh access token request message.
+ */
 public class RefreshAccessTokenRequest extends AbstractMessage {
   
   { // Set parameter requirements for message.
@@ -37,10 +40,17 @@ public class RefreshAccessTokenRequest extends AbstractMessage {
     allowedValues.put("grant_type", Arrays.asList("refresh_token"));
   }
   
+  /**
+   * Constructor.
+   */
   public RefreshAccessTokenRequest() {
     this(new HashMap<String, Object>());
   }
   
+  /**
+   * Constructor.
+   * @param claims The message parameters.
+   */
   public RefreshAccessTokenRequest(Map<String, Object> claims) {
     super(claims);
     addDefaultValues();

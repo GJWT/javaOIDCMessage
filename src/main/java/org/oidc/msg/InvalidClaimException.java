@@ -17,13 +17,24 @@
 package org.oidc.msg;
 
 /**
- * An exception that is thrown when there is an invalid claim in a Message object type
+ * An exception that is thrown when there is an invalid claim in a Message object type.
  */
+@SuppressWarnings("serial")
 public class InvalidClaimException extends Exception {
+  
+  /**
+   * Constructor.
+   * @param message The message describing the exception.
+   */
   public InvalidClaimException(String message) {
     this(message, null);
   }
 
+  /**
+   * Constructor.
+   * @param message The message describing the exception.
+   * @param cause The cause for this exception.
+   */
   public InvalidClaimException(String message, Throwable cause) {
     super(message, cause);
   }

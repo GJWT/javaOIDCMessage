@@ -16,12 +16,14 @@
 
 package org.oidc.msg.oidc;
 
+import com.auth0.jwt.exceptions.JWTDecodeException;
 import com.auth0.msg.KeyJar;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
+
+import org.oidc.msg.DeserializationException;
 import org.oidc.msg.ErrorDetails;
 import org.oidc.msg.ErrorType;
 import org.oidc.msg.ParameterVerification;
@@ -119,7 +121,7 @@ public class AuthenticationRequest extends AuthorizationRequest {
             getError().getDetails().add(details);
           }
         }
-      } catch (IOException e) {
+      } catch (DeserializationException | JWTDecodeException e) {
         ErrorDetails details = new ErrorDetails("request", ErrorType.INVALID_VALUE_FORMAT,
             String.format("Unable to parse request object from '%s'", request));
         error.getDetails().add(details);
@@ -141,7 +143,7 @@ public class AuthenticationRequest extends AuthorizationRequest {
             getError().getDetails().add(details);
           }
         }
-      } catch (IOException e) {
+      } catch (DeserializationException | JWTDecodeException e) {
         ErrorDetails details = new ErrorDetails("id_token_hint", ErrorType.INVALID_VALUE_FORMAT,
             String.format("Unable to parse id_token_hint from '%s'", idTokenHint));
         error.getDetails().add(details);

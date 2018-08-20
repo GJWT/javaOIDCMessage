@@ -47,10 +47,7 @@ public class AuthorizationRequest extends AbstractMessage {
   
   /**
    * Constructor.
-   * 
-   * @param claims
-   *          Authorization request claims. Expected claims are response_type(REQUIRED),
-   *          client_id(REQUIRED), redirect_uri(OPTIONAL), scope (OPTIONAL) and state(RECOMMENDED).
+   * @param claims The message parameters.
    */
   public AuthorizationRequest(Map<String, Object> claims) {
     super(claims);

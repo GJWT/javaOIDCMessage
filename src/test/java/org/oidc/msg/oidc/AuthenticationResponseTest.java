@@ -31,10 +31,14 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.oidc.msg.BaseMessageTest;
+import org.oidc.msg.DeserializationException;
 import org.oidc.msg.InvalidClaimException;
 import org.oidc.msg.SerializationException;
 import org.oidc.msg.oidc.util.TokenHash;
 
+/**
+ * Unit tests for {@link AuthenticationResponse}.
+ */
 public class AuthenticationResponseTest extends BaseMessageTest<AuthenticationResponse> {
 
   Map<String, Object> claims = new HashMap<String, Object>();
@@ -83,7 +87,7 @@ public class AuthenticationResponseTest extends BaseMessageTest<AuthenticationRe
 
   @Test
   public void testSuccessValidIdToken() throws InvalidClaimException, IllegalArgumentException,
-      ImportException, UnknownKeyType, ValueError, IOException, SerializationException, JWKException {
+      ImportException, UnknownKeyType, ValueError, IOException, SerializationException, JWKException, DeserializationException {
     // Add id token to response as OP would propably add
     Key key = getKeyJarPrv().getSigningKey(KeyType.RSA.name(), keyOwner, null, null).get(0);
     String jwt = generateIdTokenNow(new HashMap<String, Object>(), key, "RS256");

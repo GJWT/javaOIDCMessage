@@ -26,7 +26,7 @@ public class ParameterVerificationDefinition {
   /** Whether the parameter is required or not. */
   private boolean required = true;
   /** Claim validator used to validate the structure of the parameter value. */
-  private ClaimValidator claimValidator;
+  private ClaimValidator<?> claimValidator;
 
   /**
    * Constructor.
@@ -36,7 +36,7 @@ public class ParameterVerificationDefinition {
    * @param required
    *          whether the parameter is required or not
    */
-  public ParameterVerificationDefinition(ClaimValidator validator, boolean required) {
+  public ParameterVerificationDefinition(ClaimValidator<?> validator, boolean required) {
     this.claimValidator = validator;
     this.required = required;
 
@@ -56,7 +56,7 @@ public class ParameterVerificationDefinition {
    * 
    * @return Claim validator used to validate the structure of the parameter value
    */
-  public ClaimValidator getClaimValidator() {
+  public ClaimValidator<?> getClaimValidator() {
     return claimValidator;
   }
 

@@ -53,10 +53,7 @@ public class AuthorizationResponse extends ResponseMessage {
 
   /**
    * Constructor.
-   * 
-   * @param claims
-   *          Authorization request claims. Expected claims are code(REQUIRED), state(REQUIRED if
-   *          presented in request), iss(OPTIONAL), client_id(OPTIONAL).
+   * @param claims The message parameters.
    */
   public AuthorizationResponse(Map<String, Object> claims) {
     super(claims);
@@ -85,8 +82,7 @@ public class AuthorizationResponse extends ResponseMessage {
   /**
    * Get Client ID to use when verifying response.
    * 
-   * @param clientId
-   *          Client ID to match the response to.
+   * @return Client ID to match the response to.
    */
   public String getClientId() {
     return clientId;

@@ -206,9 +206,10 @@ public abstract class BaseMessageTest<T extends AbstractMessage> {
    *          algorithm used to sign, may be none
    * @return
    * @throws InvalidClaimException
+   * @throws SerializationException 
    */
   protected String generateIdTokenNow(Map<String, Object> claims, Key key, String algo)
-      throws InvalidClaimException {
+      throws InvalidClaimException, SerializationException {
     claims.put("iss", keyOwner);
     claims.put("sub", "subject");
     claims.put("aud", "clientid");

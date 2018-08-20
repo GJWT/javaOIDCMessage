@@ -33,10 +33,17 @@ public class ResponseMessage extends AbstractMessage {
     paramVerDefs.put("error_uri", ParameterVerification.SINGLE_OPTIONAL_STRING.getValue());
   }
 
+  /**
+   * Constructor.
+   */
   public ResponseMessage() {
     this(new HashMap<String, Object>());
   }
 
+  /**
+   * Constructor.
+   * @param claims The message parameters.
+   */
   public ResponseMessage(Map<String, Object> claims) {
     super(claims);
   }

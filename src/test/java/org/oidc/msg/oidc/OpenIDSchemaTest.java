@@ -24,6 +24,9 @@ import org.junit.Test;
 import org.oidc.msg.BaseMessageTest;
 import org.oidc.msg.InvalidClaimException;
 
+/**
+ * Unit tests for {@link OpenIDSchema}.
+ */
 public class OpenIDSchemaTest extends BaseMessageTest<OpenIDSchema> {
 
   Map<String, Object> claims = new HashMap<String, Object>();

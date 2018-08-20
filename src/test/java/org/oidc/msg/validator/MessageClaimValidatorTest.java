@@ -24,6 +24,9 @@ import org.junit.Test;
 import org.oidc.msg.AbstractMessage;
 import org.oidc.msg.InvalidClaimException;
 
+/**
+ * Unit tests for {@link MessageClaimValidator}.
+ */
 public class MessageClaimValidatorTest extends BaseClaimValidatorTest<MessageClaimValidator> {
 
   @Before

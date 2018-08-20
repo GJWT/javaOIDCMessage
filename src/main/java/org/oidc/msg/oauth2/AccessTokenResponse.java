@@ -21,6 +21,9 @@ import java.util.Map;
 
 import org.oidc.msg.ParameterVerification;
 
+/**
+ * An access token response.
+ */
 public class AccessTokenResponse extends ResponseMessage {
 
   { // Set parameter requirements for message.
@@ -32,10 +35,17 @@ public class AccessTokenResponse extends ResponseMessage {
     paramVerDefs.put("state", ParameterVerification.SINGLE_OPTIONAL_STRING.getValue());
   }
   
+  /**
+   * Constructor.
+   */
   public AccessTokenResponse() {
     this(new HashMap<String, Object>());
   }
   
+  /**
+   * Constructor.
+   * @param claims The message parameters.
+   */
   public AccessTokenResponse(Map<String, Object> claims) {
     super(claims);
   }

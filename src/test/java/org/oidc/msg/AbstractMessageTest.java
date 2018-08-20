@@ -94,15 +94,13 @@ public class AbstractMessageTest extends BaseMessageTest<AbstractMessage> {
     String testJson = "{\"GRANT_TYPE\":\"refresh_token\"}";
     MockMessage pcr = new MockMessage(claims);
     pcr.fromJson(testJson);
-    Map<String, Object> claims2 = pcr.getClaims();
-
     Assert.assertEquals(pcr.getClaims(), claims);
   }
 
   // New tests ->
   
   @Test
-  public void testSuccessToAndFromJWTNoneAlgBasicTypes() throws IOException, InvalidClaimException {
+  public void testSuccessToAndFromJWTNoneAlgBasicTypes() throws IOException, InvalidClaimException, SerializationException, DeserializationException {
     HashMap<String, Object> claims = new HashMap<String, Object>();
     Map<String, ParameterVerificationDefinition> parVerDef = new HashMap<String, ParameterVerificationDefinition>();
     parVerDef.put("foo1", ParameterVerification.SINGLE_OPTIONAL_BOOLEAN.getValue());
@@ -164,7 +162,7 @@ public class AbstractMessageTest extends BaseMessageTest<AbstractMessage> {
   }
  
   @Test
-  public void testSuccessFromJWTNoSignVerify() throws IOException, ImportException, UnknownKeyType, IllegalArgumentException, ValueError {
+  public void testSuccessFromJWTNoSignVerify() throws IOException, ImportException, UnknownKeyType, IllegalArgumentException, ValueError, DeserializationException {
     HashMap<String, Object> claims = new HashMap<>();
     MockMessage mockMessage = new MockMessage(claims);
     mockMessage.fromJwt(idToken, null, null);
@@ -188,7 +186,7 @@ public class AbstractMessageTest extends BaseMessageTest<AbstractMessage> {
   
   @Test
   public void testSuccessFromJWTSignVerifyNone() throws InvalidClaimException, IllegalArgumentException,
-      IOException, ImportException, UnknownKeyType, ValueError, JWKException {
+      IOException, ImportException, UnknownKeyType, ValueError, JWKException, DeserializationException {
     HashMap<String, Object> claims = new HashMap<>();
     MockMessage mockMessage = new MockMessage(claims);
     String jwt = getSignedJwt("none");
@@ -199,7 +197,7 @@ public class AbstractMessageTest extends BaseMessageTest<AbstractMessage> {
 
   @Test
   public void testSuccessFromJWTSignVerifyRS() throws InvalidClaimException, IllegalArgumentException,
-      IOException, ImportException, UnknownKeyType, ValueError, JWKException {
+      IOException, ImportException, UnknownKeyType, ValueError, JWKException, DeserializationException {
     HashMap<String, Object> claims = new HashMap<>();
     MockMessage mockMessage = new MockMessage(claims);
     String jwt = getSignedJwt("RS256");

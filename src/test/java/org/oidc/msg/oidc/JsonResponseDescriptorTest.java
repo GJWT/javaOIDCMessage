@@ -18,6 +18,7 @@ package org.oidc.msg.oidc;
 
 import org.junit.Test;
 import org.oidc.msg.BaseMessageTest;
+import org.oidc.msg.DeserializationException;
 import org.oidc.msg.InvalidClaimException;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -41,7 +42,7 @@ public class JsonResponseDescriptorTest extends BaseMessageTest<JsonResponseDesc
   }
   
   @Test
-  public void testFromJson() throws InvalidClaimException, JsonProcessingException {
+  public void testFromJson() throws InvalidClaimException, JsonProcessingException, DeserializationException {
     String json = "{ \"subject\" : \"acct:juliet%40capulet.example@shopping.example.com\",\n"
         + "   \"links\":\n" + "    [\n" + "     {\n"
         + "      \"rel\": \"http://openid.net/specs/connect/1.0/issuer\",\n"
@@ -52,6 +53,7 @@ public class JsonResponseDescriptorTest extends BaseMessageTest<JsonResponseDesc
     Map<String, Object> claims = message.getClaims();
     Assert.assertEquals("acct:juliet%40capulet.example@shopping.example.com",
         claims.get("subject"));
+    @SuppressWarnings("unchecked")
     List<Link> links = (List<Link>) claims.get("links");
     Assert.assertNotNull(links);
     Assert.assertEquals(links.size(), 1);
@@ -75,6 +77,7 @@ public class JsonResponseDescriptorTest extends BaseMessageTest<JsonResponseDesc
     Map<String, Object> parsedClaims = message.getClaims();
     Assert.assertEquals("acct:juliet%40capulet.example@shopping.example.com",
         parsedClaims.get("subject"));
+    @SuppressWarnings("unchecked")
     List<Link> parsedLinks = (List<Link>) parsedClaims.get("links");
     Assert.assertNotNull(parsedLinks);
     Assert.assertEquals(parsedLinks.size(), 1);

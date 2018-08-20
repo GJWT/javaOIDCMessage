@@ -34,10 +34,17 @@ public class ROPCAccessTokenRequest extends AbstractMessage {
     paramVerDefs.put("scope", ParameterVerification.OPTIONAL_LIST_OF_SP_SEP_STRINGS.getValue());
   }
   
+  /**
+   * Constructor.
+   */
   public ROPCAccessTokenRequest() {
     this(new HashMap<String, Object>());
   }
   
+  /**
+   * Constructor.
+   * @param claims The message parameters.
+   */
   public ROPCAccessTokenRequest(Map<String, Object> claims) {
     super(claims);
   }

@@ -23,6 +23,9 @@ import java.util.Map;
 import org.apache.commons.collections.ListUtils;
 import org.oidc.msg.oauth2.AuthorizationErrorResponse;
 
+/**
+ * An OIDC authentication error response message.
+ */
 public class AuthenticationErrorResponse extends AuthorizationErrorResponse {
 
   {
@@ -32,10 +35,17 @@ public class AuthenticationErrorResponse extends AuthorizationErrorResponse {
             "registration_not_supported", "request_not_supported", "request_uri_not_supported")));
   }
 
+  /**
+   * Constructor.
+   */
   public AuthenticationErrorResponse() {
     this(new HashMap<String, Object>());
   }
 
+  /**
+   * Constructor.
+   * @param claims The message parameters.
+   */
   public AuthenticationErrorResponse(Map<String, Object> claims) {
     super(claims);
   }

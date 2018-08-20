@@ -17,14 +17,24 @@
 package org.oidc.msg;
 
 /**
- * An exception that is thrown when there is an issue with deserialization of the Message type
+ * An exception that is thrown when there is an issue with deserialization of the Message type.
  */
+@SuppressWarnings("serial")
 public class DeserializationException extends Exception {
 
+  /**
+   * Constructor.
+   * @param message The message describing the exception.
+   */
   public DeserializationException(String message) {
     this(message, null);
   }
 
+  /**
+   * Constructor.
+   * @param message The message describing the exception.
+   * @param cause The cause for this exception.
+   */
   public DeserializationException(String message, Throwable cause) {
     super(message, cause);
   }

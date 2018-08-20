@@ -16,7 +16,6 @@
 
 package org.oidc.msg.oidc;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -27,7 +26,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.oidc.msg.BaseMessageTest;
 import org.oidc.msg.InvalidClaimException;
+import org.oidc.msg.SerializationException;
 
+/**
+ * Unit tests for {@link ClaimsRequest}.
+ */
 public class ClaimsRequestTest extends BaseMessageTest<ClaimsRequest> {
 
   Map<String, Object> claims = new HashMap<String, Object>();
@@ -44,7 +47,7 @@ public class ClaimsRequestTest extends BaseMessageTest<ClaimsRequest> {
    */
   @Test
   public void testSuccessMandatoryParameters()
-      throws InvalidClaimException, JsonProcessingException {
+      throws InvalidClaimException, SerializationException {
     Map<String, Object> userInfoClaimsRequestMembers = new HashMap<String, Object>();
     Map<String, Object> essentialTrue = new HashMap<String, Object>();
     essentialTrue.put("essential", true);

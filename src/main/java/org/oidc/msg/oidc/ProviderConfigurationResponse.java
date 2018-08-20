@@ -110,10 +110,17 @@ public class ProviderConfigurationResponse extends org.oidc.msg.oauth2.ASConfigu
     defaultValues.put("grant_types_supported", Arrays.asList("authorization_code", "implicit"));
   }
 
+  /**
+   * Constructor.
+   */
   public ProviderConfigurationResponse() {
     this(new HashMap<String, Object>());
   }
 
+  /**
+   * Constructor.
+   * @param claims The message parameters.
+   */
   public ProviderConfigurationResponse(Map<String, Object> claims) {
     super(claims);
     addDefaultValues();

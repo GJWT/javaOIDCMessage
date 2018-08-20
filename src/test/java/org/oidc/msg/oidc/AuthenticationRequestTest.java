@@ -33,9 +33,13 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.oidc.msg.BaseMessageTest;
+import org.oidc.msg.DeserializationException;
 import org.oidc.msg.InvalidClaimException;
 import org.oidc.msg.SerializationException;
 
+/**
+ * Unit tests for {@link AuthenticationRequest}.
+ */
 public class AuthenticationRequestTest extends BaseMessageTest<AuthenticationRequest> {
 
   Map<String, Object> claims = new HashMap<String, Object>();
@@ -138,7 +142,7 @@ public class AuthenticationRequestTest extends BaseMessageTest<AuthenticationReq
 
   @Test
   public void testSuccessIdTokenHint() throws InvalidClaimException, IllegalArgumentException,
-      ImportException, UnknownKeyType, ValueError, IOException, JWKException {
+      ImportException, UnknownKeyType, ValueError, IOException, JWKException, SerializationException, DeserializationException {
     IDToken idTokenHint = getIDTokenHint();
     List<Key> keysSign = getKeyJarPrv().getSigningKey(KeyType.RSA.name(), keyOwner, null, null);
     claims.put("id_token_hint", idTokenHint.toJwt(keysSign.get(0), "RS256"));
@@ -151,7 +155,7 @@ public class AuthenticationRequestTest extends BaseMessageTest<AuthenticationReq
         (String) idTokenHint.getClaims().get("iss"));
   }
 
-  @Test(expected = JWTDecodeException.class)
+  @Test
   public void testFailIdTokenHintInvalid() throws InvalidClaimException {
     String idToken = "notparsableasidtoken";
     claims.put("id_token_hint", idToken);
@@ -163,11 +167,12 @@ public class AuthenticationRequestTest extends BaseMessageTest<AuthenticationReq
    * Form complete authentication request, url encode and decode it, verify you have the same
    * content.
    * @throws JWKException 
+   * @throws DeserializationException 
    */
   @Test
   public void testUrlEncodingSuccess()
       throws InvalidClaimException, IllegalArgumentException, ImportException, UnknownKeyType,
-      ValueError, SerializationException, MalformedURLException, IOException, JWKException {
+      ValueError, SerializationException, MalformedURLException, IOException, JWKException, DeserializationException {
     claims.clear();
     //Form complete message   
     claims.put("scope", "openid email profile");

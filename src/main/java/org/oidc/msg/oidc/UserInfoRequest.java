@@ -21,6 +21,9 @@ import java.util.Map;
 import org.oidc.msg.AbstractMessage;
 import org.oidc.msg.ParameterVerification;
 
+/**
+ * A user info request message.
+ */
 public class UserInfoRequest extends AbstractMessage {
 
   {

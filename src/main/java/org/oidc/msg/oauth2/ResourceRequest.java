@@ -22,16 +22,26 @@ import java.util.Map;
 import org.oidc.msg.AbstractMessage;
 import org.oidc.msg.ParameterVerification;
 
+/**
+ * A generic resource request message containing access token.
+ */
 public class ResourceRequest extends AbstractMessage {
   
   { // Set parameter requirements for message.
     paramVerDefs.put("access_token", ParameterVerification.SINGLE_OPTIONAL_STRING.getValue());
   }
   
+  /**
+   * Constructor.
+   */
   public ResourceRequest() {
     this(new HashMap<String, Object>());
   }
   
+  /**
+   * Constructor.
+   * @param claims The message parameters.
+   */
   public ResourceRequest(Map<String, Object> claims) {
     super(claims);
   }

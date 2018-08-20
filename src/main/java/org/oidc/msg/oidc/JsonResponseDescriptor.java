@@ -36,10 +36,17 @@ public class JsonResponseDescriptor extends AbstractMessage {
     paramVerDefs.put("links", new ParameterVerificationDefinition(new LinksClaimValidator(), true));
   }
 
+  /**
+   * Constructor.
+   */
   public JsonResponseDescriptor() {
     this(new HashMap<String, Object>());
   }
 
+  /**
+   * Constructor.
+   * @param claims The message parameters.
+   */
   public JsonResponseDescriptor(Map<String, Object> claims) {
     super(claims);
   }

@@ -21,7 +21,9 @@ package org.oidc.msg;
  */
 public class ErrorDetails {
 
-  /** The parameter name whose verification failed. */
+  /** T   * @param message The message describing the exception.
+   * @param cause The cause for this exception.
+ */
   private String parameterName;
   
   /** The verification error type. */
@@ -33,18 +35,42 @@ public class ErrorDetails {
   /** The optional exception related to the verification failure. */
   private Throwable errorCause;
 
+  /**
+   * Constructor.
+   * @param parameter The parameter name whose verification failed.
+   * @param type The verification error type.
+   */
   public ErrorDetails(String parameter, ErrorType type) {
     this(parameter, type, null, null);
   }
-  
+
+  /**
+   * Constructor.
+   * @param parameter The parameter name whose verification failed.
+   * @param type The verification error type.
+   * @param message The optional message describing why verification failed.
+   */
   public ErrorDetails(String parameter, ErrorType type, String message) {
     this(parameter, type, message, null);
   }
 
+  /**
+   * Constructor.
+   * @param parameter The parameter name whose verification failed.
+   * @param type The verification error type.
+   * @param cause The optional exception related to the verification failure.
+   */
   public ErrorDetails(String parameter, ErrorType type, Throwable cause) {
     this(parameter, type, null, cause);
   }
 
+  /**
+   * Constructor.
+   * @param parameter The parameter name whose verification failed.
+   * @param type The verification error type.
+   * @param message The optional message describing why verification failed.
+   * @param cause The optional exception related to the verification failure.
+   */
   public ErrorDetails(String parameter, ErrorType type, String message, Throwable cause) {
     parameterName = parameter;
     errorType = type;
@@ -68,6 +94,7 @@ public class ErrorDetails {
     return errorCause;
   }
 
+  @Override
   public String toString() {
     StringBuilder builder = new StringBuilder("parameterName=" + parameterName);
     builder.append(", errorType=" + errorType);

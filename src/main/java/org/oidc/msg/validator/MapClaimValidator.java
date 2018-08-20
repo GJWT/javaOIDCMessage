@@ -26,6 +26,7 @@ import org.oidc.msg.InvalidClaimException;
  */
 public class MapClaimValidator implements ClaimValidator<Map<String, Object>> {
 
+  @SuppressWarnings("unchecked")
   @Override
   public Map<String, Object> validate(Object value) throws InvalidClaimException {
     if (value instanceof Map) {

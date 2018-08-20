@@ -59,10 +59,18 @@ public class ASConfigurationResponse extends ResponseMessage {
     defaultValues.put("version", "3.0");
   }
 
+  /**
+   * Constructor.
+   */
+
   public ASConfigurationResponse() {
     this(new HashMap<String, Object>());
   }
 
+  /**
+   * Constructor.
+   * @param claims The message parameters.
+   */
   public ASConfigurationResponse(Map<String, Object> claims) {
     super(claims);
     addDefaultValues();

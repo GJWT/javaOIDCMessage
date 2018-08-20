@@ -22,6 +22,9 @@ import java.util.Map;
 
 import org.oidc.msg.ParameterVerification;
 
+/**
+ * An OIDC access token request message.
+ */
 public class AccessTokenRequest extends org.oidc.msg.oauth2.AccessTokenRequest {
 
   { // Set parameter requirements for message.
@@ -33,10 +36,17 @@ public class AccessTokenRequest extends org.oidc.msg.oauth2.AccessTokenRequest {
         Arrays.asList("urn:ietf:params:oauth:client-assertion-type:jwt-bearer"));
   }
 
+  /**
+   * Constructor.
+   */
   public AccessTokenRequest() {
     this(new HashMap<String, Object>());
   }
 
+  /**
+   * Constructor.
+   * @param claims The message parameters.
+   */
   public AccessTokenRequest(Map<String, Object> claims) {
     super(claims);
     addDefaultValues();

@@ -29,8 +29,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.oidc.msg.BaseMessageTest;
 import org.oidc.msg.InvalidClaimException;
-
-
+import org.oidc.msg.SerializationException;
 
 /**
  * Unit tests for {@link AccessTokenResponse}.
@@ -43,7 +42,7 @@ public class AccessTokenResponseTest extends BaseMessageTest<AccessTokenResponse
   }
 
   @Test
-  public void testValidIdToken() throws InvalidClaimException, IllegalArgumentException, ImportException, UnknownKeyType, ValueError, IOException, JWKException {
+  public void testValidIdToken() throws InvalidClaimException, IllegalArgumentException, ImportException, UnknownKeyType, ValueError, IOException, JWKException, SerializationException {
     //TODO: check JWT signature also
     message.addClaim("access_token", "mockToken");
     message.addClaim("token_type", "mockType");

@@ -28,8 +28,12 @@ import org.oidc.msg.ErrorDetails;
 import org.oidc.msg.ErrorType;
 import org.oidc.msg.ParameterVerification;
 
+/**
+ * An OICD dynamic registration request message.
+ */
 public class RegistrationRequest extends AbstractMessage {
 
+  /** The default encryption (*_enc) value. */
   public static final String DEFAULT_ENC_VALUE = "A128CBC-HS256";
 
   { // Set parameter requirements for message.
@@ -86,10 +90,17 @@ public class RegistrationRequest extends AbstractMessage {
     allowedValues.put("subject_type", Arrays.asList("public", "pairwise"));
   }
 
+  /**
+   * Constructor.
+   */
   public RegistrationRequest() {
     this(new HashMap<String, Object>());
   }
 
+  /**
+   * Constructor.
+   * @param claims The message parameters.
+   */
   public RegistrationRequest(Map<String, Object> claims) {
     super(claims);
     addDefaultValues();

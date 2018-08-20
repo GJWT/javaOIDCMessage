@@ -21,6 +21,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.oidc.msg.InvalidClaimException;
 
+/**
+ * Unit tests for {@link StringClaimValidator}.
+ */
 public class StringClaimValidatorTest extends BaseClaimValidatorTest<StringClaimValidator> {
 
   @Before

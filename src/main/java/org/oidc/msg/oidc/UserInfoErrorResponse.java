@@ -21,6 +21,9 @@ import java.util.HashMap;
 import java.util.Map;
 import org.oidc.msg.oauth2.ResponseMessage;
 
+/**
+ * A user info error response message.
+ */
 public class UserInfoErrorResponse extends ResponseMessage {
 
   {

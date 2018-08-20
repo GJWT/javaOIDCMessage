@@ -37,10 +37,17 @@ public class Link extends AbstractMessage {
     paramVerDefs.put("properties", ParameterVerification.SINGLE_OPTIONAL_MAP.getValue());
   }
 
+  /**
+   * Constructor.
+   */
   public Link() {
     this(new HashMap<String, Object>());
   }
 
+  /**
+   * Constructor.
+   * @param claims The message parameters.
+   */
   public Link(Map<String, Object> claims) {
     super(claims);
   }

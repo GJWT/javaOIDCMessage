@@ -17,12 +17,13 @@
 package org.oidc.msg.oidc;
 
 import com.auth0.jwt.JWT;
+import com.auth0.jwt.exceptions.JWTDecodeException;
 import com.auth0.msg.KeyJar;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.oidc.msg.DeserializationException;
 import org.oidc.msg.ErrorDetails;
 import org.oidc.msg.ErrorType;
 import org.oidc.msg.ParameterVerification;
@@ -99,6 +100,7 @@ public class AuthenticationResponse extends AuthorizationResponse {
   @Override
   protected void doVerify() {
     if (getClaims().get("aud") != null && getClientId() != null) {
+      @SuppressWarnings("unchecked")
       List<String> aud = (List<String>) getClaims().get("aud");
       if (!aud.contains(getClientId())) {
         getError().getDetails().add(new ErrorDetails("aud", ErrorType.MISSING_REQUIRED_VALUE,
@@ -123,7 +125,7 @@ public class AuthenticationResponse extends AuthorizationResponse {
             getError().getDetails().add(details);
           }
         }
-      } catch (IOException e) {
+      } catch (DeserializationException | JWTDecodeException e) {
         getError().getDetails().add(new ErrorDetails("id_token", ErrorType.INVALID_VALUE_FORMAT,
             "Unable to verify id token signature", e));
       }

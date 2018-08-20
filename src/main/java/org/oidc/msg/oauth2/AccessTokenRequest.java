@@ -38,10 +38,17 @@ public class AccessTokenRequest extends AbstractMessage {
     defaultValues.put("grant_type", "authorization_code");
   }
   
+  /**
+   * Constructor.
+   */
   public AccessTokenRequest() {
     this(new HashMap<String, Object>());
   }
   
+  /**
+   * Constructor.
+   * @param claims The message parameters.
+   */
   public AccessTokenRequest(Map<String, Object> claims) {
     super(claims);
     addDefaultValues();
