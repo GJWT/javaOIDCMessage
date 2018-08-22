@@ -23,9 +23,11 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTDecodeException;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.exceptions.oicmsg_exceptions.JWKException;
+import com.auth0.jwt.exceptions.oicmsg_exceptions.SerializationNotPossible;
 import com.auth0.jwt.exceptions.oicmsg_exceptions.ValueError;
 import com.auth0.msg.Key;
 import com.auth0.msg.KeyJar;
+import com.auth0.msg.SYMKey;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -115,7 +117,6 @@ public abstract class AbstractMessage implements Message {
       jsonBuilder.append(
           value.startsWith("{") || value.startsWith("[") ? "\"" + value.replace("\"", "\\\"") + "\""
               : "\"" + value + "\"");
-      // jsonBuilder.append("\"" + value.replace("\"", "\\\"") + "\"");
       jsonBuilder.append(paramTokenizer.hasMoreTokens() ? "," : new String());
     }
     jsonBuilder.append("}");
@@ -155,8 +156,6 @@ public abstract class AbstractMessage implements Message {
         throw new SerializationException("Could not URL encode the parameter", e);
       }
     }
-    // String urlEncodedMsg =
-    // Base64.encodeBase64URLSafeString(jsonMsg.getBytes(StandardCharsets.UTF_8));
     return query.toString();
   }
 
@@ -366,11 +365,19 @@ public abstract class AbstractMessage implements Message {
         case "ES512":
           algorithm = Algorithm.ECDSA512(null, (ECPrivateKey) key.getKey(true));
           break;
+        case "HS256":
+          algorithm = Algorithm.HMAC256((String)((SYMKey) key).serialize(true).get("k"));
+          break;
+        case "HS384":
+          algorithm = Algorithm.HMAC384((String)((SYMKey) key).serialize(true).get("k"));
+          break;
+        case "HS512":
+          algorithm = Algorithm.HMAC512((String)((SYMKey) key).serialize(true).get("k"));
+          break;
         default:
           break;
-      // TODO: HMAC algorithms, are getting client secret also from key jar?
       }
-    } catch (IllegalArgumentException | ValueError e) {
+    } catch (IllegalArgumentException | ValueError | UnsupportedEncodingException | SerializationNotPossible e) {
       throw new SerializationException(String
           .format("Not able to initialize algorithm '%s' to sign JWT, '%s'", alg, e.getMessage()));
     }

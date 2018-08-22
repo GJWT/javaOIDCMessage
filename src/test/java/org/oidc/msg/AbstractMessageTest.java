@@ -27,6 +27,7 @@ import com.auth0.jwt.interfaces.DecodedJWT;
 import com.auth0.msg.Key;
 import com.auth0.msg.KeyJar;
 import com.auth0.msg.KeyType;
+import com.auth0.msg.SYMKey;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import java.io.IOException;
 import java.lang.reflect.Array;
@@ -159,6 +160,30 @@ public class AbstractMessageTest extends BaseMessageTest<AbstractMessage> {
         .build().verify(mockMessage.toJwt(keysSign.get(0), "RS512"));
     Assert.assertEquals("bar", jwt.getClaim("foo").asString());
     Assert.assertEquals("RS512", jwt.getHeaderClaim("alg").asString());
+  }
+  
+  @Test
+  public void testSuccessToJWTSignHS()
+      throws IllegalArgumentException, ImportException, UnknownKeyType, ValueError,
+      SerializationException, InvalidClaimException, IOException, JWKException {
+    String secret = "mockSharedSecret";
+    SYMKey key = new SYMKey("sig", secret);
+    HashMap<String, Object> claims = new HashMap<String, Object>();
+    claims.put("foo", "bar");
+    MockMessage mockMessage = new MockMessage(claims);
+    DecodedJWT jwt = JWT
+        .require(Algorithm.HMAC256(secret)).build()
+        .verify(mockMessage.toJwt(key, "HS256"));
+    Assert.assertEquals("bar", jwt.getClaim("foo").asString());
+    Assert.assertEquals("HS256", jwt.getHeaderClaim("alg").asString());
+    jwt = JWT.require(Algorithm.HMAC384(secret))
+        .build().verify(mockMessage.toJwt(key, "HS384"));
+    Assert.assertEquals("bar", jwt.getClaim("foo").asString());
+    Assert.assertEquals("HS384", jwt.getHeaderClaim("alg").asString());
+    jwt = JWT.require(Algorithm.HMAC512(secret))
+        .build().verify(mockMessage.toJwt(key, "HS512"));
+    Assert.assertEquals("bar", jwt.getClaim("foo").asString());
+    Assert.assertEquals("HS512", jwt.getHeaderClaim("alg").asString());
   }
  
   @Test
