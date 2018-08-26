@@ -44,6 +44,12 @@ public class AuthenticationResponse extends AuthorizationResponse {
   private long skew = 0;
   /** Whether to allow missing kid when searching jwt key for signing. */
   private boolean allowMissingKid;
+  /** Nonce storage time in seconds. */
+  private Long storageTime;
+  /** map of allowed kids for issuer. */
+  private Map<String, List<String>> noKidIssuers;
+  /** Whether to trust jku header. */
+  private boolean trustJku;
 
   {
     paramVerDefs.put("access_token", ParameterVerification.SINGLE_OPTIONAL_STRING.getValue());
@@ -79,6 +85,26 @@ public class AuthenticationResponse extends AuthorizationResponse {
   }
 
   /**
+   * Set map of allowed kids for issuer.
+   * 
+   * @param noKidIssuers
+   *          map of allowed kids for issuer
+   */
+  public void setNoKidIssuers(Map<String, List<String>> noKidIssuers) {
+    this.noKidIssuers = noKidIssuers;
+  }
+
+  /**
+   * Set whether to trust jku header.
+   * 
+   * @param trustJku
+   *          whether to trust jku header
+   */
+  public void setTrustJku(boolean trustJku) {
+    this.trustJku = trustJku;
+  }
+
+  /**
    * Set whether to allow missing kid when searching jwt key for signing.
    * 
    * @param allowMissingKid
@@ -108,6 +134,17 @@ public class AuthenticationResponse extends AuthorizationResponse {
     this.skew = skew;
   }
 
+  /**
+   * Set nonce storage time in seconds. Id token must not have been issued longer ago than nonce
+   * storage time is. Default is 4h.
+   * 
+   * @param storageTime
+   *          nonce storage time in seconds
+   */
+  public void setStorageTime(long storageTime) {
+    this.storageTime = storageTime;
+  }
+
   /** {@inheritDoc} */
   @Override
   protected void doVerify() {
@@ -121,17 +158,20 @@ public class AuthenticationResponse extends AuthorizationResponse {
     }
 
     // TODO: Still missing passing options for:
-    // 'encalg', 'encenc', 'sigalg','no_kid_issuer','trusting','nonce_storage_time' when compared to
-    // python impl.
+    // 'encalg', 'encenc', 'sigalg' ie. optionally set required algorithms for id token
+    // decr/signature verification.
 
     if (getClaims().get("id_token") != null) {
       IDToken idToken = new IDToken();
       idToken.setClientId(getClientId());
       idToken.setIssuer(getIssuer());
       idToken.setSkew(skew);
+      if (storageTime != null) {
+        idToken.setStorageTime(storageTime);
+      }
       try {
-        idToken.fromJwt((String) getClaims().get("id_token"), keyJar, getIssuer(), null,
-            allowMissingKid, true);
+        idToken.fromJwt((String) getClaims().get("id_token"), keyJar, getIssuer(), noKidIssuers,
+            allowMissingKid, trustJku);
         if (!idToken.verify()) {
           for (ErrorDetails idTokenErrorDetails : idToken.getError().getDetails()) {
             ErrorDetails details = new ErrorDetails("id_token", idTokenErrorDetails.getErrorType(),
