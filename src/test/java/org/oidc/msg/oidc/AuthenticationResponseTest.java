@@ -98,7 +98,7 @@ public class AuthenticationResponseTest extends BaseMessageTest<AuthenticationRe
     // response
     AuthenticationResponse respParsed = new AuthenticationResponse();
     respParsed.fromUrlEncoded(resp.toUrlEncoded());
-    respParsed.setKeyOwner(keyOwner);
+    respParsed.setIssuer(keyOwner);
     respParsed.setKeyJar(getKeyJarPub());
     Assert.assertTrue(respParsed.verify());
     // Second approach, validate id token after getting it from response
