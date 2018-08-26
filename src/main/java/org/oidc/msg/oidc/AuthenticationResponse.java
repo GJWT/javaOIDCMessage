@@ -77,6 +77,20 @@ public class AuthenticationResponse extends AuthorizationResponse {
     this(new HashMap<String, Object>());
   }
 
+  
+  /**
+   * Constructor.
+   * 
+   * @param claims
+   *          that form the response as detailed in
+   *          http://openid.net/specs/openid-connect-core-1_0.html#AuthResponse,
+   *          http://openid.net/specs/openid-connect-core-1_0.html#ImplicitAuthResponse,
+   *          http://openid.net/specs/openid-connect-core-1_0.html#HybridAuthResponse.
+   */
+  public AuthenticationResponse(Map<String, Object> claims) {
+    super(claims);
+  }
+
   /**
    * Set the allowed id token encryption key transport algorithm.
    * 
@@ -105,19 +119,6 @@ public class AuthenticationResponse extends AuthorizationResponse {
    */
   public void setSigAlg(String sigAlg) {
     this.sigAlg = sigAlg;
-  }
-
-  /**
-   * Constructor.
-   * 
-   * @param claims
-   *          that form the response as detailed in
-   *          http://openid.net/specs/openid-connect-core-1_0.html#AuthResponse,
-   *          http://openid.net/specs/openid-connect-core-1_0.html#ImplicitAuthResponse,
-   *          http://openid.net/specs/openid-connect-core-1_0.html#HybridAuthResponse.
-   */
-  public AuthenticationResponse(Map<String, Object> claims) {
-    super(claims);
   }
 
   /**
