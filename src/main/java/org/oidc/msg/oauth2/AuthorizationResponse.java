@@ -32,8 +32,6 @@ public class AuthorizationResponse extends ResponseMessage {
   {
     paramVerDefs.put("code", ParameterVerification.SINGLE_REQUIRED_STRING.getValue());
     paramVerDefs.put("state", ParameterVerification.SINGLE_OPTIONAL_STRING.getValue());
-    // TODO: Find out from RFC/Roland why iss and client_id are defined here as by first glance they
-    // should not be.
     paramVerDefs.put("iss", ParameterVerification.SINGLE_OPTIONAL_STRING.getValue());
     paramVerDefs.put("client_id", ParameterVerification.SINGLE_OPTIONAL_STRING.getValue());
   }
@@ -53,7 +51,9 @@ public class AuthorizationResponse extends ResponseMessage {
 
   /**
    * Constructor.
-   * @param claims The message parameters.
+   * 
+   * @param claims
+   *          The message parameters.
    */
   public AuthorizationResponse(Map<String, Object> claims) {
     super(claims);
@@ -67,6 +67,15 @@ public class AuthorizationResponse extends ResponseMessage {
    */
   public void setIssuer(String issuer) {
     this.issuer = issuer;
+  }
+
+  /**
+   * Get Issuer to match the response to.
+   * 
+   * @return Issuer to match the response to
+   */
+  public String getIssuer() {
+    return issuer;
   }
 
   /**
