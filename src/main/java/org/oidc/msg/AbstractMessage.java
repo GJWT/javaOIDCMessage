@@ -90,12 +90,14 @@ public abstract class AbstractMessage implements Message {
   /**
    * Constructs a message from the URL string.
    * 
-   * @param input The urlEncoded String representation of a message.
-   * @throws MalformedURLException Thrown if the message cannot be parsed from the input.
-   * @throws InvalidClaimException Thrown if the message content is invalid.
+   * @param input
+   *          The urlEncoded String representation of a message.
+   * @throws MalformedURLException
+   *           Thrown if the message cannot be parsed from the input.
+   * @throws InvalidClaimException
+   *           Thrown if the message content is invalid.
    */
-  public void fromUrlEncoded(String input)
-      throws MalformedURLException, DeserializationException {
+  public void fromUrlEncoded(String input) throws MalformedURLException, DeserializationException {
     if (Strings.isNullOrEmpty(input)) {
       return;
     }
@@ -104,7 +106,7 @@ public abstract class AbstractMessage implements Message {
     while (paramTokenizer.hasMoreTokens()) {
       String pair = paramTokenizer.nextToken();
       StringTokenizer pairTokenizer = new StringTokenizer(pair, "=");
- 
+
       String key;
       String value;
       try {
@@ -128,10 +130,10 @@ public abstract class AbstractMessage implements Message {
    * urlEncoded string.
    *
    * @return an urlEncoded string
-   * @throws SerializationException Thrown if message cannot be serialized.
+   * @throws SerializationException
+   *           Thrown if message cannot be serialized.
    */
-  public String toUrlEncoded()
-      throws SerializationException {
+  public String toUrlEncoded() throws SerializationException {
     if (claims.size() == 0) {
       return "";
     }
@@ -162,8 +164,10 @@ public abstract class AbstractMessage implements Message {
   /**
    * Constructs a message from the JSON string.
    * 
-   * @param input The JSON String representation of a message
-   * @throws InvalidClaimException Thrown if the message content is invalid.
+   * @param input
+   *          The JSON String representation of a message
+   * @throws InvalidClaimException
+   *           Thrown if the message content is invalid.
    */
   public void fromJson(String input) throws DeserializationException {
     Map<String, Object> newClaims;
@@ -182,7 +186,8 @@ public abstract class AbstractMessage implements Message {
    * json string.
    *
    * @return a JSON String representation in the form of a hashMap mapping string -> string
-   * @throws SerializationException Thrown if message cannot be serialized.
+   * @throws SerializationException
+   *           Thrown if message cannot be serialized.
    */
   public String toJson() throws SerializationException {
     SimpleModule module = new SimpleModule();
@@ -211,7 +216,7 @@ public abstract class AbstractMessage implements Message {
   public void fromJwt(String jwt, KeyJar keyJar, String keyOwner) throws DeserializationException {
     fromJwt(jwt, keyJar, keyOwner, null, true, true);
   }
-  
+
   /**
    * Constructs message from JWT.
    * 
@@ -228,12 +233,49 @@ public abstract class AbstractMessage implements Message {
    *          If jwt is missing kid, try any of the owners keys to verify jwt.
    * @param trustJKU
    *          Whether extending keyjar by JKU is allowed or not.
-   * @throws DeserializationException Thrown if the message content is invalid.
-   * @throws JWTDecodeException Thrown if the JWT cannot be decoded.
+   * @throws DeserializationException
+   *           Thrown if the message content is invalid.
+   * @throws JWTDecodeException
+   *           Thrown if the JWT cannot be decoded.
    */
   @SuppressWarnings("unchecked")
   public void fromJwt(String jwt, KeyJar keyJar, String keyOwner,
       Map<String, List<String>> noKidIssuers, boolean allowMissingKid, boolean trustJKU)
+      throws DeserializationException {
+    fromJwt(jwt, keyJar, keyOwner, noKidIssuers, allowMissingKid, trustJKU, null, null, null);
+  }
+
+  /**
+   * Constructs message from JWT.
+   * 
+   * @param jwt
+   *          the jwt String representation of a message
+   * @param keyJar
+   *          KeyJar having a key for verifying the signature. If null, signature is not verified.
+   * @param keyOwner
+   *          For whom the key belongs to.
+   * @param noKidIssuers
+   *          If jwt is missing kid, set the list of allowed kids in keyjar to verify jwt. if
+   *          allowMissingKid is set to true, list is not used.
+   * @param allowMissingKid
+   *          If jwt is missing kid, try any of the owners keys to verify jwt.
+   * @param trustJKU
+   *          Whether extending keyjar by JKU is allowed or not.
+   * @param encAlg
+   *          The allowed id token encryption key transport algorithm
+   * @param encEnc
+   *          The allowed id token encryption encryption algorithm
+   * @param sigAlg
+   *          The allowed id token signing algorithm
+   * @throws DeserializationException
+   *           Thrown if the message content is invalid.
+   * @throws JWTDecodeException
+   *           Thrown if the JWT cannot be decoded.
+   */
+  @SuppressWarnings("unchecked")
+  public void fromJwt(String jwt, KeyJar keyJar, String keyOwner,
+      Map<String, List<String>> noKidIssuers, boolean allowMissingKid, boolean trustJKU,
+      String encAlg, String encEnc, String sigAlg)
       throws DeserializationException, JWTDecodeException {
     String[] parts = MessageUtil.splitToken(jwt);
     String headerJson;
@@ -260,8 +302,11 @@ public abstract class AbstractMessage implements Message {
     if (header.get("alg") == null || !(header.get("alg") instanceof String)) {
       throw new JWTDecodeException("JWT does not have alg in header");
     }
-
     String alg = (String) header.get("alg");
+    if (sigAlg != null && !sigAlg.equals(alg)) {
+      throw new JWTDecodeException(String.format(
+          "JWT siging algorithm '%s' not matching the required algorithm '%s'", sigAlg, alg));
+    }
     if ("none".equals(alg)) {
       Algorithm algorithm = Algorithm.none();
       JWTVerifier verifier = JWT.require(algorithm).build();
@@ -366,18 +411,19 @@ public abstract class AbstractMessage implements Message {
           algorithm = Algorithm.ECDSA512(null, (ECPrivateKey) key.getKey(true));
           break;
         case "HS256":
-          algorithm = Algorithm.HMAC256((String)((SYMKey) key).serialize(true).get("k"));
+          algorithm = Algorithm.HMAC256((String) ((SYMKey) key).serialize(true).get("k"));
           break;
         case "HS384":
-          algorithm = Algorithm.HMAC384((String)((SYMKey) key).serialize(true).get("k"));
+          algorithm = Algorithm.HMAC384((String) ((SYMKey) key).serialize(true).get("k"));
           break;
         case "HS512":
-          algorithm = Algorithm.HMAC512((String)((SYMKey) key).serialize(true).get("k"));
+          algorithm = Algorithm.HMAC512((String) ((SYMKey) key).serialize(true).get("k"));
           break;
         default:
           break;
       }
-    } catch (IllegalArgumentException | ValueError | UnsupportedEncodingException | SerializationNotPossible e) {
+    } catch (IllegalArgumentException | ValueError | UnsupportedEncodingException
+        | SerializationNotPossible e) {
       throw new SerializationException(String
           .format("Not able to initialize algorithm '%s' to sign JWT, '%s'", alg, e.getMessage()));
     }
