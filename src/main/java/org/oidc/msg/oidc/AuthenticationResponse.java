@@ -40,8 +40,10 @@ public class AuthenticationResponse extends AuthorizationResponse {
 
   /** Key Jar for performing keys performing JWT verification. */
   private KeyJar keyJar;
-  /** Owner of the verification key in the Key Jar. */
-  private String keyOwner;
+  /** Skew in seconds for calculating if the id token has expired or not. */
+  private long skew = 0;
+  /** Whether to allow missing kid when searching jwt key for signing. */
+  private boolean allowMissingKid;
 
   {
     paramVerDefs.put("access_token", ParameterVerification.SINGLE_OPTIONAL_STRING.getValue());
@@ -77,6 +79,16 @@ public class AuthenticationResponse extends AuthorizationResponse {
   }
 
   /**
+   * Set whether to allow missing kid when searching jwt key for signing.
+   * 
+   * @param allowMissingKid
+   *          Whether to allow missing kid when searching jwt key for signing.
+   */
+  public void setAllowMissingKid(boolean allowMissingKid) {
+    this.allowMissingKid = allowMissingKid;
+  }
+
+  /**
    * Set Key Jar for JWT verification keys. If not set verification is not done.
    * 
    * @param keyJar
@@ -87,13 +99,13 @@ public class AuthenticationResponse extends AuthorizationResponse {
   }
 
   /**
-   * Set Owner of the JWT verification keys in Key Jar.
+   * Set Skew in seconds for calculating if the id token has expired or not.
    * 
-   * @param keyOwner
-   *          Owner of the JWT verification keys in Key Jar.
+   * @param skew
+   *          Skew in seconds for calculating if the id token has expired or not.
    */
-  public void setKeyOwner(String keyOwner) {
-    this.keyOwner = keyOwner;
+  public void setSkew(long skew) {
+    this.skew = skew;
   }
 
   /** {@inheritDoc} */
@@ -109,15 +121,17 @@ public class AuthenticationResponse extends AuthorizationResponse {
     }
 
     // TODO: Still missing passing options for:
-    // 'encalg', 'encenc', 'sigalg','issuer', 'allow_missing_kid', 'no_kid_issuer','trusting',
-    // 'skew', 'nonce_storage_time', 'client_id'.
-    // Python implementation passes some of them to fromJwt and some to verify in map structures.
-    //
+    // 'encalg', 'encenc', 'sigalg','no_kid_issuer','trusting','nonce_storage_time' when compared to
+    // python impl.
 
     if (getClaims().get("id_token") != null) {
       IDToken idToken = new IDToken();
+      idToken.setClientId(getClientId());
+      idToken.setIssuer(getIssuer());
+      idToken.setSkew(skew);
       try {
-        idToken.fromJwt((String) getClaims().get("id_token"), keyJar, keyOwner);
+        idToken.fromJwt((String) getClaims().get("id_token"), keyJar, getIssuer(), null,
+            allowMissingKid, true);
         if (!idToken.verify()) {
           for (ErrorDetails idTokenErrorDetails : idToken.getError().getDetails()) {
             ErrorDetails details = new ErrorDetails("id_token", idTokenErrorDetails.getErrorType(),
