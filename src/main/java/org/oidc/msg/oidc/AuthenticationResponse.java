@@ -50,6 +50,12 @@ public class AuthenticationResponse extends AuthorizationResponse {
   private Map<String, List<String>> noKidIssuers;
   /** Whether to trust jku header. */
   private boolean trustJku;
+  /** the allowed id token encryption key transport algorithm. */
+  private String encAlg;
+  /** the allowed id token encryption algorithm. */
+  private String encEnc;
+  /** the allowed id token signing algorithm. */
+  private String sigAlg;
 
   {
     paramVerDefs.put("access_token", ParameterVerification.SINGLE_OPTIONAL_STRING.getValue());
@@ -69,6 +75,36 @@ public class AuthenticationResponse extends AuthorizationResponse {
    */
   public AuthenticationResponse() {
     this(new HashMap<String, Object>());
+  }
+
+  /**
+   * Set the allowed id token encryption key transport algorithm.
+   * 
+   * @param encAlg
+   *          the allowed id token encryption key transport algorithm
+   */
+  public void setEncAlg(String encAlg) {
+    this.encAlg = encAlg;
+  }
+
+  /**
+   * Set the allowed id token encryption algorithm.
+   * 
+   * @param encEnc
+   *          the allowed id token encryption algorithm
+   */
+  public void setEncEnc(String encEnc) {
+    this.encEnc = encEnc;
+  }
+
+  /**
+   * Set the allowed id token signing algorithm.
+   * 
+   * @param sigAlg
+   *          the allowed id token signing algorithm
+   */
+  public void setSigAlg(String sigAlg) {
+    this.sigAlg = sigAlg;
   }
 
   /**
@@ -171,7 +207,7 @@ public class AuthenticationResponse extends AuthorizationResponse {
       }
       try {
         idToken.fromJwt((String) getClaims().get("id_token"), keyJar, getIssuer(), noKidIssuers,
-            allowMissingKid, trustJku);
+            allowMissingKid, trustJku, encAlg, encEnc, sigAlg);
         if (!idToken.verify()) {
           for (ErrorDetails idTokenErrorDetails : idToken.getError().getDetails()) {
             ErrorDetails details = new ErrorDetails("id_token", idTokenErrorDetails.getErrorType(),
