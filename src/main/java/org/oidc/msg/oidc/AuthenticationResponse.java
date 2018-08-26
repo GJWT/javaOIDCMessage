@@ -77,7 +77,6 @@ public class AuthenticationResponse extends AuthorizationResponse {
     this(new HashMap<String, Object>());
   }
 
-  
   /**
    * Constructor.
    * 
@@ -193,10 +192,6 @@ public class AuthenticationResponse extends AuthorizationResponse {
             "Client ID not included in audience"));
       }
     }
-
-    // TODO: Still missing passing options for:
-    // 'encalg', 'encenc', 'sigalg' ie. optionally set required algorithms for id token
-    // decr/signature verification.
 
     if (getClaims().get("id_token") != null) {
       IDToken idToken = new IDToken();
