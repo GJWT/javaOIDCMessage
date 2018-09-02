@@ -21,6 +21,7 @@ import org.oidc.msg.validator.BooleanClaimValidator;
 import org.oidc.msg.validator.DateClaimValidator;
 import org.oidc.msg.validator.IntClaimValidator;
 import org.oidc.msg.validator.JWTClaimValidator;
+import org.oidc.msg.validator.KeyClaimValidator;
 import org.oidc.msg.validator.ListClaimValidator;
 import org.oidc.msg.validator.MapClaimValidator;
 import org.oidc.msg.validator.MessageClaimValidator;
@@ -50,7 +51,9 @@ public enum ParameterVerification {
   SINGLE_REQUIRED_MESSAGE(new ParameterVerificationDefinition(new MessageClaimValidator(), true)), 
   SINGLE_OPTIONAL_MESSAGE(new ParameterVerificationDefinition(new MessageClaimValidator(), false)),
   SINGLE_REQUIRED_JWT(new ParameterVerificationDefinition(new JWTClaimValidator(), true)), 
-  SINGLE_OPTIONAL_JWT(new ParameterVerificationDefinition(new JWTClaimValidator(), false));
+  SINGLE_OPTIONAL_JWT(new ParameterVerificationDefinition(new JWTClaimValidator(), false)),
+  SINGLE_REQUIRED_KEY(new ParameterVerificationDefinition(new KeyClaimValidator(), true)), 
+  SINGLE_OPTIONAL_KEY(new ParameterVerificationDefinition(new KeyClaimValidator(), false));
   
  
   /** Verification definition. */
