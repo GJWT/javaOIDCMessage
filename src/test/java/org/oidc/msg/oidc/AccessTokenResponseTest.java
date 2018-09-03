@@ -48,7 +48,7 @@ public class AccessTokenResponseTest extends BaseMessageTest<AccessTokenResponse
     message.addClaim("token_type", "mockType");
     Key key = getKeyJarPrv().getSigningKey(KeyType.RSA.name(), keyOwner, null, null).get(0);
     String jwt = generateIdTokenNow(new HashMap<String, Object>(), key, "RS256");
-    message.setKeyOwner(keyOwner);
+    message.setIssuer(keyOwner);
     message.setKeyJar(getKeyJarPub());
     message.addClaim("id_token", jwt);
     Assert.assertTrue(message.verify());
