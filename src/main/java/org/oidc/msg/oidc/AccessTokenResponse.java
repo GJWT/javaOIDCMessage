@@ -169,20 +169,20 @@ public class AccessTokenResponse extends org.oidc.msg.oauth2.AccessTokenResponse
   }
 
   /**
-   * Set Issuer to use when verifying response.
+   * Set Issuer to use when verifying id token.
    * 
    * @param issuer
-   *          Issuer to match the response to.
+   *          Issuer to match the id token to.
    */
   public void setIssuer(String issuer) {
     this.issuer = issuer;
   }
 
   /**
-   * Set Client ID to use when verifying response.
+   * Set Client ID to use when verifying id token.
    * 
    * @param clientId
-   *          Client ID to match the response to.
+   *          Client ID to match the id token to.
    */
   public void setClientId(String clientId) {
     this.clientId = clientId;
