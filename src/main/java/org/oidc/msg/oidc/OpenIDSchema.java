@@ -19,15 +19,36 @@ package org.oidc.msg.oidc;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import org.oidc.msg.CryptoMessage;
 import org.oidc.msg.ErrorDetails;
 import org.oidc.msg.ErrorType;
 import org.oidc.msg.ParameterVerification;
 import org.oidc.msg.oauth2.ResponseMessage;
 
+import com.auth0.msg.KeyJar;
+
 /** Schema for claims presented in idtoken and userinfo response. */
-public class OpenIDSchema extends ResponseMessage {
+public class OpenIDSchema extends ResponseMessage implements CryptoMessage {
+
+  /** Key Jar for performing keys performing JWT verification. */
+  private KeyJar keyJar;
+  /** Whether to allow missing kid when searching jwt key for signing. */
+  private boolean allowMissingKid;
+  /** map of allowed kids for issuer. */
+  private Map<String, List<String>> noKidIssuers;
+  /** Whether to trust jku header. */
+  private boolean trustJku;
+  /** the allowed id token encryption key transport algorithm. */
+  private String encAlg;
+  /** the allowed id token encryption algorithm. */
+  private String encEnc;
+  /** the allowed id token signing algorithm. */
+  private String sigAlg;
+  /** the issuer of keys. */
+  private String issuer;
 
   { // Set parameter requirements for message.
     paramVerDefs.put("error", ParameterVerification.SINGLE_OPTIONAL_STRING.getValue());
@@ -101,5 +122,92 @@ public class OpenIDSchema extends ResponseMessage {
             String.format("Value of '%s' is null.", key)));
       }
     }
+  }
+
+  @Override
+  public void setEncAlg(String encAlg) {
+    this.encAlg = encAlg;
+
+  }
+
+  @Override
+  public String getEncAlg() {
+    return encAlg;
+  }
+
+  @Override
+  public void setEncEnc(String encEnc) {
+    this.encEnc = encEnc;
+
+  }
+
+  @Override
+  public String getEncEnc() {
+    return encEnc;
+  }
+
+  @Override
+  public void setSigAlg(String sigAlg) {
+    this.sigAlg = sigAlg;
+  }
+
+  @Override
+  public String getSigAlg() {
+    return sigAlg;
+  }
+
+  @Override
+  public void setNoKidIssuers(Map<String, List<String>> noKidIssuers) {
+    this.noKidIssuers = noKidIssuers;
+
+  }
+
+  @Override
+  public Map<String, List<String>> getNoKidIssuers() {
+    return noKidIssuers;
+  }
+
+  @Override
+  public void setTrustJku(boolean trustJku) {
+    this.trustJku = trustJku;
+
+  }
+
+  @Override
+  public boolean getTrustJku() {
+    return trustJku;
+  }
+
+  @Override
+  public void setAllowMissingKid(boolean allowMissingKid) {
+    this.allowMissingKid = allowMissingKid;
+
+  }
+
+  @Override
+  public boolean getAllowMissingKid() {
+    return allowMissingKid;
+  }
+
+  @Override
+  public void setKeyJar(KeyJar keyJar) {
+    this.keyJar = keyJar;
+
+  }
+
+  @Override
+  public KeyJar getKeyJar() {
+    return keyJar;
+  }
+
+  @Override
+  public void setIssuer(String issuer) {
+    this.issuer = issuer;
+
+  }
+
+  @Override
+  public String getIssuer() {
+    return issuer;
   }
 }
