@@ -20,12 +20,12 @@ import java.util.HashMap;
 import java.util.Map;
 import org.oidc.msg.AbstractMessage;
 
-public class ClaimNames extends AbstractMessage {
+public class GenericMessage extends AbstractMessage {
   
   /**
    * Constructor.
    */
-  public ClaimNames() {
+  public GenericMessage() {
     this(new HashMap<String, Object>());
   }
 
@@ -34,7 +34,7 @@ public class ClaimNames extends AbstractMessage {
    * 
    * @param claims claims request parameters.
    */
-  public ClaimNames(Map<String, Object> claims) {
+  public GenericMessage(Map<String, Object> claims) {
     super(claims);
   }
 
