@@ -44,7 +44,6 @@ public class AuthenticationRequest extends AuthorizationRequest {
     // Updating parameter requirements.
     paramVerDefs.put("redirect_uri", ParameterVerification.SINGLE_REQUIRED_STRING.getValue());
     paramVerDefs.put("scope", ParameterVerification.REQUIRED_LIST_OF_SP_SEP_STRINGS.getValue());
-    paramVerDefs.put("redirect_uri", ParameterVerification.SINGLE_REQUIRED_STRING.getValue());
     paramVerDefs.put("nonce", ParameterVerification.SINGLE_OPTIONAL_STRING.getValue());
     paramVerDefs.put("display", ParameterVerification.SINGLE_OPTIONAL_STRING.getValue());
     paramVerDefs.put("prompt", ParameterVerification.OPTIONAL_LIST_OF_SP_SEP_STRINGS.getValue());
