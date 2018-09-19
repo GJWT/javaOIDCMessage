@@ -26,7 +26,7 @@ import com.auth0.jwt.exceptions.oicmsg_exceptions.ValueError;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.auth0.msg.Key;
 import com.auth0.msg.KeyJar;
-import com.auth0.msg.KeyType;
+//import com.auth0.msg.KeyType;
 import com.auth0.msg.SYMKey;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import java.io.IOException;
@@ -142,8 +142,8 @@ public class AbstractMessageTest extends BaseMessageTest<AbstractMessage> {
   public void testSuccessToJWTSignRS()
       throws IllegalArgumentException, ImportException, UnknownKeyType, ValueError,
       SerializationException, InvalidClaimException, IOException, JWKException {
-    List<Key> keysSign = getKeyJarPrv().getSigningKey(KeyType.RSA.name(), keyOwner, null, null);
-    List<Key> keysVerify = getKeyJarPub().getVerifyKey(KeyType.RSA.name(), keyOwner, null, null);
+    List<Key> keysSign = getKeyJarPrv().getSigningKey("RSA", keyOwner, null, null);
+    List<Key> keysVerify = getKeyJarPub().getVerifyKey("RSA", keyOwner, null, null);
     HashMap<String, Object> claims = new HashMap<String, Object>();
     claims.put("foo", "bar");
     MockMessage mockMessage = new MockMessage(claims);

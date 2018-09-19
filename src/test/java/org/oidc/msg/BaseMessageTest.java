@@ -25,7 +25,6 @@ import com.auth0.jwt.exceptions.oicmsg_exceptions.ValueError;
 import com.auth0.msg.Key;
 import com.auth0.msg.KeyBundle;
 import com.auth0.msg.KeyJar;
-import com.auth0.msg.KeyType;
 
 import java.io.IOException;
 import java.security.interfaces.ECPrivateKey;
@@ -111,12 +110,12 @@ public abstract class BaseMessageTest<T extends AbstractMessage> {
       case "RS256":
       case "RS384":
       case "RS512":
-        keys = getKeyJarPrv().getSigningKey(KeyType.RSA.name(), keyOwner, null, null);
+        keys = getKeyJarPrv().getSigningKey("RSA", keyOwner, null, null);
         break;
       case "ES256":
       case "ES384":
       case "ES512":
-        keys = getKeyJarPrv().getSigningKey(KeyType.EC.name(), keyOwner, null, null);
+        keys = getKeyJarPrv().getSigningKey("EC", keyOwner, null, null);
         break;
       default:
         break;

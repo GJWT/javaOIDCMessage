@@ -21,7 +21,6 @@ import com.auth0.jwt.exceptions.oicmsg_exceptions.JWKException;
 import com.auth0.jwt.exceptions.oicmsg_exceptions.UnknownKeyType;
 import com.auth0.jwt.exceptions.oicmsg_exceptions.ValueError;
 import com.auth0.msg.Key;
-import com.auth0.msg.KeyType;
 import java.io.IOException;
 import java.util.HashMap;
 import org.junit.Assert;
@@ -46,7 +45,7 @@ public class AccessTokenResponseTest extends BaseMessageTest<AccessTokenResponse
     //TODO: check JWT signature also
     message.addClaim("access_token", "mockToken");
     message.addClaim("token_type", "mockType");
-    Key key = getKeyJarPrv().getSigningKey(KeyType.RSA.name(), keyOwner, null, null).get(0);
+    Key key = getKeyJarPrv().getSigningKey("RSA", keyOwner, null, null).get(0);
     String jwt = generateIdTokenNow(new HashMap<String, Object>(), key, "RS256");
     message.setIssuer(keyOwner);
     message.setKeyJar(getKeyJarPub());

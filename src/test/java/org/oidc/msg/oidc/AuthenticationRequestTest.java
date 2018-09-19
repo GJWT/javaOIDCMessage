@@ -16,13 +16,11 @@
 
 package org.oidc.msg.oidc;
 
-import com.auth0.jwt.exceptions.JWTDecodeException;
 import com.auth0.jwt.exceptions.oicmsg_exceptions.ImportException;
 import com.auth0.jwt.exceptions.oicmsg_exceptions.JWKException;
 import com.auth0.jwt.exceptions.oicmsg_exceptions.UnknownKeyType;
 import com.auth0.jwt.exceptions.oicmsg_exceptions.ValueError;
 import com.auth0.msg.Key;
-import com.auth0.msg.KeyType;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
@@ -144,7 +142,7 @@ public class AuthenticationRequestTest extends BaseMessageTest<AuthenticationReq
   public void testSuccessIdTokenHint() throws InvalidClaimException, IllegalArgumentException,
       ImportException, UnknownKeyType, ValueError, IOException, JWKException, SerializationException, DeserializationException {
     IDToken idTokenHint = getIDTokenHint();
-    List<Key> keysSign = getKeyJarPrv().getSigningKey(KeyType.RSA.name(), keyOwner, null, null);
+    List<Key> keysSign = getKeyJarPrv().getSigningKey("RSA", keyOwner, null, null);
     claims.put("id_token_hint", idTokenHint.toJwt(keysSign.get(0), "RS256"));
     AuthenticationRequest req = new AuthenticationRequest(claims);
     Assert.assertTrue(req.verify());
@@ -195,7 +193,7 @@ public class AuthenticationRequestTest extends BaseMessageTest<AuthenticationReq
     locales[2] = "en";
     claims.put("ui_locales", locales);
     IDToken idTokenHint = getIDTokenHint();
-    List<Key> keysSign = getKeyJarPrv().getSigningKey(KeyType.RSA.name(), keyOwner, null, null);
+    List<Key> keysSign = getKeyJarPrv().getSigningKey("RSA", keyOwner, null, null);
     claims.put("id_token_hint", idTokenHint.toJwt(keysSign.get(0), "RS256"));
     claims.put("login_hint", "user_is_bob");
     String[] acrs = new String[2];
