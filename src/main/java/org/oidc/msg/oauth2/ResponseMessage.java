@@ -42,9 +42,20 @@ public class ResponseMessage extends AbstractMessage {
 
   /**
    * Constructor.
-   * @param claims The message parameters.
+   * 
+   * @param claims
+   *          The message parameters.
    */
   public ResponseMessage(Map<String, Object> claims) {
     super(claims);
+  }
+
+  /**
+   * Whether the response message is a error response message.
+   * 
+   * @return Whether the response message is a error response message
+   */
+  public boolean indicatesErrorResponseMessage() {
+    return this.getClaims().containsKey("error");
   }
 }
