@@ -108,6 +108,7 @@ public class AuthenticationResponseTest extends BaseMessageTest<AuthenticationRe
     Assert.assertTrue(idToken.verify());
     // Finally assert we really have the same jwt
     Assert.assertEquals(jwt, (String) respParsed.getClaims().get("id_token"));
+    Assert.assertNotNull(respParsed.getVerifiedIdToken());
   }
 
   @Test

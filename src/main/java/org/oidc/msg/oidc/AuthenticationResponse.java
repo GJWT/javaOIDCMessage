@@ -56,6 +56,8 @@ public class AuthenticationResponse extends AuthorizationResponse {
   private String encEnc;
   /** the allowed id token signing algorithm. */
   private String sigAlg;
+  /** Verified id token. */
+  private IDToken verifiedIdToken;
 
   {
     paramVerDefs.put("access_token", ParameterVerification.SINGLE_OPTIONAL_STRING.getValue());
@@ -88,6 +90,15 @@ public class AuthenticationResponse extends AuthorizationResponse {
    */
   public AuthenticationResponse(Map<String, Object> claims) {
     super(claims);
+  }
+
+  /**
+   * Get verified id token.
+   * 
+   * @return verified id token
+   */
+  public IDToken getVerifiedIdToken() {
+    return verifiedIdToken;
   }
 
   /**
@@ -211,6 +222,7 @@ public class AuthenticationResponse extends AuthorizationResponse {
             getError().getDetails().add(details);
           }
         }
+        verifiedIdToken = idToken;
       } catch (DeserializationException | JWTDecodeException e) {
         getError().getDetails().add(new ErrorDetails("id_token", ErrorType.INVALID_VALUE_FORMAT,
             "Unable to verify id token signature", e));

@@ -55,6 +55,8 @@ public class AccessTokenResponse extends org.oidc.msg.oauth2.AccessTokenResponse
   private String issuer;
   /** Client ID to match the response to. */
   private String clientId;
+  /** Verified id token.*/
+  private IDToken verifiedIdToken;
 
   { // Set parameter requirements for message.
     paramVerDefs.put("id_token", ParameterVerification.SINGLE_OPTIONAL_JWT.getValue());
@@ -75,6 +77,14 @@ public class AccessTokenResponse extends org.oidc.msg.oauth2.AccessTokenResponse
    */
   public AccessTokenResponse(Map<String, Object> claims) {
     super(claims);
+  }
+  
+  /**
+   * Get verified id token.
+   * @return verified id token
+   */
+  public IDToken getVerifiedIdToken() {
+    return verifiedIdToken;
   }
 
   /**
@@ -209,6 +219,7 @@ public class AccessTokenResponse extends org.oidc.msg.oauth2.AccessTokenResponse
             getError().getDetails().add(details);
           }
         }
+        verifiedIdToken = idToken;
       } catch (DeserializationException | JWTDecodeException e) {
         getError().getDetails().add(new ErrorDetails("id_token", ErrorType.INVALID_VALUE_FORMAT,
             "Unable to verify id token signature", e));

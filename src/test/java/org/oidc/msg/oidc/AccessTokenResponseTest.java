@@ -54,6 +54,7 @@ public class AccessTokenResponseTest extends BaseMessageTest<AccessTokenResponse
     Assert.assertEquals("mockToken", message.getClaims().get("access_token"));
     Assert.assertEquals("mockType", message.getClaims().get("token_type"));
     Assert.assertEquals(jwt, message.getClaims().get("id_token"));
+    Assert.assertNotNull(message.getVerifiedIdToken());
   }
 
   @Test
@@ -62,6 +63,7 @@ public class AccessTokenResponseTest extends BaseMessageTest<AccessTokenResponse
     message.addClaim("token_type", "mockType");
     message.addClaim("id_token", "not_jwt");
     Assert.assertFalse(message.verify());
+    Assert.assertNull(message.getVerifiedIdToken());
   }
 
 }
