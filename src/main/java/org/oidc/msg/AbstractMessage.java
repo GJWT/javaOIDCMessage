@@ -238,7 +238,6 @@ public abstract class AbstractMessage implements Message {
    * @throws JWTDecodeException
    *           Thrown if the JWT cannot be decoded.
    */
-  @SuppressWarnings("unchecked")
   public void fromJwt(String jwt, KeyJar keyJar, String keyOwner,
       Map<String, List<String>> noKidIssuers, boolean allowMissingKid, boolean trustJKU)
       throws DeserializationException {
@@ -313,7 +312,7 @@ public abstract class AbstractMessage implements Message {
       verifier.verify(jwt);
       return;
     }
-    List<java.security.Key> keys;
+    List<Key> keys;
     try {
       keys = keyJar.getJWTVerifyKeys(jwt, keyOwner, noKidIssuers, allowMissingKid, trustJKU);
     } catch (JWKException | ValueError | IOException e) {
@@ -325,26 +324,70 @@ public abstract class AbstractMessage implements Message {
     }
     // We try each located key
     try {
-      for (java.security.Key key : keys) {
+      for (Key key : keys) {
+        java.security.Key decKey = null;
+        try {
+          decKey =  key.getKey(false);
+        } catch (ValueError e) {
+          throw new JWTDecodeException(String.format("Invalid key: '%s'", e.getMessage()));
+        }
+        switch (alg) {
+          case "RS256":
+          case "RS384":
+          case "RS512":
+            if (!(decKey instanceof RSAPublicKey)) {
+              continue;
+            }
+            break;
+          case "ES256":
+          case "ES384":
+          case "ES512":
+            if (!(decKey instanceof ECPublicKey)) {
+              continue;
+            }
+            break;
+          case "HS256":
+          case "HS384":
+          case "HS512":
+            if (!(decKey instanceof SYMKey)) {
+              continue;
+            }
+            break;
+          default:
+            break;
+        }
+        if (decKey == null) {
+          //key not suitable for the algorithm, move on
+          continue;
+        }
         Algorithm algorithm = null;
         switch (alg) {
           case "RS256":
-            algorithm = Algorithm.RSA256((RSAPublicKey) key, null);
+            algorithm = Algorithm.RSA256((RSAPublicKey) decKey, null);
             break;
           case "RS384":
-            algorithm = Algorithm.RSA384((RSAPublicKey) key, null);
+            algorithm = Algorithm.RSA384((RSAPublicKey) decKey, null);
             break;
           case "RS512":
-            algorithm = Algorithm.RSA512((RSAPublicKey) key, null);
+            algorithm = Algorithm.RSA512((RSAPublicKey) decKey, null);
             break;
           case "ES256":
-            algorithm = Algorithm.ECDSA256((ECPublicKey) key, null);
+            algorithm = Algorithm.ECDSA256((ECPublicKey) decKey, null);
             break;
           case "ES384":
-            algorithm = Algorithm.ECDSA384((ECPublicKey) key, null);
+            algorithm = Algorithm.ECDSA384((ECPublicKey) decKey, null);
             break;
           case "ES512":
-            algorithm = Algorithm.ECDSA512((ECPublicKey) key, null);
+            algorithm = Algorithm.ECDSA512((ECPublicKey) decKey, null);
+            break;
+          case "HS256":
+            algorithm = Algorithm.HMAC256((String) ((SYMKey) decKey).serialize(false).get("k"));
+            break;
+          case "HS384":
+            algorithm = Algorithm.HMAC384((String) ((SYMKey) decKey).serialize(false).get("k"));
+            break;
+          case "HS512":
+            algorithm = Algorithm.HMAC512((String) ((SYMKey) decKey).serialize(false).get("k"));
             break;
           default:
             break;
@@ -361,8 +404,9 @@ public abstract class AbstractMessage implements Message {
           continue;
         }
       }
-    } catch (IllegalArgumentException e) {
-      throw new JWTDecodeException("Key handling exception");
+    } catch (IllegalArgumentException | UnsupportedEncodingException | SerializationNotPossible e) {
+      throw new JWTDecodeException(
+          String.format("Key/Algorithmn handling exception '%s'", e.getMessage()));
     }
     throw new JWTDecodeException("Not able to verify JWT with any of the keys provided");
 
