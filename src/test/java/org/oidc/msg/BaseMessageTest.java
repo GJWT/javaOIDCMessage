@@ -48,6 +48,7 @@ public abstract class BaseMessageTest<T extends AbstractMessage> {
 
   private static final String PRIVATE_KEY_FILE = "src/test/resources/rsa-private.pem";
   private static final String PUBLIC_KEY_FILE = "src/test/resources/rsa-public.pem";
+  private static final String PUBLIC_KEY_FILE2 = "src/test/resources/rsa-public2.pem";
   //TODO: return keyOwner to https://issuer.example.com once edmund explains how parameter is used in getJWTVerifyKeys 
   protected String keyOwner = "https://issuer.example.com";
   protected KeyJar keyJarOfPrivateKeys = null;
@@ -192,6 +193,25 @@ public abstract class BaseMessageTest<T extends AbstractMessage> {
     KeyBundle keyBundlePub = KeyBundle.keyBundleFromLocalFile(PUBLIC_KEY_FILE, "der", usesPub);
     keyJarOfPublicKeys.addKeyBundle(keyOwner, keyBundlePub);
     return keyJarOfPublicKeys;
+  }
+  
+  /**
+   * Creates a second key jar with no corresponding private key.
+   * 
+   * @return keyjar
+   * @throws JWKException 
+   * @throws IOException 
+   * 
+   */
+  protected KeyJar getKeyJarPub2()
+      throws ImportException, UnknownKeyType, IllegalArgumentException, ValueError, IOException, JWKException {
+    KeyJar keyJarOfPublicKeys2 = new KeyJar();
+    ArrayList<String> usesPub = new ArrayList<String>();
+    usesPub.add("ver");
+    usesPub.add("enc");
+    KeyBundle keyBundlePub = KeyBundle.keyBundleFromLocalFile(PUBLIC_KEY_FILE2, "der", usesPub);
+    keyJarOfPublicKeys2.addKeyBundle(keyOwner, keyBundlePub);
+    return keyJarOfPublicKeys2;
   }
 
   /**
