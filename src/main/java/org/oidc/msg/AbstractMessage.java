@@ -55,6 +55,7 @@ import java.util.StringTokenizer;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.StringUtils;
+import org.oidc.msg.oidc.util.AlgorithmResolver;
 
 /**
  * This abstract class provides basic processing of messages.
@@ -421,62 +422,23 @@ public abstract class AbstractMessage implements Message {
    *          signing algorithm
    * @return message as jwt string.
    */
-  public String toJwt(Key key, String alg) throws SerializationException {
-
+  public String toJwt(Key key, String alg)
+      throws SerializationException {
     header = new HashMap<String, Object>();
     header.put("alg", alg);
     header.put("typ", "JWT");
     if (key != null && key.getKid() != null) {
       header.put("kid", key.getKid());
     }
-
     Algorithm algorithm = null;
     try {
-      switch (alg) {
-        case "none":
-          algorithm = Algorithm.none();
-          break;
-        case "RS256":
-          algorithm = Algorithm.RSA256(null, (RSAPrivateKey) key.getKey(true));
-          break;
-        case "RS384":
-          algorithm = Algorithm.RSA384(null, (RSAPrivateKey) key.getKey(true));
-          break;
-        case "RS512":
-          algorithm = Algorithm.RSA512(null, (RSAPrivateKey) key.getKey(true));
-          break;
-        case "ES256":
-          algorithm = Algorithm.ECDSA256(null, (ECPrivateKey) key.getKey(true));
-          break;
-        case "ES384":
-          algorithm = Algorithm.ECDSA384(null, (ECPrivateKey) key.getKey(true));
-          break;
-        case "ES512":
-          algorithm = Algorithm.ECDSA512(null, (ECPrivateKey) key.getKey(true));
-          break;
-        case "HS256":
-          algorithm = Algorithm.HMAC256((String) ((SYMKey) key).serialize(true).get("k"));
-          break;
-        case "HS384":
-          algorithm = Algorithm.HMAC384((String) ((SYMKey) key).serialize(true).get("k"));
-          break;
-        case "HS512":
-          algorithm = Algorithm.HMAC512((String) ((SYMKey) key).serialize(true).get("k"));
-          break;
-        default:
-          break;
-      }
+      algorithm = AlgorithmResolver.resolveSigningAlgorithm(key, alg);
     } catch (IllegalArgumentException | ValueError | UnsupportedEncodingException
         | SerializationNotPossible e) {
       throw new SerializationException(String
           .format("Not able to initialize algorithm '%s' to sign JWT, '%s'", alg, e.getMessage()));
     }
-    if (algorithm == null) {
-      throw new SerializationException(
-          String.format("Not able to initialize algorithm '%s' to sign JWT", alg));
-    }
     JWTCreator.Builder newBuilder = JWT.create().withHeader(this.header);
-
     for (String claimName : claims.keySet()) {
       Object value = claims.get(claimName);
       if (value instanceof Boolean) {
