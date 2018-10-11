@@ -25,7 +25,9 @@ import com.auth0.msg.RSAKey;
 import com.auth0.msg.SYMKey;
 import java.io.UnsupportedEncodingException;
 import java.security.interfaces.ECPrivateKey;
+import java.security.interfaces.ECPublicKey;
 import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
 
 public class AlgorithmResolver {
 
@@ -68,7 +70,7 @@ public class AlgorithmResolver {
     }
     return false;
   }
-
+  
   /**
    * Resolves signing algorithm for key and algorithm identifier string. 
    * @param key for signing.
@@ -113,4 +115,49 @@ public class AlgorithmResolver {
     }
     throw new ValueError(String.format("Algorithm '%s' not supported ", alg));
   }
+  
+  /**
+   * Resolves signature verification algorithm for key and algorithm identifier string. 
+   * @param key for signing.
+   * @param alg algorithm name.
+   * @return Algorithm instance
+   * @throws ValueError if key or algorithm is of unexpected type
+   * @throws UnsupportedEncodingException if symmetric key encoding fails
+   * @throws SerializationNotPossible if symmetric key fails to serialize
+   */
+  public static Algorithm resolveVerificationAlgorithm(Key key, String alg)
+      throws ValueError, UnsupportedEncodingException, SerializationNotPossible {
+    if (!verifyKeyType(key, alg)) {
+      throw new ValueError(String.format("key does not match algorithm '%s' ", alg));
+    }
+    if (key != null && !key.isPublicKey()) {
+      throw new ValueError(String.format("Verification key must be public"));
+    }
+    switch (alg) {
+      case "none":
+        return Algorithm.none();
+      case "RS256":
+        return Algorithm.RSA256((RSAPublicKey) key.getKey(false), null);
+      case "RS384":
+        return Algorithm.RSA384((RSAPublicKey) key.getKey(false), null);
+      case "RS512":
+        return Algorithm.RSA512((RSAPublicKey) key.getKey(false), null);
+      case "ES256":
+        return Algorithm.ECDSA256((ECPublicKey) key.getKey(false), null);
+      case "ES384":
+        return Algorithm.ECDSA384((ECPublicKey) key.getKey(false), null);
+      case "ES512":
+        return Algorithm.ECDSA512((ECPublicKey) key.getKey(false), null);
+      case "HS256":
+        return Algorithm.HMAC256((String) ((SYMKey) key).serialize(false).get("k"));
+      case "HS384":
+        return Algorithm.HMAC384((String) ((SYMKey) key).serialize(false).get("k"));
+      case "HS512":
+        return Algorithm.HMAC512((String) ((SYMKey) key).serialize(false).get("k"));
+      default:
+        break;
+    }
+    throw new ValueError(String.format("Algorithm '%s' not supported ", alg));
+  }
+  
 }
