@@ -19,6 +19,7 @@ package org.oidc.msg;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.JWTDecodeException;
 import com.auth0.jwt.exceptions.oicmsg_exceptions.ImportException;
 import com.auth0.jwt.exceptions.oicmsg_exceptions.JWKException;
 import com.auth0.jwt.exceptions.oicmsg_exceptions.UnknownKeyType;
@@ -233,6 +234,16 @@ public class AbstractMessageTest extends BaseMessageTest<AbstractMessage> {
     jwt = getSignedJwt("RS512");
     mockMessage.fromJwt(jwt, keyJar, keyOwner);
     Assert.assertEquals(mockMessage.getClaims().get("iss"), keyOwner);
+  }
+  
+  @Test(expected = JWTDecodeException.class)
+  public void testFailFromJWTSignVerifyRS() throws JWTDecodeException, InvalidClaimException, IllegalArgumentException,
+      IOException, ImportException, UnknownKeyType, ValueError, JWKException, DeserializationException {
+    HashMap<String, Object> claims = new HashMap<>();
+    MockMessage mockMessage = new MockMessage(claims);
+    String jwt = getSignedJwt("RS256");
+    KeyJar keyJar = getKeyJarPub2();
+    mockMessage.fromJwt(jwt, keyJar, keyOwner);
   }
   
   @Test
