@@ -47,6 +47,9 @@ public class AlgorithmResolver {
       case "RS256":
       case "RS384":
       case "RS512":
+      case "RSA1_5": 
+      case "RSA-OAEP":
+      case "RSA-OAEP-256":
         if (key instanceof RSAKey) {
           return true;
         }
@@ -61,6 +64,9 @@ public class AlgorithmResolver {
       case "HS256":
       case "HS384":
       case "HS512":
+      case "A128KW":
+      case "A192KW":  
+      case "A256KW":
         if (key instanceof SYMKey) {
           return true;
         }
@@ -154,6 +160,51 @@ public class AlgorithmResolver {
         return Algorithm.HMAC384((String) ((SYMKey) key).serialize(false).get("k"));
       case "HS512":
         return Algorithm.HMAC512((String) ((SYMKey) key).serialize(false).get("k"));
+      default:
+        break;
+    }
+    throw new ValueError(String.format("Algorithm '%s' not supported ", alg));
+  }
+  
+  /**
+   * Resolves key transport algorithm for key and algorithm identifier string. 
+   * @param key for signing.
+   * @param alg algorithm name.
+   * @return Algorithm instance
+   * @throws ValueError if key or algorithm is of unexpected type
+   * @throws UnsupportedEncodingException if symmetric key encoding fails
+   * @throws SerializationNotPossible if symmetric key fails to serialize
+   */
+  public static Algorithm resolveKeyTransportAlgorithm(Key key, String alg)
+      throws ValueError, UnsupportedEncodingException, SerializationNotPossible {
+    if (!verifyKeyType(key, alg)) {
+      throw new ValueError(String.format("key does not match algorithm '%s' ", alg));
+    }
+    if (key == null || !key.isPublicKey()) {
+      throw new ValueError(String.format("Key for key transport algorithm must be public"));
+    }
+    switch (alg) {
+      case "RSA1_5":
+        return Algorithm.RSA1_5((RSAPublicKey) key.getKey(false), null);
+      case "RSA-OAEP":
+        return Algorithm.RSAOAEP((RSAPublicKey) key.getKey(false), null);
+      case "RSA-OAEP-256":
+        return Algorithm.RSAOAEP256((RSAPublicKey) key.getKey(false), null);
+      case "A128KW":
+        return Algorithm.AES128Keywrap(((SYMKey) key).getKey(false).getEncoded());
+      case "A192KW":
+        return Algorithm.AES192Keywrap(((SYMKey) key).getKey(false).getEncoded());
+      case "A256KW":
+        return Algorithm.AES256Keywrap(((SYMKey) key).getKey(false).getEncoded());
+      /*
+       * TODO: rest of the algorithms requiring more parameters 
+       * case "ECDH-ES": 
+       * case "ECDH-ES+A128KW":
+       * case "ECDH-ES+A192KW": 
+       * case "ECDH-ES+A256KW": 
+       * ..return Algorithm.ECDH_ES((ECPublicKey) key.getKey(false)...); ... ...
+       * 
+       */
       default:
         break;
     }

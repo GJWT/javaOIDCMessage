@@ -18,8 +18,10 @@ package org.oidc.msg;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTCreator;
+import com.auth0.jwt.JWTEncryptor;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.algorithms.CipherParams;
 import com.auth0.jwt.exceptions.JWTDecodeException;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.exceptions.oicmsg_exceptions.JWKException;
@@ -341,23 +343,43 @@ public abstract class AbstractMessage implements Message {
   /**
    * Serialize the content of this instance (the claims map) into a jwt string.
    * 
-   * @param key
+   * @param signingKey
    *          signing key
    * @param alg
-   *          signing algorithm
+   *          signing algorithm name
+   * @return message as jwt string.
+   * @throws SerializationException 
+   */
+  public String toJwt(Key signingKey, String alg) throws SerializationException {
+    return toJwt(signingKey, alg, null, null, null);
+  }
+  /**
+   * Serialize the content of this instance (the claims map) into a jwt string.
+   * 
+   * @param signingKey
+   *          signing key
+   * @param alg
+   *          signing algorithm name
+   * @param transportKey
+   *          key transport key, if null encryption is not done.
+   * @param encAlg
+   *          key transport algorithm name. Must not be null if transportKey is set.
+   * @param encEnc
+   *          content encryption algorithm name. Must not be null if transportKey is set.
    * @return message as jwt string.
    */
-  public String toJwt(Key key, String alg)
+  
+  public String toJwt(Key signingKey, String alg, Key transportKey, String encAlg, String encEnc)
       throws SerializationException {
     header = new HashMap<String, Object>();
     header.put("alg", alg);
     header.put("typ", "JWT");
-    if (key != null && key.getKid() != null) {
-      header.put("kid", key.getKid());
+    if (signingKey != null && signingKey.getKid() != null) {
+      header.put("kid", signingKey.getKid());
     }
     Algorithm algorithm = null;
     try {
-      algorithm = AlgorithmResolver.resolveSigningAlgorithm(key, alg);
+      algorithm = AlgorithmResolver.resolveSigningAlgorithm(signingKey, alg);
     } catch (IllegalArgumentException | ValueError | UnsupportedEncodingException
         | SerializationNotPossible e) {
       throw new SerializationException(String
@@ -383,8 +405,24 @@ public abstract class AbstractMessage implements Message {
       }
 
     }
-    return newBuilder.sign(algorithm);
-
+    
+    String signedJwt = newBuilder.sign(algorithm);
+    if (transportKey == null) {
+      return signedJwt;
+    }
+    if (encAlg == null || encEnc == null) {
+      throw new SerializationException(
+          "encAlg and encEnc are mandatory parameters if transport key is set");
+    }
+    try {
+      return JWTEncryptor.init().withPayload(signedJwt.getBytes("UTF-8")).encrypt(
+          AlgorithmResolver.resolveKeyTransportAlgorithm(transportKey, encAlg),
+          Algorithm.getContentEncryptionAlg(encEnc, CipherParams.getInstance(encEnc)));
+    } catch (UnsupportedEncodingException | ValueError | SerializationNotPossible e) {
+      throw new SerializationException(
+          String.format("Not able to initialize key transport algorithm '%s' to encrypt JWS, '%s'",
+              encAlg, e.getMessage()));
+    }
   }
 
   /**

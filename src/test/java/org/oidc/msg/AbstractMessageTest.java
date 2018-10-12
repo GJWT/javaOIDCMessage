@@ -140,6 +140,20 @@ public class AbstractMessageTest extends BaseMessageTest<AbstractMessage> {
   }
   
   @Test
+  public void testSuccessToJWTEncryptInitialVersion()
+      throws IOException, InvalidClaimException, SerializationException, DeserializationException,
+      IllegalArgumentException, ImportException, UnknownKeyType, ValueError, JWKException {
+    //Initial test for jwt encryption. Not at all complete case.
+    HashMap<String, Object> claims = new HashMap<String, Object>();
+    claims.put("foo", "bar");
+    MockMessage mockMessage = new MockMessage(claims);
+    List<Key> keysDec = getKeyJarPrv().getDecryptKey("RSA", keyOwner, null, null);
+    List<Key> keysEnc = getKeyJarPub().getEncryptKey("RSA", keyOwner, null, null);
+    mockMessage.toJwt(keysDec.get(0), "RS256", keysEnc.get(0), "RSA1_5",
+        "A128CBC-HS256");
+  }
+  
+  @Test
   public void testSuccessToJWTSignRS()
       throws IllegalArgumentException, ImportException, UnknownKeyType, ValueError,
       SerializationException, InvalidClaimException, IOException, JWKException {
