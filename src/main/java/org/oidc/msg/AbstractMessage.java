@@ -106,7 +106,8 @@ public abstract class AbstractMessage implements Message {
       return;
     }
     StringBuilder jsonBuilder = new StringBuilder("{ ");
-    StringTokenizer paramTokenizer = new StringTokenizer(input.substring(1), "&");
+    StringTokenizer paramTokenizer = new StringTokenizer(
+        input.substring(input.startsWith("?") ? 1 : 0), "&");
     while (paramTokenizer.hasMoreTokens()) {
       String pair = paramTokenizer.nextToken();
       StringTokenizer pairTokenizer = new StringTokenizer(pair, "=");

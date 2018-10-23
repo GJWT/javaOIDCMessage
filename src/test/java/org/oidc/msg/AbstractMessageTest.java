@@ -32,6 +32,7 @@ import com.auth0.msg.SYMKey;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import java.io.IOException;
 import java.lang.reflect.Array;
+import java.net.MalformedURLException;
 import java.security.interfaces.RSAPublicKey;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -55,6 +56,17 @@ public class AbstractMessageTest extends BaseMessageTest<AbstractMessage> {
     message = new MockMessage();
   }
 
+  @Test
+  public void fromUrlEncodedRemoveQuestionMark()
+      throws MalformedURLException, DeserializationException {
+    MockMessage pcr = new MockMessage();
+    pcr.fromUrlEncoded("?key1=value1&key2=value2");
+    Assert.assertEquals("value1", pcr.getClaims().get("key1"));
+    Assert.assertEquals("value2", pcr.getClaims().get("key2"));
+    pcr.fromUrlEncoded("key1=value1&key2=value2");
+    Assert.assertEquals("value1", pcr.getClaims().get("key1"));
+    Assert.assertEquals("value2", pcr.getClaims().get("key2"));
+  }
   
   @Test
   public void testToAndFromUrlEncoded() throws Exception {
