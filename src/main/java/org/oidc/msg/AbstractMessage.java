@@ -150,7 +150,7 @@ public abstract class AbstractMessage implements Message {
     } catch (IOException e) {
       throw new SerializationException("Could not build the JSON", e);
     }
-    StringBuilder query = new StringBuilder("?");
+    StringBuilder query = new StringBuilder("");
     Iterator<String> keys = claims.keySet().iterator();
     while (keys.hasNext()) {
       String key = keys.next();
