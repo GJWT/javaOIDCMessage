@@ -111,12 +111,12 @@ public abstract class BaseMessageTest<T extends AbstractMessage> {
       case "RS256":
       case "RS384":
       case "RS512":
-        keys = getKeyJarPrv().getSigningKey("RSA", keyOwner, null, null);
+        keys = getKeyJar().getSigningKey("RSA", keyOwner, null, null);
         break;
       case "ES256":
       case "ES384":
       case "ES512":
-        keys = getKeyJarPrv().getSigningKey("EC", keyOwner, null, null);
+        keys = getKeyJar().getSigningKey("EC", keyOwner, null, null);
         break;
       default:
         break;
@@ -159,7 +159,7 @@ public abstract class BaseMessageTest<T extends AbstractMessage> {
    * @throws IOException 
    * 
    */
-  protected KeyJar getKeyJarPrv()
+  protected KeyJar getKeyJar()
       throws ImportException, UnknownKeyType, IllegalArgumentException, ValueError, IOException, JWKException {
     if (keyJarOfPrivateKeys != null) {
       return keyJarOfPrivateKeys;
@@ -170,6 +170,11 @@ public abstract class BaseMessageTest<T extends AbstractMessage> {
     usesPrv.add("dec");
     KeyBundle keyBundlePrv = KeyBundle.keyBundleFromLocalFile(PRIVATE_KEY_FILE, "der", usesPrv);
     keyJarOfPrivateKeys.addKeyBundle(keyOwner, keyBundlePrv);
+    ArrayList<String> usesPub = new ArrayList<String>();
+    usesPub.add("ver");
+    usesPub.add("enc");
+    KeyBundle keyBundlePub = KeyBundle.keyBundleFromLocalFile(PUBLIC_KEY_FILE, "der", usesPub);
+    keyJarOfPrivateKeys.addKeyBundle(keyOwner, keyBundlePub);
     return keyJarOfPrivateKeys;
   }
 

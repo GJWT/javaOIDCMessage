@@ -45,7 +45,7 @@ public class AccessTokenResponseTest extends BaseMessageTest<AccessTokenResponse
     //TODO: check JWT signature also
     message.addClaim("access_token", "mockToken");
     message.addClaim("token_type", "mockType");
-    Key key = getKeyJarPrv().getSigningKey("RSA", keyOwner, null, null).get(0);
+    Key key = getKeyJar().getSigningKey("RSA", keyOwner, null, null).get(0);
     String jwt = generateIdTokenNow(new HashMap<String, Object>(), key, "RS256");
     message.setIssuer(keyOwner);
     message.setKeyJar(getKeyJarPub());

@@ -88,7 +88,7 @@ public class AuthenticationResponseTest extends BaseMessageTest<AuthenticationRe
   public void testSuccessValidIdToken() throws InvalidClaimException, IllegalArgumentException,
       ImportException, UnknownKeyType, ValueError, IOException, SerializationException, JWKException, DeserializationException {
     // Add id token to response as OP would propably add
-    Key key = getKeyJarPrv().getSigningKey("RSA", keyOwner, null, null).get(0);
+    Key key = getKeyJar().getSigningKey("RSA", keyOwner, null, null).get(0);
     String jwt = generateIdTokenNow(new HashMap<String, Object>(), key, "RS256");
     AuthenticationResponse resp = new AuthenticationResponse();
     resp.addClaim("id_token", jwt);
@@ -115,7 +115,7 @@ public class AuthenticationResponseTest extends BaseMessageTest<AuthenticationRe
   public void testCHashMissingFailure() throws InvalidClaimException, IllegalArgumentException,
       ImportException, UnknownKeyType, ValueError, IOException, SerializationException, JWKException {
     String code = "AUTHORIZATION_CODE";
-    Key key = getKeyJarPrv().getSigningKey("RSA", keyOwner, null, null).get(0);
+    Key key = getKeyJar().getSigningKey("RSA", keyOwner, null, null).get(0);
     HashMap<String, Object> claims = new HashMap<String, Object>();
     String jwt = generateIdTokenNow(claims, key, "RS256");
     AuthenticationResponse resp = new AuthenticationResponse();
@@ -128,7 +128,7 @@ public class AuthenticationResponseTest extends BaseMessageTest<AuthenticationRe
   public void testCHashInvalidFailure() throws InvalidClaimException, IllegalArgumentException,
       ImportException, UnknownKeyType, ValueError, IOException, SerializationException, JWKException {
     String code = "AUTHORIZATION_CODE";
-    Key key = getKeyJarPrv().getSigningKey("RSA", keyOwner, null, null).get(0);
+    Key key = getKeyJar().getSigningKey("RSA", keyOwner, null, null).get(0);
     HashMap<String, Object> claims = new HashMap<String, Object>();
     claims.put("c_hash", "BADGUESS");
     String jwt = generateIdTokenNow(claims, key, "RS256");
@@ -142,7 +142,7 @@ public class AuthenticationResponseTest extends BaseMessageTest<AuthenticationRe
   public void testCHashSuccess() throws InvalidClaimException, IllegalArgumentException,
       ImportException, UnknownKeyType, ValueError, IOException, SerializationException, JWKException {
     String code = "AUTHORIZATION_CODE";
-    Key key = getKeyJarPrv().getSigningKey("RSA", keyOwner, null, null).get(0);
+    Key key = getKeyJar().getSigningKey("RSA", keyOwner, null, null).get(0);
     HashMap<String, Object> claims = new HashMap<String, Object>();
     claims.put("c_hash", TokenHash.compute(code, "RS256"));
     String jwt = generateIdTokenNow(claims, key, "RS256");
@@ -156,7 +156,7 @@ public class AuthenticationResponseTest extends BaseMessageTest<AuthenticationRe
   public void testAtHashMissingFailure() throws InvalidClaimException, IllegalArgumentException,
       ImportException, UnknownKeyType, ValueError, IOException, SerializationException, JWKException {
     String accessToken = "ACCESS_TOKEN";
-    Key key = getKeyJarPrv().getSigningKey("RSA", keyOwner, null, null).get(0);
+    Key key = getKeyJar().getSigningKey("RSA", keyOwner, null, null).get(0);
     HashMap<String, Object> claims = new HashMap<String, Object>();
     String jwt = generateIdTokenNow(claims, key, "RS256");
     AuthenticationResponse resp = new AuthenticationResponse();
@@ -169,7 +169,7 @@ public class AuthenticationResponseTest extends BaseMessageTest<AuthenticationRe
   public void testAtHashInvalidFailure() throws InvalidClaimException, IllegalArgumentException,
       ImportException, UnknownKeyType, ValueError, IOException, SerializationException, JWKException {
     String accessToken = "ACCESS_TOKEN";
-    Key key = getKeyJarPrv().getSigningKey("RSA", keyOwner, null, null).get(0);
+    Key key = getKeyJar().getSigningKey("RSA", keyOwner, null, null).get(0);
     HashMap<String, Object> claims = new HashMap<String, Object>();
     claims.put("at_hash", "BADGUESS");
     String jwt = generateIdTokenNow(claims, key, "RS256");
@@ -183,7 +183,7 @@ public class AuthenticationResponseTest extends BaseMessageTest<AuthenticationRe
   public void testAtHashSuccess() throws InvalidClaimException, IllegalArgumentException,
       ImportException, UnknownKeyType, ValueError, IOException, SerializationException, JWKException {
     String accessToken = "ACCESS_TOKEN";
-    Key key = getKeyJarPrv().getSigningKey("RSA", keyOwner, null, null).get(0);
+    Key key = getKeyJar().getSigningKey("RSA", keyOwner, null, null).get(0);
     HashMap<String, Object> claims = new HashMap<String, Object>();
     claims.put("at_hash", TokenHash.compute(accessToken, "RS256"));
     String jwt = generateIdTokenNow(claims, key, "RS256");
