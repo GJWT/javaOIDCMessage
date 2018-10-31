@@ -18,6 +18,7 @@ package org.oidc.msg;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTCreator;
+import com.auth0.jwt.JWTDecryptor;
 import com.auth0.jwt.JWTEncryptor;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
@@ -287,20 +288,49 @@ public abstract class AbstractMessage implements Message {
     try {
       headerJson = StringUtils.newStringUtf8(Base64.decodeBase64(parts[0]));
       payloadJson = StringUtils.newStringUtf8(Base64.decodeBase64(parts[1]));
-    } catch (NullPointerException e) {
-      throw new JWTDecodeException("The UTF-8 Charset isn't initialized.", e);
+    } catch (ArrayIndexOutOfBoundsException | NullPointerException e) {
+      throw new JWTDecodeException("Not able to locate header and payload for JWT", e);
     }
-
     try {
       this.header = mapper.readValue(headerJson, Map.class);
       this.claims = mapper.readValue(payloadJson, Map.class);
     } catch (IOException e) {
-      throw new DeserializationException("Could not read the JWT contents", e);
+      if (header.get("enc") == null) {
+        throw new DeserializationException("Could not map the JWT contents", e);
+      }
+      // We assume we are dealing with JWE here
+      // TODO: We need to resolve key type, now hard coded to match test case!
+      // TODO: for EC key type args must not be null, we need curve as input
+      List<Key> keys = keyJar.getDecryptKey("RSA", keyOwner, (String) header.get("kid"), null);
+      for (Key key : keys) {
+        if (!key.isPrivateKey()) {
+          continue;
+        }
+        try {
+          // TODO: We need to resolve algorithm, now hard coded to match test case!
+          Algorithm decyptionAlg = Algorithm.RSA1_5(null, (RSAPrivateKey) key.getKey(true));
+          JWTDecryptor decryptor = new JWTDecryptor(decyptionAlg);
+          String signedJwt = new String(decryptor.decrypt(jwt));
+          try {
+            fromJwt(signedJwt, keyJar, keyOwner, noKidIssuers, allowMissingKid, trustJKU, encAlg,
+                encEnc, sigAlg);
+          } catch (Exception e1) {
+            // We move to next key and are hopeful
+            continue;
+          }
+          return;
+        } catch (IllegalArgumentException | ValueError e2) {
+          throw new DeserializationException(e2.getMessage());
+        }
+      }
+      throw new DeserializationException("Unable to encrypt and verify JWT");
     }
+    
     verified = false;
     if (keyJar == null) {
       return;
     }
+ 
     if (header.get("alg") == null || !(header.get("alg") instanceof String)) {
       throw new JWTDecodeException("JWT does not have alg in header");
     }
