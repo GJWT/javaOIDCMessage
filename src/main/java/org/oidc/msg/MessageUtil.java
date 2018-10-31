@@ -22,7 +22,7 @@ import com.auth0.jwt.exceptions.JWTDecodeException;
  * Collection of utility methods related to messages.
  */
 public final class MessageUtil {
-  
+
   private MessageUtil() {
     // no op
   }
@@ -32,7 +32,7 @@ public final class MessageUtil {
    *
    * @param token
    *          the string to split.
-   * @return the array representing the 3 parts of the token.
+   * @return the array representing the 3or more parts of the token.
    * @throws JWTDecodeException
    *           if the Token doesn't have 3 parts.
    */
@@ -42,10 +42,11 @@ public final class MessageUtil {
       // Tokens with alg='none' have empty String as Signature.
       parts = new String[] { parts[0], parts[1], "" };
     }
-    if (parts.length != 3) {
-      throw new JWTDecodeException(
-          String.format("The token was expected to have 3 parts, but got %s.", parts.length));
+    if (parts.length < 3) {
+      throw new JWTDecodeException(String
+          .format("The token was expected to have atleast 3 parts, but got %s.", parts.length));
     }
+
     return parts;
   }
 }
