@@ -17,6 +17,7 @@
 package org.oidc.msg;
 
 import com.auth0.jwt.JWT;
+import com.auth0.jwt.JWTDecryptor;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTDecodeException;
@@ -33,6 +34,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.net.MalformedURLException;
+import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -42,6 +44,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.hamcrest.CoreMatchers;
+import org.hamcrest.Matcher;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -152,24 +155,27 @@ public class AbstractMessageTest extends BaseMessageTest<AbstractMessage> {
   }
   
   @Test
-  public void testSuccessToJWTEncryptInitialVersion()
+  public void testSuccessToJWTEncrypt()
       throws IOException, InvalidClaimException, SerializationException, DeserializationException,
       IllegalArgumentException, ImportException, UnknownKeyType, ValueError, JWKException {
     //Initial test for jwt encryption. Not at all complete case.
     HashMap<String, Object> claims = new HashMap<String, Object>();
     claims.put("foo", "bar");
     MockMessage mockMessage = new MockMessage(claims);
-    List<Key> keysDec = getKeyJarPrv().getDecryptKey("RSA", keyOwner, null, null);
+    List<Key> keysDec = getKeyJar().getDecryptKey("RSA", keyOwner, null, null);
     List<Key> keysEnc = getKeyJarPub().getEncryptKey("RSA", keyOwner, null, null);
-    mockMessage.toJwt(keysDec.get(0), "RS256", keysEnc.get(0), "RSA1_5",
+    String signedAndEncryptedJwt=mockMessage.toJwt(keysDec.get(0), "RS256", keysEnc.get(0), "RSA1_5",
         "A128CBC-HS256");
+    MockMessage mockMessage2 = new MockMessage();
+    mockMessage2.fromJwt(signedAndEncryptedJwt, getKeyJar(), keyOwner);
+   
   }
   
   @Test
   public void testSuccessToJWTSignRS()
       throws IllegalArgumentException, ImportException, UnknownKeyType, ValueError,
       SerializationException, InvalidClaimException, IOException, JWKException {
-    List<Key> keysSign = getKeyJarPrv().getSigningKey("RSA", keyOwner, null, null);
+    List<Key> keysSign = getKeyJar().getSigningKey("RSA", keyOwner, null, null);
     List<Key> keysVerify = getKeyJarPub().getVerifyKey("RSA", keyOwner, null, null);
     HashMap<String, Object> claims = new HashMap<String, Object>();
     claims.put("foo", "bar");
