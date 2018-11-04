@@ -154,20 +154,34 @@ public class AbstractMessageTest extends BaseMessageTest<AbstractMessage> {
         CoreMatchers.is(mockMessage2.getClaims().get("foo4")));
   }
   
-  @Test
-  public void testSuccessToJWTEncrypt()
+  private void testSuccessJWTEncryptDecrypt(String alg, String encAlg, String encEnc)
       throws IOException, InvalidClaimException, SerializationException, DeserializationException,
       IllegalArgumentException, ImportException, UnknownKeyType, ValueError, JWKException {
     //Initial test for jwt encryption. Not at all complete case.
     HashMap<String, Object> claims = new HashMap<String, Object>();
     claims.put("foo", "bar");
     MockMessage mockMessage = new MockMessage(claims);
-    List<Key> keysDec = getKeyJar().getDecryptKey("RSA", keyOwner, null, null);
-    List<Key> keysEnc = getKeyJarPub().getEncryptKey("RSA", keyOwner, null, null);
-    String signedAndEncryptedJwt=mockMessage.toJwt(keysDec.get(0), "RS256", keysEnc.get(0), "RSA1_5",
-        "A128CBC-HS256");
+    List<Key> keysDec = getKeyJar().getDecryptKey(null, keyOwner, null, null);
+    List<Key> keysEnc = getKeyJarPub().getEncryptKey(null, keyOwner, null, null);
+    String signedAndEncryptedJwt=mockMessage.toJwt(keysDec.get(0), alg, keysEnc.get(0), encAlg,
+        encEnc);
     MockMessage mockMessage2 = new MockMessage();
     mockMessage2.fromJwt(signedAndEncryptedJwt, getKeyJar(), keyOwner);
+    Assert.assertEquals("bar",  mockMessage2.getClaims().get("foo"));
+   
+  }
+  
+  @Test
+  public void testSuccessJWTEncryptDecrypt1()
+      throws IOException, InvalidClaimException, SerializationException, DeserializationException,
+      IllegalArgumentException, ImportException, UnknownKeyType, ValueError, JWKException {
+    
+    testSuccessJWTEncryptDecrypt("RS256","RSA1_5","A128CBC-HS256");
+    testSuccessJWTEncryptDecrypt("RS384","RSA-OAEP","A192CBC-HS384");
+    testSuccessJWTEncryptDecrypt("RS512","RSA-OAEP-256","A256CBC-HS512");
+    testSuccessJWTEncryptDecrypt("RS256","RSA1_5","A128GCM");
+    testSuccessJWTEncryptDecrypt("RS384","RSA-OAEP","A192GCM");
+    testSuccessJWTEncryptDecrypt("RS512","RSA-OAEP-256","A256GCM");
    
   }
   

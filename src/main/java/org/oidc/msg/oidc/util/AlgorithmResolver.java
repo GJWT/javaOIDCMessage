@@ -167,7 +167,7 @@ public class AlgorithmResolver {
   }
   
   /**
-   * Resolves key transport algorithm for key and algorithm identifier string. 
+   * Resolves key transport algorithm by key and algorithm identifier string. 
    * @param key for signing.
    * @param alg algorithm name.
    * @return Algorithm instance
@@ -175,7 +175,7 @@ public class AlgorithmResolver {
    * @throws UnsupportedEncodingException if symmetric key encoding fails
    * @throws SerializationNotPossible if symmetric key fails to serialize
    */
-  public static Algorithm resolveKeyTransportAlgorithm(Key key, String alg)
+  public static Algorithm resolveKeyTransportAlgorithmForEncryption(Key key, String alg)
       throws ValueError, UnsupportedEncodingException, SerializationNotPossible {
     if (!verifyKeyType(key, alg)) {
       throw new ValueError(String.format("key does not match algorithm '%s' ", alg));
@@ -196,6 +196,51 @@ public class AlgorithmResolver {
         return Algorithm.AES192Keywrap(((SYMKey) key).getKey(false).getEncoded());
       case "A256KW":
         return Algorithm.AES256Keywrap(((SYMKey) key).getKey(false).getEncoded());
+      /*
+       * TODO: rest of the algorithms requiring more parameters 
+       * case "ECDH-ES": 
+       * case "ECDH-ES+A128KW":
+       * case "ECDH-ES+A192KW": 
+       * case "ECDH-ES+A256KW": 
+       * ..return Algorithm.ECDH_ES((ECPublicKey) key.getKey(false)...); ... ...
+       * 
+       */
+      default:
+        break;
+    }
+    throw new ValueError(String.format("Algorithm '%s' not supported ", alg));
+  }
+  
+  /**
+   * Resolves key transport algorithm by key and algorithm identifier string. 
+   * @param key for signing.
+   * @param alg algorithm name.
+   * @return Algorithm instance
+   * @throws ValueError if key or algorithm is of unexpected type
+   * @throws UnsupportedEncodingException if symmetric key encoding fails
+   * @throws SerializationNotPossible if symmetric key fails to serialize
+   */
+  public static Algorithm resolveKeyTransportAlgorithmForDecryption(Key key, String alg)
+      throws ValueError, UnsupportedEncodingException, SerializationNotPossible {
+    if (!verifyKeyType(key, alg)) {
+      throw new ValueError(String.format("key does not match algorithm '%s' ", alg));
+    }
+    if (key == null || !key.isPrivateKey()) {
+      throw new ValueError(String.format("Key for key transport algorithm must be private"));
+    }
+    switch (alg) {
+      case "RSA1_5":
+        return Algorithm.RSA1_5(null,(RSAPrivateKey) key.getKey(true));
+      case "RSA-OAEP":
+        return Algorithm.RSAOAEP(null,(RSAPrivateKey) key.getKey(true));
+      case "RSA-OAEP-256":
+        return Algorithm.RSAOAEP256(null,(RSAPrivateKey) key.getKey(true));
+      case "A128KW":
+        return Algorithm.AES128Keywrap(((SYMKey) key).getKey(true).getEncoded());
+      case "A192KW":
+        return Algorithm.AES192Keywrap(((SYMKey) key).getKey(true).getEncoded());
+      case "A256KW":
+        return Algorithm.AES256Keywrap(((SYMKey) key).getKey(true).getEncoded());
       /*
        * TODO: rest of the algorithms requiring more parameters 
        * case "ECDH-ES": 

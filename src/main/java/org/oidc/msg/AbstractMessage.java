@@ -33,9 +33,11 @@ import com.auth0.msg.Key;
 import com.auth0.msg.KeyJar;
 import com.auth0.msg.SYMKey;
 import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
@@ -250,6 +252,7 @@ public abstract class AbstractMessage implements Message {
     fromJwt(jwt, keyJar, keyOwner, noKidIssuers, allowMissingKid, trustJKU, null, null, null);
   }
 
+  
   /**
    * Constructs message from JWT.
    * 
@@ -272,65 +275,23 @@ public abstract class AbstractMessage implements Message {
    *          The allowed id token encryption encryption algorithm
    * @param sigAlg
    *          The allowed id token signing algorithm
-   * @throws DeserializationException
-   *           Thrown if the message content is invalid.
    * @throws JWTDecodeException
    *           Thrown if the JWT cannot be decoded.
    */
-  @SuppressWarnings("unchecked")
   public void fromJwt(String jwt, KeyJar keyJar, String keyOwner,
       Map<String, List<String>> noKidIssuers, boolean allowMissingKid, boolean trustJKU,
-      String encAlg, String encEnc, String sigAlg)
-      throws DeserializationException, JWTDecodeException {
-    String[] parts = MessageUtil.splitToken(jwt);
-    String headerJson;
-    String payloadJson;
+      String encAlg, String encEnc, String sigAlg) throws JWTDecodeException {
+
     try {
-      headerJson = StringUtils.newStringUtf8(Base64.decodeBase64(parts[0]));
-      payloadJson = StringUtils.newStringUtf8(Base64.decodeBase64(parts[1]));
-    } catch (ArrayIndexOutOfBoundsException | NullPointerException e) {
-      throw new JWTDecodeException("Not able to locate header and payload for JWT", e);
-    }
-    try {
-      this.header = mapper.readValue(headerJson, Map.class);
-      this.claims = mapper.readValue(payloadJson, Map.class);
+      jwt = parseFromToken(jwt, keyJar, keyOwner, encAlg, encEnc);
     } catch (IOException e) {
-      if (header.get("enc") == null) {
-        throw new DeserializationException("Could not map the JWT contents", e);
-      }
-      // We assume we are dealing with JWE here
-      // TODO: We need to resolve key type, now hard coded to match test case!
-      // TODO: for EC key type args must not be null, we need curve as input
-      List<Key> keys = keyJar.getDecryptKey("RSA", keyOwner, (String) header.get("kid"), null);
-      for (Key key : keys) {
-        if (!key.isPrivateKey()) {
-          continue;
-        }
-        try {
-          // TODO: We need to resolve algorithm, now hard coded to match test case!
-          Algorithm decyptionAlg = Algorithm.RSA1_5(null, (RSAPrivateKey) key.getKey(true));
-          JWTDecryptor decryptor = new JWTDecryptor(decyptionAlg);
-          String signedJwt = new String(decryptor.decrypt(jwt));
-          try {
-            fromJwt(signedJwt, keyJar, keyOwner, noKidIssuers, allowMissingKid, trustJKU, encAlg,
-                encEnc, sigAlg);
-          } catch (Exception e1) {
-            // We move to next key and are hopeful
-            continue;
-          }
-          return;
-        } catch (IllegalArgumentException | ValueError e2) {
-          throw new DeserializationException(e2.getMessage());
-        }
-      }
-      throw new DeserializationException("Unable to encrypt and verify JWT");
+      throw new JWTDecodeException(
+          String.format("Unable to parse JWT '%s': '%s'", jwt, e.getMessage()));
     }
-    
     verified = false;
     if (keyJar == null) {
       return;
     }
- 
     if (header.get("alg") == null || !(header.get("alg") instanceof String)) {
       throw new JWTDecodeException("JWT does not have alg in header");
     }
@@ -357,19 +318,109 @@ public abstract class AbstractMessage implements Message {
       throw new JWTDecodeException("Not able to locate keys to verify JWT");
     }
     // We try each located key
-    for (Key key : keys) {
+    for (Iterator<Key> iter = keys.iterator(); iter.hasNext();) {
+      Key key = iter.next();
       try {
         JWT.require(AlgorithmResolver.resolveVerificationAlgorithm(key, alg)).build().verify(jwt);
         // Success
         return;
       } catch (JWTVerificationException | IllegalArgumentException | ValueError
           | UnsupportedEncodingException | SerializationNotPossible e) {
-        // Move on to next key, this one is not suitable or just wrong
+        if (iter.hasNext()) {
+          //We move on to try next key
+          continue;
+        } else {
+          throw new JWTDecodeException(String.format("Unable to verify JWT: '%s'", e.getMessage()));
+        }
       }
     }
     throw new JWTDecodeException("Not able to verify JWT with any of the keys provided");
-
   }
+  
+  /**
+   * Parses header and claims from JWT.
+   * @param jwt jwt to parse.
+   * @throws IOException if parsing fails. 
+   */
+  @SuppressWarnings("unchecked")
+  private void parseFromJwt(String jwt)
+      throws  IOException {
+    String[] parts = MessageUtil.splitToken(jwt);
+    String headerJson;
+    String payloadJson;
+    try {
+      headerJson = StringUtils.newStringUtf8(Base64.decodeBase64(parts[0]));
+      payloadJson = StringUtils.newStringUtf8(Base64.decodeBase64(parts[1]));
+    } catch (ArrayIndexOutOfBoundsException | NullPointerException e) {
+      throw new JWTDecodeException("Not able to locate header and payload for JWT", e);
+    }
+    this.header = mapper.readValue(headerJson, Map.class);
+    this.claims = mapper.readValue(payloadJson, Map.class);
+  }
+  
+  /**
+   * Parses header and claims from JWT or from JWE.
+   * 
+   * @param token
+   *          jwe/jwt to parse from
+   * @param keyJar
+   *          key jar used, must not be null for jwe
+   * @param keyOwner
+   *          key owner, may be null
+   * @param encAlg
+   *          key transport algorithm required, may be null.
+   * @param encEnc
+   *          enc algorithm required, may be null.
+   * @return jwt
+   * @throws JWTDecodeException
+   *           if unable to decrypt jwe
+   * @throws IOException
+   *           if parsing of jwt fails
+   */
+  private String parseFromToken(String token, KeyJar keyJar, String keyOwner, String encAlg,
+      String encEnc)
+      throws JWTDecodeException, IOException {
+    DecodedJWT decodedJwt = JWT.decode(token);
+    if (!decodedJwt.isJWE()) {
+      parseFromJwt(token);
+      return token;
+    }
+    if (keyJar == null) {
+      throw new JWTDecodeException("KeyJar not set for decrypting JWE");
+    }
+    List<Key> keys = keyJar.getDecryptKey(null, keyOwner, decodedJwt.getKeyId(), null);
+    for (Iterator<Key> iter = keys.iterator(); iter.hasNext();) {
+      Key key = iter.next();
+      Algorithm decyptionAlg;
+      try {
+        decyptionAlg = AlgorithmResolver.resolveKeyTransportAlgorithmForDecryption(key,
+            decodedJwt.getAlgorithm());
+      } catch (ValueError | UnsupportedEncodingException | SerializationNotPossible e) {
+        if (iter.hasNext()) {
+          // We move on to try next key
+          continue;
+        } else {
+          throw new JWTDecodeException(
+              String.format("Unable to decrypt JWE: '%s'", e.getMessage()));
+        }
+      }
+      JWTDecryptor decryptor = new JWTDecryptor(decyptionAlg);
+      String signedJwt = new String(decryptor.decrypt(token));
+      try {
+        parseFromJwt(signedJwt);
+        return signedJwt;
+      } catch (Exception e) {
+        if (iter.hasNext()) {
+          continue;
+        } else {
+          throw new JWTDecodeException(
+              String.format("Unable to decrypt JWE: '%s'", e.getMessage()));
+        }
+      }
+    }
+    throw new JWTDecodeException("Unable to decrypt JWE with any of the keys provided");
+  }
+
 
   /**
    * Serialize the content of this instance (the claims map) into a jwt string.
@@ -447,7 +498,7 @@ public abstract class AbstractMessage implements Message {
     }
     try {
       return JWTEncryptor.init().withPayload(signedJwt.getBytes("UTF-8")).encrypt(
-          AlgorithmResolver.resolveKeyTransportAlgorithm(transportKey, encAlg),
+          AlgorithmResolver.resolveKeyTransportAlgorithmForEncryption(transportKey, encAlg),
           Algorithm.getContentEncryptionAlg(encEnc, CipherParams.getInstance(encEnc)));
     } catch (UnsupportedEncodingException | ValueError | SerializationNotPossible e) {
       throw new SerializationException(

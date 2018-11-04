@@ -223,7 +223,7 @@ public class AuthenticationResponse extends AuthorizationResponse {
           }
         }
         verifiedIdToken = idToken;
-      } catch (DeserializationException | JWTDecodeException e) {
+      } catch (JWTDecodeException e) {
         getError().getDetails().add(new ErrorDetails("id_token", ErrorType.INVALID_VALUE_FORMAT,
             "Unable to verify id token signature", e));
       }

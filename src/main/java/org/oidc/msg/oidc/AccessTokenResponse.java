@@ -220,7 +220,7 @@ public class AccessTokenResponse extends org.oidc.msg.oauth2.AccessTokenResponse
           }
         }
         verifiedIdToken = idToken;
-      } catch (DeserializationException | JWTDecodeException e) {
+      } catch (JWTDecodeException e) {
         getError().getDetails().add(new ErrorDetails("id_token", ErrorType.INVALID_VALUE_FORMAT,
             "Unable to verify id token signature", e));
       }
