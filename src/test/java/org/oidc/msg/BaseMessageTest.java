@@ -178,7 +178,7 @@ public abstract class BaseMessageTest<T extends AbstractMessage> {
     keyBundlePrv.append(new SYMKey("enc", Base64.encodeBase64URLSafeString(
         "123456789012345678901234".getBytes(Charset.forName("UTF-8")))));
     keyBundlePrv.append(new SYMKey("enc", Base64.encodeBase64URLSafeString(
-        "123456789012345678901234".getBytes(Charset.forName("UTF-8")))));
+        "12345678901234567890123456789012".getBytes(Charset.forName("UTF-8")))));
     ArrayList<String> usesPub = new ArrayList<String>();
     usesPub.add("ver");
     usesPub.add("enc");
@@ -211,7 +211,7 @@ public abstract class BaseMessageTest<T extends AbstractMessage> {
     keyBundlePub.append(new SYMKey("enc", Base64.encodeBase64URLSafeString(
         "123456789012345678901234".getBytes(Charset.forName("UTF-8")))));
     keyBundlePub.append(new SYMKey("enc", Base64.encodeBase64URLSafeString(
-        "123456789012345678901234".getBytes(Charset.forName("UTF-8")))));
+        "12345678901234567890123456789012".getBytes(Charset.forName("UTF-8")))));
     keyJarOfPublicKeys.addKeyBundle(keyOwner, keyBundlePub);
     return keyJarOfPublicKeys;
   }
