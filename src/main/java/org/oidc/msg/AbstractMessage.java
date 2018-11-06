@@ -394,7 +394,7 @@ public abstract class AbstractMessage implements Message {
       Algorithm decyptionAlg;
       try {
         decyptionAlg = AlgorithmResolver.resolveKeyTransportAlgorithmForDecryption(key,
-            decodedJwt.getAlgorithm());
+            decodedJwt);
       } catch (ValueError | UnsupportedEncodingException | SerializationNotPossible e) {
         if (iter.hasNext()) {
           // We move on to try next key
