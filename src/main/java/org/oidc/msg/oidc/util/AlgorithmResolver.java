@@ -82,6 +82,11 @@ public class AlgorithmResolver {
       case "A192GCMKW":
       case "A256GCMKW":  
         if (key instanceof SYMKey) {
+          // Verify key length
+          if (Algorithm.getAlgorithmKeydataLen(alg) > 0 && (Algorithm.getAlgorithmKeydataLen(alg)
+              / 8) != ((SYMKey) key).getKey(false).getEncoded().length) {
+            return false;
+          }
           return true;
         }
         break;
@@ -227,7 +232,9 @@ public class AlgorithmResolver {
         return Algorithm.AES192Keywrap(((SYMKey) key).getKey(false).getEncoded());
       case "A256KW":
         return Algorithm.AES256Keywrap(((SYMKey) key).getKey(false).getEncoded());
-        // TODO: Add missing algorithms
+        // TODO: Add missing algorithms -->
+      case "A128GCMKW":
+        return Algorithm.A128GCM(CipherParams.getInstance("A128GCM"));
       default:
         break;
     }
