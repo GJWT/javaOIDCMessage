@@ -17,7 +17,6 @@
 package org.oidc.msg;
 
 import com.auth0.jwt.JWT;
-import com.auth0.jwt.JWTDecryptor;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTDecodeException;
@@ -34,7 +33,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.net.MalformedURLException;
-import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -44,7 +42,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.hamcrest.CoreMatchers;
-import org.hamcrest.Matcher;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -163,7 +160,17 @@ public class AbstractMessageTest extends BaseMessageTest<AbstractMessage> {
     MockMessage mockMessage = new MockMessage(claims);
     List<Key> keysDec = getKeyJar().getDecryptKey(null, keyOwner, null, null);
     List<Key> keysEnc = getKeyJarPub().getEncryptKey(null, keyOwner, null, null);
-    String signedAndEncryptedJwt=mockMessage.toJwt(keysDec.get(0), alg, keysEnc.get(0), encAlg,
+    int index=0;
+    if (encAlg.equals("A128KW")){
+      index=1;
+    }
+    if (encAlg.equals("A192KW")){
+      index=2;
+    }
+    if (encAlg.equals("A256KW")){
+      index=3;
+    }
+    String signedAndEncryptedJwt=mockMessage.toJwt(keysDec.get(0), alg, keysEnc.get(index), encAlg,
         encEnc);
     MockMessage mockMessage2 = new MockMessage();
     mockMessage2.fromJwt(signedAndEncryptedJwt, getKeyJar(), keyOwner);
@@ -182,7 +189,9 @@ public class AbstractMessageTest extends BaseMessageTest<AbstractMessage> {
     testSuccessJWTEncryptDecrypt("RS256","RSA1_5","A128GCM");
     testSuccessJWTEncryptDecrypt("RS384","RSA-OAEP","A192GCM");
     testSuccessJWTEncryptDecrypt("RS512","RSA-OAEP-256","A256GCM");
-   
+    testSuccessJWTEncryptDecrypt("RS256","A128KW","A128CBC-HS256");
+    //testSuccessJWTEncryptDecrypt("RS256","A192KW","A128CBC-HS256");
+    //testSuccessJWTEncryptDecrypt("RS256","A256KW","A128CBC-HS256");
   }
   
   @Test
