@@ -190,8 +190,8 @@ public class AbstractMessageTest extends BaseMessageTest<AbstractMessage> {
     testSuccessJWTEncryptDecrypt("RS384","RSA-OAEP","A192GCM");
     testSuccessJWTEncryptDecrypt("RS512","RSA-OAEP-256","A256GCM");
     testSuccessJWTEncryptDecrypt("RS256","A128KW","A128CBC-HS256");
-    //testSuccessJWTEncryptDecrypt("RS256","A192KW","A128CBC-HS256");
-    //testSuccessJWTEncryptDecrypt("RS256","A256KW","A128CBC-HS256");
+    testSuccessJWTEncryptDecrypt("RS256","A192KW","A128CBC-HS256");
+    testSuccessJWTEncryptDecrypt("RS256","A256KW","A128CBC-HS256");
   }
   
   @Test
