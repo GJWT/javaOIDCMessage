@@ -25,6 +25,7 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.algorithms.CipherParams;
 import com.auth0.jwt.exceptions.JWTDecodeException;
 import com.auth0.jwt.exceptions.JWTVerificationException;
+import com.auth0.jwt.exceptions.oicmsg_exceptions.DeserializationNotPossible;
 import com.auth0.jwt.exceptions.oicmsg_exceptions.JWKException;
 import com.auth0.jwt.exceptions.oicmsg_exceptions.SerializationNotPossible;
 import com.auth0.jwt.exceptions.oicmsg_exceptions.ValueError;
@@ -395,7 +396,8 @@ public abstract class AbstractMessage implements Message {
       try {
         decyptionAlg = AlgorithmResolver.resolveKeyTransportAlgorithmForDecryption(key,
             decodedJwt);
-      } catch (ValueError | UnsupportedEncodingException | SerializationNotPossible e) {
+      } catch (ValueError | UnsupportedEncodingException | SerializationNotPossible
+          | DeserializationNotPossible e) {
         if (iter.hasNext()) {
           // We move on to try next key
           continue;

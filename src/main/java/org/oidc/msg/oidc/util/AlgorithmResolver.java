@@ -17,6 +17,8 @@
 package org.oidc.msg.oidc.util;
 
 import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.algorithms.CipherParams;
+import com.auth0.jwt.exceptions.oicmsg_exceptions.DeserializationNotPossible;
 import com.auth0.jwt.exceptions.oicmsg_exceptions.HeaderError;
 import com.auth0.jwt.exceptions.oicmsg_exceptions.JWKException;
 import com.auth0.jwt.exceptions.oicmsg_exceptions.SerializationNotPossible;
@@ -32,6 +34,7 @@ import java.security.interfaces.ECPublicKey;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.Map;
+import org.apache.commons.codec.binary.Base64;
 
 public class AlgorithmResolver {
 
@@ -75,6 +78,9 @@ public class AlgorithmResolver {
       case "A128KW":
       case "A192KW":
       case "A256KW":
+      case "A128GCMKW":
+      case "A192GCMKW":
+      case "A256GCMKW":  
         if (key instanceof SYMKey) {
           return true;
         }
@@ -265,9 +271,10 @@ public class AlgorithmResolver {
    *           if symmetric key encoding fails
    * @throws SerializationNotPossible
    *           if symmetric key fails to serialize
+   * @throws DeserializationNotPossible 
    */
   public static Algorithm resolveKeyTransportAlgorithmForDecryption(Key key, DecodedJWT decodedJWT)
-      throws ValueError, UnsupportedEncodingException, SerializationNotPossible {
+      throws ValueError, UnsupportedEncodingException, SerializationNotPossible, DeserializationNotPossible {
     if (!verifyKeyType(key, decodedJWT.getAlgorithm())) {
       throw new ValueError(
           String.format("key does not match algorithm '%s' ", decodedJWT.getAlgorithm()));
@@ -316,6 +323,18 @@ public class AlgorithmResolver {
             decodedJWT.getHeaderClaim("apv").asString(),
             decodedJWT.getHeaderClaim("enc").asString(),
             Algorithm.getAlgorithmKeydataLen(decodedJWT.getHeaderClaim("enc").asString()));
+      case "A128GCMKW":
+        CipherParams cipherParams = new CipherParams(((SYMKey) key).encryptionKey().getEncoded(),
+            Base64.decodeBase64(decodedJWT.getIV()));
+        return Algorithm.A128GCM(cipherParams);
+      case "A192GCMKW":
+        cipherParams = new CipherParams(((SYMKey) key).encryptionKey().getEncoded(),
+            Base64.decodeBase64(decodedJWT.getIV()));
+        return Algorithm.A192GCM(cipherParams);
+      case "A256GCMKW":
+        cipherParams = new CipherParams(((SYMKey) key).encryptionKey().getEncoded(),
+            Base64.decodeBase64(decodedJWT.getIV()));
+        return Algorithm.A256GCM(cipherParams);
       default:
         break;
     }
