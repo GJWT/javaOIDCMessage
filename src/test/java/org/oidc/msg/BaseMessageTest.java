@@ -25,8 +25,10 @@ import com.auth0.jwt.exceptions.oicmsg_exceptions.ValueError;
 import com.auth0.msg.Key;
 import com.auth0.msg.KeyBundle;
 import com.auth0.msg.KeyJar;
+import com.auth0.msg.SYMKey;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.RSAPrivateKey;
 import java.util.ArrayList;
@@ -35,6 +37,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.codec.binary.Base64;
 import org.junit.Assert;
 import org.junit.Test;
 import org.oidc.msg.oidc.ClaimsRequest;
@@ -170,11 +173,18 @@ public abstract class BaseMessageTest<T extends AbstractMessage> {
     usesPrv.add("dec");
     KeyBundle keyBundlePrv = KeyBundle.keyBundleFromLocalFile(PRIVATE_KEY_FILE, "der", usesPrv);
     keyJarOfPrivateKeys.addKeyBundle(keyOwner, keyBundlePrv);
+    keyBundlePrv.append(new SYMKey("enc", Base64.encodeBase64URLSafeString(
+        "1234567890123456".getBytes(Charset.forName("UTF-8")))));
+    keyBundlePrv.append(new SYMKey("enc", Base64.encodeBase64URLSafeString(
+        "123456789012345678901234".getBytes(Charset.forName("UTF-8")))));
+    keyBundlePrv.append(new SYMKey("enc", Base64.encodeBase64URLSafeString(
+        "123456789012345678901234".getBytes(Charset.forName("UTF-8")))));
     ArrayList<String> usesPub = new ArrayList<String>();
     usesPub.add("ver");
     usesPub.add("enc");
     KeyBundle keyBundlePub = KeyBundle.keyBundleFromLocalFile(PUBLIC_KEY_FILE, "der", usesPub);
     keyJarOfPrivateKeys.addKeyBundle(keyOwner, keyBundlePub);
+    
     return keyJarOfPrivateKeys;
   }
 
@@ -196,6 +206,12 @@ public abstract class BaseMessageTest<T extends AbstractMessage> {
     usesPub.add("ver");
     usesPub.add("enc");
     KeyBundle keyBundlePub = KeyBundle.keyBundleFromLocalFile(PUBLIC_KEY_FILE, "der", usesPub);
+    keyBundlePub.append(new SYMKey("enc", Base64.encodeBase64URLSafeString(
+        "1234567890123456".getBytes(Charset.forName("UTF-8")))));
+    keyBundlePub.append(new SYMKey("enc", Base64.encodeBase64URLSafeString(
+        "123456789012345678901234".getBytes(Charset.forName("UTF-8")))));
+    keyBundlePub.append(new SYMKey("enc", Base64.encodeBase64URLSafeString(
+        "123456789012345678901234".getBytes(Charset.forName("UTF-8")))));
     keyJarOfPublicKeys.addKeyBundle(keyOwner, keyBundlePub);
     return keyJarOfPublicKeys;
   }
