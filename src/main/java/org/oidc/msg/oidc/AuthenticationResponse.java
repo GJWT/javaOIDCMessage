@@ -244,14 +244,20 @@ public class AuthenticationResponse extends AuthorizationResponse {
       }
       if (getClaims().get("code") != null) {
         if (idToken.getClaims().get("c_hash") == null) {
-          getError().getDetails().add(new ErrorDetails("c_hash", ErrorType.MISSING_REQUIRED_VALUE,
-              "c_hash must be in id token if returned with authorization code"));
+          ErrorDetails idTokenErrorDetails = new ErrorDetails("c_hash", 
+              ErrorType.MISSING_REQUIRED_VALUE,
+              "c_hash must be in id token if returned with authorization code");
+          getError().getDetails().add(new ErrorDetails("id_token", ErrorType.MISSING_REQUIRED_VALUE,
+              idTokenErrorDetails.toString()));
         } else {
           String codeHash = TokenHash.compute((String) getClaims().get("code"),
               JWT.decode((String) getClaims().get("id_token")).getAlgorithm());
           if (!((String) idToken.getClaims().get("c_hash")).equals(codeHash)) {
-            getError().getDetails().add(new ErrorDetails("c_hash", ErrorType.VALUE_NOT_ALLOWED,
-                String.format("c_hash in id token not same as expected value '%s'", codeHash)));
+            ErrorDetails idTokenErrorDetails = new ErrorDetails("c_hash", 
+                ErrorType.VALUE_NOT_ALLOWED,
+                String.format("c_hash in id token not same as expected value '%s'", codeHash));
+            getError().getDetails().add(new ErrorDetails("id_token", ErrorType.VALUE_NOT_ALLOWED,
+                idTokenErrorDetails.toString()));
           }
         }
       }
