@@ -218,7 +218,8 @@ public class AuthenticationResponse extends AuthorizationResponse {
         if (!idToken.verify()) {
           for (ErrorDetails idTokenErrorDetails : idToken.getError().getDetails()) {
             ErrorDetails details = new ErrorDetails("id_token", idTokenErrorDetails.getErrorType(),
-                idTokenErrorDetails.getErrorMessage(), idTokenErrorDetails.getErrorCause());
+                "Cause: (" + idTokenErrorDetails.toString() + ")", 
+                idTokenErrorDetails.getErrorCause());
             getError().getDetails().add(details);
           }
         }
