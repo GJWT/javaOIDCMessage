@@ -48,14 +48,28 @@ public interface Message {
   /**
    * Serialize the content of this instance (the claims map) into a jwt string.
    * 
-   * @param key
+   * @param signingKey
    *          signing key
    * @param alg
-   *          signing algorithm
+   *          signing algorithm name
+   * @param transportKey
+   *          key transport key, if null encryption is not done.
+   * @param encAlg
+   *          key transport algorithm name. Must not be null if transportKey is set.
+   * @param encEnc
+   *          content encryption algorithm name. Must not be null if transportKey is set.
+   * @param keyjar
+   *          key jar containing receiver ephemeral public key when using ECDH 
+   *          family of key transport
+   * @param sender
+   *          sender i.e. client id
+   * @param receiver
+   *          receiver i.e. issuer id of the o.                            
    * @return message as jwt string.
-   * @throws SerializationException Thrown if message cannot be serialized.
    */
-  String toJwt(Key key, String alg) throws SerializationException;
+  
+  public String toJwt(Key signingKey, String alg, Key transportKey, String encAlg, String encEnc,
+      KeyJar keyjar, String sender, String receiver) throws SerializationException;
 
   /**
    * Constructs a message from the JSON string.
