@@ -17,8 +17,6 @@
 package org.oidc.msg.oidc.util;
 
 import com.auth0.jwt.algorithms.Algorithm;
-import com.auth0.jwt.algorithms.CipherParams;
-import com.auth0.jwt.exceptions.oicmsg_exceptions.DeserializationNotPossible;
 import com.auth0.jwt.exceptions.oicmsg_exceptions.HeaderError;
 import com.auth0.jwt.exceptions.oicmsg_exceptions.JWKException;
 import com.auth0.jwt.exceptions.oicmsg_exceptions.SerializationNotPossible;
@@ -26,6 +24,7 @@ import com.auth0.jwt.exceptions.oicmsg_exceptions.ValueError;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.auth0.msg.ECKey;
 import com.auth0.msg.Key;
+import com.auth0.msg.KeyJar;
 import com.auth0.msg.RSAKey;
 import com.auth0.msg.SYMKey;
 import java.io.UnsupportedEncodingException;
@@ -33,9 +32,11 @@ import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.ECPublicKey;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import org.apache.commons.codec.binary.Base64;
 
+/** Class for verifying proposed key and algorithm match to create Algorithm. */
 public class AlgorithmResolver {
 
   /**
@@ -117,7 +118,7 @@ public class AlgorithmResolver {
       throw new ValueError(String.format("key does not match algorithm '%s' ", alg));
     }
     if (key != null && !key.isPrivateKey()) {
-      throw new ValueError(String.format("Siging key must be private"));
+      throw new ValueError(String.format("Signing key must be private"));
     }
     switch (alg) {
       case "none":
@@ -211,13 +212,15 @@ public class AlgorithmResolver {
    * @throws SerializationNotPossible
    *           if symmetric key fails to serialize
    */
-  public static Algorithm resolveKeyTransportAlgorithmForEncryption(Key key, String alg)
+  public static Algorithm resolveKeyTransportAlgorithmForEncryption(Key key, String alg, String enc,
+      KeyJar keyjar, String sender, String receiver)
       throws ValueError, UnsupportedEncodingException, SerializationNotPossible {
     if (!verifyKeyType(key, alg)) {
       throw new ValueError(String.format("key does not match algorithm '%s' ", alg));
     }
-    if (key == null || !key.isPublicKey()) {
-      throw new ValueError(String.format("Key for key transport algorithm must be public"));
+    if (alg.startsWith("ECDH") && !key.isPrivateKey()) {
+      throw new ValueError(
+          String.format("for ECDH family we need rp's own private key as transport key"));
     }
     switch (alg) {
       case "RSA1_5":
@@ -232,10 +235,63 @@ public class AlgorithmResolver {
         return Algorithm.AES192Keywrap(((SYMKey) key).getKey(false).getEncoded());
       case "A256KW":
         return Algorithm.AES256Keywrap(((SYMKey) key).getKey(false).getEncoded());
+      case "ECDH-ES":
+        return Algorithm.ECDH_ES((ECPrivateKey) key.getKey(true),
+            (ECPublicKey) key.getKey(false),
+            (ECPublicKey) getReceiverEphemeralKey(keyjar, receiver).getKey(false), sender, receiver,
+            enc, Algorithm.getAlgorithmKeydataLen(enc));
+      case "ECDH-ES+A128KW":
+        return Algorithm.ECDH_ES_A128KW((ECPrivateKey) key.getKey(true),
+            (ECPublicKey) key.getKey(false),
+            (ECPublicKey) getReceiverEphemeralKey(keyjar, receiver).getKey(false), sender, receiver,
+            "ECDH-ES+A128KW", Algorithm.getAlgorithmKeydataLen("ECDH-ES+A128KW"));
+      case "ECDH-ES+A192KW":
+        return Algorithm.ECDH_ES_A192KW((ECPrivateKey) key.getKey(true),
+            (ECPublicKey) key.getKey(false),
+            (ECPublicKey) getReceiverEphemeralKey(keyjar, receiver).getKey(false), sender, receiver,
+            "ECDH-ES+A192KW", Algorithm.getAlgorithmKeydataLen("ECDH-ES+A192KW"));
+      case "ECDH-ES+A256KW":
+        return Algorithm.ECDH_ES_A256KW((ECPrivateKey) key.getKey(true),
+            (ECPublicKey) key.getKey(false),
+            (ECPublicKey) getReceiverEphemeralKey(keyjar, receiver).getKey(false), sender, receiver,
+            "ECDH-ES+A256KW", Algorithm.getAlgorithmKeydataLen("ECDH-ES+A256KW"));
       default:
         break;
     }
     throw new ValueError(String.format("Algorithm '%s' not supported ", alg));
+  }
+  
+  /**
+   * Gets receiver ephemeral key from keyjar. Any suitable located receiver key is treated as the
+   * key.
+   * 
+   * @param keyjar
+   *          KeyJar containing the ephemeral key
+   * @param receiver
+   *          receiver identifier, op issuer id
+   * @return EC key or null
+   * @throws ValueError
+   *           if keyjar o
+   */
+  private static ECKey getReceiverEphemeralKey(KeyJar keyjar, String receiver) throws ValueError {
+    if (keyjar == null) {
+      throw new ValueError(
+          "For ECDH family of key transports KeyJar is needed for receiver EC key");
+    }
+    if (receiver == null || receiver.isEmpty()) {
+      throw new ValueError(
+          "For ECDH family of key transports receiver is needed to locate EC key");
+    }
+    List<Key> keys = keyjar.getEncryptKey("EC", receiver, null, new HashMap<String,String>());
+    if (keys.size() == 0) {
+      throw new ValueError(String.format("No EC key for receiver '%s' in keyjar", receiver));
+    }
+    ECKey key = (ECKey) keys.get(0);
+    if (key == null) {
+      throw new ValueError(
+          String.format("Not able to solve receiver ephemeral key for '%s'", receiver));
+    }
+    return key;
   }
 
   /**
@@ -248,7 +304,8 @@ public class AlgorithmResolver {
    *           if unable to build ephemeral key
    */
   private static ECKey buildSenderEphemeralKey(DecodedJWT decodedJWT) throws ValueError {
-    if (!(decodedJWT.getHeaderClaim("epk") instanceof Map)) {
+    
+    if ((decodedJWT.getHeaderClaim("epk") == null)) {
       throw new ValueError(String.format("No ephemeral key in jwt '%s'", decodedJWT.toString()));
     }
     Map<String, Object> epk = decodedJWT.getHeaderClaim("epk").asMap();
@@ -275,14 +332,14 @@ public class AlgorithmResolver {
    *           if symmetric key encoding fails
    * @throws SerializationNotPossible
    *           if symmetric key fails to serialize
-   * @throws DeserializationNotPossible 
    */
   public static Algorithm resolveKeyTransportAlgorithmForDecryption(Key key, DecodedJWT decodedJWT)
-      throws ValueError, UnsupportedEncodingException, SerializationNotPossible, DeserializationNotPossible {
+      throws ValueError, UnsupportedEncodingException, SerializationNotPossible {
     if (!verifyKeyType(key, decodedJWT.getAlgorithm())) {
       throw new ValueError(
           String.format("key does not match algorithm '%s' ", decodedJWT.getAlgorithm()));
     }
+    
     if (key == null || !key.isPrivateKey()) {
       throw new ValueError(String.format("Key for key transport algorithm must be private"));
     }
@@ -311,22 +368,22 @@ public class AlgorithmResolver {
             (ECPublicKey) buildSenderEphemeralKey(decodedJWT).getKey(false),
             decodedJWT.getHeaderClaim("apu").asString(), 
             decodedJWT.getHeaderClaim("apv").asString(),
-            decodedJWT.getHeaderClaim("enc").asString(),
-            Algorithm.getAlgorithmKeydataLen(decodedJWT.getHeaderClaim("enc").asString()));
+            decodedJWT.getHeaderClaim("alg").asString(),
+            Algorithm.getAlgorithmKeydataLen(decodedJWT.getHeaderClaim("alg").asString()));
       case "ECDH-ES+A192KW":
         return Algorithm.ECDH_ES_A192KW((ECPrivateKey) key.getKey(true), null,
             (ECPublicKey) buildSenderEphemeralKey(decodedJWT).getKey(false),
             decodedJWT.getHeaderClaim("apu").asString(), 
             decodedJWT.getHeaderClaim("apv").asString(),
-            decodedJWT.getHeaderClaim("enc").asString(),
-            Algorithm.getAlgorithmKeydataLen(decodedJWT.getHeaderClaim("enc").asString()));
+            decodedJWT.getHeaderClaim("alg").asString(),
+            Algorithm.getAlgorithmKeydataLen(decodedJWT.getHeaderClaim("alg").asString()));
       case "ECDH-ES+A256KW":
         return Algorithm.ECDH_ES_A256KW((ECPrivateKey) key.getKey(true), null,
             (ECPublicKey) buildSenderEphemeralKey(decodedJWT).getKey(false),
             decodedJWT.getHeaderClaim("apu").asString(), 
             decodedJWT.getHeaderClaim("apv").asString(),
-            decodedJWT.getHeaderClaim("enc").asString(),
-            Algorithm.getAlgorithmKeydataLen(decodedJWT.getHeaderClaim("enc").asString()));
+            decodedJWT.getHeaderClaim("alg").asString(),
+            Algorithm.getAlgorithmKeydataLen(decodedJWT.getHeaderClaim("alg").asString()));
       default:
         break;
     }
