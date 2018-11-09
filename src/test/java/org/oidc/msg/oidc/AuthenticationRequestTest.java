@@ -143,7 +143,7 @@ public class AuthenticationRequestTest extends BaseMessageTest<AuthenticationReq
       ImportException, UnknownKeyType, ValueError, IOException, JWKException, SerializationException, DeserializationException {
     IDToken idTokenHint = getIDTokenHint();
     List<Key> keysSign = getKeyJar().getSigningKey("RSA", keyOwner, null, null);
-    claims.put("id_token_hint", idTokenHint.toJwt(keysSign.get(0), "RS256"));
+    claims.put("id_token_hint", idTokenHint.toJwt(keysSign.get(0), "RS256", null, null, null, null, null, null));
     AuthenticationRequest req = new AuthenticationRequest(claims);
     Assert.assertTrue(req.verify());
     IDToken idTokenHintFromJwt = new IDToken();
@@ -194,7 +194,7 @@ public class AuthenticationRequestTest extends BaseMessageTest<AuthenticationReq
     claims.put("ui_locales", locales);
     IDToken idTokenHint = getIDTokenHint();
     List<Key> keysSign = getKeyJar().getSigningKey("RSA", keyOwner, null, null);
-    claims.put("id_token_hint", idTokenHint.toJwt(keysSign.get(0), "RS256"));
+    claims.put("id_token_hint", idTokenHint.toJwt(keysSign.get(0), "RS256", null, null, null, null, null, null));
     claims.put("login_hint", "user_is_bob");
     String[] acrs = new String[2];
     acrs[0] = "1";
@@ -204,7 +204,7 @@ public class AuthenticationRequestTest extends BaseMessageTest<AuthenticationReq
     claims.put("claims", claimsRequest.toJson());
     RequestObject requestObject = new RequestObject(claims);
     Assert.assertTrue(requestObject.verify());
-    claims.put("request", requestObject.toJwt(keysSign.get(0), "RS256"));
+    claims.put("request", requestObject.toJwt(keysSign.get(0), "RS256", null, null, null, null, null, null));
     message = new AuthenticationRequest(claims);
     message.verify();
     AuthenticationRequest messageParsed = new AuthenticationRequest();

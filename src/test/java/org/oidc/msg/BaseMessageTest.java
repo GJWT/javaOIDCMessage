@@ -257,7 +257,7 @@ public abstract class BaseMessageTest<T extends AbstractMessage> {
     claims.put("iat", new Date());
     IDToken token = new IDToken(claims);
     token.verify();
-    return token.toJwt(key, algo);
+    return token.toJwt(key, algo, null, null, null, null, null, null);
   }
 
   /**

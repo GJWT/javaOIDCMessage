@@ -396,8 +396,7 @@ public abstract class AbstractMessage implements Message {
       try {
         decyptionAlg = AlgorithmResolver.resolveKeyTransportAlgorithmForDecryption(key,
             decodedJwt);
-      } catch (ValueError | UnsupportedEncodingException | SerializationNotPossible
-          | DeserializationNotPossible e) {
+      } catch (ValueError | UnsupportedEncodingException | SerializationNotPossible e) {
         if (iter.hasNext()) {
           // We move on to try next key
           continue;
@@ -431,29 +430,22 @@ public abstract class AbstractMessage implements Message {
    *          signing key
    * @param alg
    *          signing algorithm name
-   * @return message as jwt string.
-   * @throws SerializationException 
-   */
-  public String toJwt(Key signingKey, String alg) throws SerializationException {
-    return toJwt(signingKey, alg, null, null, null);
-  }
-  /**
-   * Serialize the content of this instance (the claims map) into a jwt string.
-   * 
-   * @param signingKey
-   *          signing key
-   * @param alg
-   *          signing algorithm name
    * @param transportKey
    *          key transport key, if null encryption is not done.
    * @param encAlg
    *          key transport algorithm name. Must not be null if transportKey is set.
    * @param encEnc
    *          content encryption algorithm name. Must not be null if transportKey is set.
+   * @param keyjar
+   *          key jar containing receiver ephemeral public key when using ECDH family of key transport
+   * @param sender
+   *          sender i.e. client id
+   * @param receiver
+   *          receiver i.e. issuer id of the o.                            
    * @return message as jwt string.
    */
   
-  public String toJwt(Key signingKey, String alg, Key transportKey, String encAlg, String encEnc)
+  public String toJwt(Key signingKey, String alg, Key transportKey, String encAlg, String encEnc, KeyJar keyjar, String sender, String receiver)
       throws SerializationException {
     header = new HashMap<String, Object>();
     header.put("alg", alg);
@@ -500,7 +492,7 @@ public abstract class AbstractMessage implements Message {
     }
     try {
       return JWTEncryptor.init().withPayload(signedJwt.getBytes("UTF-8")).encrypt(
-          AlgorithmResolver.resolveKeyTransportAlgorithmForEncryption(transportKey, encAlg),
+          AlgorithmResolver.resolveKeyTransportAlgorithmForEncryption(transportKey, encAlg, encEnc, keyjar, sender, receiver),
           Algorithm.getContentEncryptionAlg(encEnc, CipherParams.getInstance(encEnc)));
     } catch (UnsupportedEncodingException | ValueError | SerializationNotPossible e) {
       throw new SerializationException(
