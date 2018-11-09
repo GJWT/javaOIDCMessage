@@ -16,6 +16,9 @@
 
 package org.oidc.msg.validator;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -38,7 +41,13 @@ public class ArrayClaimValidatorTest extends BaseClaimValidatorTest<ArrayClaimVa
   }
 
   @Test(expected = InvalidClaimException.class)
-  public void testEmptyArray() throws InvalidClaimException {
+  public void testEmptyArrayWithoutListsEnabled() throws InvalidClaimException {
+    validator.validate(new String[0]);
+  }
+  
+  @Test(expected = InvalidClaimException.class)
+  public void testEmptyArrayWithListsEnabled() throws InvalidClaimException {
+    validator = new ArrayClaimValidator(true);
     validator.validate(new String[0]);
   }
 
@@ -52,6 +61,28 @@ public class ArrayClaimValidatorTest extends BaseClaimValidatorTest<ArrayClaimVa
   @Test
   public void testEmptyString() throws InvalidClaimException {
     Assert.assertEquals("", validator.validate(""));
+  }
+  
+  @Test(expected = InvalidClaimException.class)
+  public void testListWithoutEnablingLists() throws InvalidClaimException {
+    validator.validate(Arrays.asList("string1", "string2"));
+  }
+  
+  @Test(expected = InvalidClaimException.class)
+  public void testEmptyListWithEnablingLists() throws InvalidClaimException {
+    validator.validate(new ArrayList<>());
+  }
+
+  @Test(expected = InvalidClaimException.class)
+  public void testInvalidListWithEnablingLists() throws InvalidClaimException {
+    validator.validate(Arrays.asList(1, 2));
+  }
+  
+  @Test
+  public void testListWithEnablingLists() throws InvalidClaimException {
+    validator = new ArrayClaimValidator(true);
+    Assert.assertEquals("string", validator.validate(Arrays.asList("string")));
+    Assert.assertEquals("string1 string2", validator.validate(Arrays.asList("string1 string2")));
   }
 
 }
