@@ -284,7 +284,7 @@ public abstract class AbstractMessage implements Message {
       String encAlg, String encEnc, String sigAlg) throws JWTDecodeException {
 
     try {
-      jwt = parseFromToken(jwt, keyJar, keyOwner, encAlg, encEnc);
+      jwt = parseFromToken(jwt, keyJar, encAlg, encEnc);
     } catch (IOException e) {
       throw new JWTDecodeException(
           String.format("Unable to parse JWT '%s': '%s'", jwt, e.getMessage()));
@@ -378,7 +378,7 @@ public abstract class AbstractMessage implements Message {
    * @throws IOException
    *           if parsing of jwt fails
    */
-  private String parseFromToken(String token, KeyJar keyJar, String keyOwner, String encAlg,
+  private String parseFromToken(String token, KeyJar keyJar, String encAlg,
       String encEnc)
       throws JWTDecodeException, IOException {
     DecodedJWT decodedJwt = JWT.decode(token);
@@ -389,7 +389,7 @@ public abstract class AbstractMessage implements Message {
     if (keyJar == null) {
       throw new JWTDecodeException("KeyJar not set for decrypting JWE");
     }
-    List<Key> keys = keyJar.getDecryptKey(null, keyOwner, decodedJwt.getKeyId(), null);
+    List<Key> keys = keyJar.getDecryptKey(null, "", decodedJwt.getKeyId(), null);
     for (Iterator<Key> iter = keys.iterator(); iter.hasNext();) {
       Key key = iter.next();
       Algorithm decyptionAlg;
