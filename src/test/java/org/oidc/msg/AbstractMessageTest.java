@@ -216,7 +216,7 @@ public class AbstractMessageTest extends BaseMessageTest<AbstractMessage> {
    
   }
   
-  @Test
+  //@Test
   public void testSuccessJWTEncryptDecrypt1()
       throws IOException, InvalidClaimException, SerializationException, DeserializationException,
       IllegalArgumentException, ImportException, UnknownKeyType, ValueError, JWKException, HeaderError, SerializationNotPossible {
