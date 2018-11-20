@@ -173,6 +173,7 @@ public abstract class BaseMessageTest<T extends AbstractMessage> {
     usesPrv.add("dec");
     KeyBundle keyBundlePrv = KeyBundle.keyBundleFromLocalFile(PRIVATE_KEY_FILE, "der", usesPrv);
     keyJarOfPrivateKeys.addKeyBundle(keyOwner, keyBundlePrv);
+    keyJarOfPrivateKeys.addKeyBundle("", keyBundlePrv);
     keyBundlePrv.append(new SYMKey("enc", Base64.encodeBase64URLSafeString(
         "1234567890123456".getBytes(Charset.forName("UTF-8")))));
     keyBundlePrv.append(new SYMKey("enc", Base64.encodeBase64URLSafeString(
