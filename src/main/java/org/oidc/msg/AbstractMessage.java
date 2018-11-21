@@ -451,7 +451,7 @@ public abstract class AbstractMessage implements Message {
     header = new HashMap<String, Object>();
     header.put("alg", alg);
     header.put("typ", "JWT");
-    if (signingKey != null && signingKey.getKid() != null) {
+    if (signingKey != null && !Strings.isNullOrEmpty(signingKey.getKid())) {
       header.put("kid", signingKey.getKid());
     }
     Algorithm algorithm = null;
