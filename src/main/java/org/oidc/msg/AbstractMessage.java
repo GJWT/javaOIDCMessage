@@ -25,6 +25,7 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.algorithms.CipherParams;
 import com.auth0.jwt.exceptions.JWTDecodeException;
 import com.auth0.jwt.exceptions.JWTVerificationException;
+import com.auth0.jwt.exceptions.KeyAgreementException;
 import com.auth0.jwt.exceptions.oicmsg_exceptions.DeserializationNotPossible;
 import com.auth0.jwt.exceptions.oicmsg_exceptions.JWKException;
 import com.auth0.jwt.exceptions.oicmsg_exceptions.SerializationNotPossible;
@@ -491,10 +492,14 @@ public abstract class AbstractMessage implements Message {
           "encAlg and encEnc are mandatory parameters if transport key is set");
     }
     try {
-      return JWTEncryptor.init().withPayload(signedJwt.getBytes("UTF-8")).encrypt(
-          AlgorithmResolver.resolveKeyTransportAlgorithmForEncryption(transportKey, encAlg, encEnc, keyjar, sender, receiver),
-          Algorithm.getContentEncryptionAlg(encEnc, CipherParams.getInstance(encEnc)));
-    } catch (UnsupportedEncodingException | ValueError | SerializationNotPossible e) {
+      Algorithm keyTransportAlgorithm = AlgorithmResolver.resolveKeyTransportAlgorithmForEncryption(
+          transportKey, encAlg, encEnc, keyjar, sender, receiver);
+      Algorithm contentEncryptionAlgorithm = AlgorithmResolver
+          .resolveContentEncryptionAlg(keyTransportAlgorithm, encEnc);
+      return JWTEncryptor.init().withPayload(signedJwt.getBytes("UTF-8"))
+          .encrypt(keyTransportAlgorithm, contentEncryptionAlgorithm);
+    } catch (UnsupportedEncodingException | ValueError | SerializationNotPossible
+        | KeyAgreementException e) {
       throw new SerializationException(
           String.format("Not able to initialize key transport algorithm '%s' to encrypt JWS, '%s'",
               encAlg, e.getMessage()));

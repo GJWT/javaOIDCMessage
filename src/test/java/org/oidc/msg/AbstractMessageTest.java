@@ -231,8 +231,7 @@ public class AbstractMessageTest extends BaseMessageTest<AbstractMessage> {
     testSuccessJWTEncryptDecrypt("RS256","A128KW","A128CBC-HS256");
     testSuccessJWTEncryptDecrypt("RS384","A192KW","A128CBC-HS256");
     testSuccessJWTEncryptDecrypt("RS512","A256KW","A128CBC-HS256");
-    //TODO: not passing
-    //testSuccessJWTEncryptDecrypt("RS256","ECDH-ES","A128CBC-HS256");
+    testSuccessJWTEncryptDecrypt("RS256","ECDH-ES","A128CBC-HS256");
     testSuccessJWTEncryptDecrypt("RS256","ECDH-ES+A128KW","A128GCM");
     testSuccessJWTEncryptDecrypt("RS384","ECDH-ES+A192KW","A192GCM");
     testSuccessJWTEncryptDecrypt("RS512","ECDH-ES+A256KW","A256GCM");

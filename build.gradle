@@ -8,6 +8,10 @@ apply plugin: 'net.saliman.cobertura'
 
 sourceCompatibility = 1.7
 
+test {
+  testLogging.showStandardStreams = true
+}
+
 buildscript {
   repositories {
     maven {

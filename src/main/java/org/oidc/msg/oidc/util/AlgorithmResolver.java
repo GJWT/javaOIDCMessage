@@ -17,6 +17,9 @@
 package org.oidc.msg.oidc.util;
 
 import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.algorithms.CipherParams;
+import com.auth0.jwt.algorithms.ECDHESAlgorithm;
+import com.auth0.jwt.exceptions.KeyAgreementException;
 import com.auth0.jwt.exceptions.oicmsg_exceptions.HeaderError;
 import com.auth0.jwt.exceptions.oicmsg_exceptions.JWKException;
 import com.auth0.jwt.exceptions.oicmsg_exceptions.SerializationNotPossible;
@@ -259,6 +262,25 @@ public class AlgorithmResolver {
         break;
     }
     throw new ValueError(String.format("Algorithm '%s' not supported ", alg));
+  }
+  
+  /**
+   * Resolves content encryption algorithm.
+   * 
+   * @param encAlg
+   *          key transport algorithm
+   * @param encEnc
+   *          name of the content encryption algorithm
+   * @return content encryption algorithm
+   * @throws KeyAgreementException
+   */
+  public static Algorithm resolveContentEncryptionAlg(Algorithm encAlg, String encEnc)
+      throws KeyAgreementException {
+    if (encAlg instanceof ECDHESAlgorithm) {
+      return Algorithm.getContentEncryptionAlg(encEnc,
+          CipherParams.getKeyAgreementInstance(encEnc, encAlg));
+    }
+    return Algorithm.getContentEncryptionAlg(encEnc, CipherParams.getInstance(encEnc));
   }
   
   /**
