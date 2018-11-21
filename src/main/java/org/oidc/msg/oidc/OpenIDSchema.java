@@ -74,8 +74,8 @@ public class OpenIDSchema extends ResponseMessage implements CryptoMessage {
     // TODO:ADDRESS MESSAGE CLASS ?
     paramVerDefs.put("address", ParameterVerification.SINGLE_OPTIONAL_STRING.getValue());
     paramVerDefs.put("updated_at", ParameterVerification.SINGLE_OPTIONAL_INT.getValue());
-    paramVerDefs.put("_claim_names", ParameterVerification.SINGLE_OPTIONAL_STRING.getValue());
-    paramVerDefs.put("_claim_sources", ParameterVerification.SINGLE_OPTIONAL_STRING.getValue());
+    paramVerDefs.put("_claim_names", ParameterVerification.SINGLE_OPTIONAL_MAP.getValue());
+    paramVerDefs.put("_claim_sources", ParameterVerification.SINGLE_OPTIONAL_MAP.getValue());
 
   }
 
