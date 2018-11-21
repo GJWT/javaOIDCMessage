@@ -286,6 +286,10 @@ public abstract class AbstractMessage implements Message {
 
     try {
       jwt = parseFromToken(jwt, keyJar, encAlg, encEnc);
+      if (jwt == null) {
+        // successfully parsed from jwe(json)
+        return;
+      }
     } catch (IOException e) {
       throw new JWTDecodeException(
           String.format("Unable to parse JWT '%s': '%s'", jwt, e.getMessage()));
@@ -373,14 +377,13 @@ public abstract class AbstractMessage implements Message {
    *          key transport algorithm required, may be null.
    * @param encEnc
    *          enc algorithm required, may be null.
-   * @return jwt
+   * @return jwt or null if response was json
    * @throws JWTDecodeException
    *           if unable to decrypt jwe
    * @throws IOException
    *           if parsing of jwt fails
    */
-  private String parseFromToken(String token, KeyJar keyJar, String encAlg,
-      String encEnc)
+  private String parseFromToken(String token, KeyJar keyJar, String encAlg, String encEnc)
       throws JWTDecodeException, IOException {
     DecodedJWT decodedJwt = JWT.decode(token);
     if (!decodedJwt.isJWE()) {
@@ -391,12 +394,12 @@ public abstract class AbstractMessage implements Message {
       throw new JWTDecodeException("KeyJar not set for decrypting JWE");
     }
     List<Key> keys = keyJar.getDecryptKey(null, "", decodedJwt.getKeyId(), null);
+    //We try with each suitable private key we have
     for (Iterator<Key> iter = keys.iterator(); iter.hasNext();) {
       Key key = iter.next();
       Algorithm decyptionAlg;
       try {
-        decyptionAlg = AlgorithmResolver.resolveKeyTransportAlgorithmForDecryption(key,
-            decodedJwt);
+        decyptionAlg = AlgorithmResolver.resolveKeyTransportAlgorithmForDecryption(key, decodedJwt);
       } catch (ValueError | UnsupportedEncodingException | SerializationNotPossible e) {
         if (iter.hasNext()) {
           // We move on to try next key
@@ -407,22 +410,31 @@ public abstract class AbstractMessage implements Message {
         }
       }
       JWTDecryptor decryptor = new JWTDecryptor(decyptionAlg);
-      String signedJwt = new String(decryptor.decrypt(token));
+      String decryptedJwe = new String(decryptor.decrypt(token));
+      // Now we have a string that should be either jwt or json
       try {
-        parseFromJwt(signedJwt);
-        return signedJwt;
+        parseFromJwt(decryptedJwe);
+        return decryptedJwe;
       } catch (Exception e) {
+        // no op, we try our luck with json
+      }
+      try {
+        fromJson(decryptedJwe);
+        return null;
+      } catch (Exception e) {
+        // no op if we have still more keys
         if (iter.hasNext()) {
           continue;
         } else {
           throw new JWTDecodeException(
-              String.format("Unable to decrypt JWE: '%s'", e.getMessage()));
+              String.format("Unable to decode decrypted JWE '%s'", decryptedJwe));
         }
       }
+      
     }
+
     throw new JWTDecodeException("Unable to decrypt JWE with any of the keys provided");
   }
-
 
   /**
    * Serialize the content of this instance (the claims map) into a jwt string.
