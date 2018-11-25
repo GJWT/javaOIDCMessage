@@ -164,14 +164,8 @@ public class AbstractMessageTest extends BaseMessageTest<AbstractMessage> {
     List<Key> keysDec = getKeyJar().getDecryptKey(null, keyOwner, null, null);
     List<Key> keysEnc = getKeyJarPub().getEncryptKey(null, keyOwner, null, null);
     String signedAndEncryptedJwt = null;
-    if (encAlg.equals("A128KW")) {
+    if (encAlg.startsWith("A")) {
       signedAndEncryptedJwt = mockMessage.toJwt(keysDec.get(0), alg, keysEnc.get(1), encAlg,
-          encEnc, null, null, null);
-    } else if (encAlg.equals("A192KW")) {
-      signedAndEncryptedJwt = mockMessage.toJwt(keysDec.get(0), alg, keysEnc.get(2), encAlg,
-          encEnc, null, null, null);
-    } else if (encAlg.equals("A256KW")) {
-      signedAndEncryptedJwt = mockMessage.toJwt(keysDec.get(0), alg, keysEnc.get(3), encAlg,
           encEnc, null, null, null);
     } else if (encAlg.startsWith("ECDH")) {
       

@@ -174,12 +174,7 @@ public abstract class BaseMessageTest<T extends AbstractMessage> {
     KeyBundle keyBundlePrv = KeyBundle.keyBundleFromLocalFile(PRIVATE_KEY_FILE, "der", usesPrv);
     keyJarOfPrivateKeys.addKeyBundle(keyOwner, keyBundlePrv);
     keyJarOfPrivateKeys.addKeyBundle("", keyBundlePrv);
-    keyBundlePrv.append(new SYMKey("enc", Base64.encodeBase64URLSafeString(
-        "1234567890123456".getBytes(Charset.forName("UTF-8")))));
-    keyBundlePrv.append(new SYMKey("enc", Base64.encodeBase64URLSafeString(
-        "123456789012345678901234".getBytes(Charset.forName("UTF-8")))));
-    keyBundlePrv.append(new SYMKey("enc", Base64.encodeBase64URLSafeString(
-        "12345678901234567890123456789012".getBytes(Charset.forName("UTF-8")))));
+    keyBundlePrv.append(new SYMKey("enc", "symmetrickey"));
     ArrayList<String> usesPub = new ArrayList<String>();
     usesPub.add("ver");
     usesPub.add("enc");
@@ -207,12 +202,7 @@ public abstract class BaseMessageTest<T extends AbstractMessage> {
     usesPub.add("ver");
     usesPub.add("enc");
     KeyBundle keyBundlePub = KeyBundle.keyBundleFromLocalFile(PUBLIC_KEY_FILE, "der", usesPub);
-    keyBundlePub.append(new SYMKey("enc", Base64.encodeBase64URLSafeString(
-        "1234567890123456".getBytes(Charset.forName("UTF-8")))));
-    keyBundlePub.append(new SYMKey("enc", Base64.encodeBase64URLSafeString(
-        "123456789012345678901234".getBytes(Charset.forName("UTF-8")))));
-    keyBundlePub.append(new SYMKey("enc", Base64.encodeBase64URLSafeString(
-        "12345678901234567890123456789012".getBytes(Charset.forName("UTF-8")))));
+    keyBundlePub.append(new SYMKey("enc", "symmetrickey"));
     keyJarOfPublicKeys.addKeyBundle(keyOwner, keyBundlePub);
     return keyJarOfPublicKeys;
   }
