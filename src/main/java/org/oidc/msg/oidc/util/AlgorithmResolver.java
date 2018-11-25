@@ -41,6 +41,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.codec.CharEncoding;
 import org.bouncycastle.util.Arrays;
 
 /** Class for verifying proposed key and algorithm match to create Algorithm. */
@@ -200,9 +201,9 @@ public class AlgorithmResolver {
   }
 
   /**
-   * Helper creating symmetric key from byte [] assumed to be client secret.
+   * Helper creating symmetric key from byte string assumed to be client secret.
    * 
-   * @param keyData
+   * @param secret
    *          client secret.
    * @param keyLength
    *          length of the key required.
@@ -210,18 +211,25 @@ public class AlgorithmResolver {
    * @throws ValueError
    *           of that type for convinience. Thrown if message diges caant be instantiated.
    */
-  private static byte[] buildSymmetricCryptoKey(byte[] keyData, int keyLength) throws ValueError {
+  private static byte[] buildSymmetricCryptoKey(String secret, int keyLength) throws ValueError {
     try {
       if (keyLength <= 256) {
-        return Arrays.copyOf(MessageDigest.getInstance("SHA-256").digest(keyData), keyLength / 8);
+        return Arrays.copyOf(
+            MessageDigest.getInstance("SHA-256").digest(secret.getBytes(CharEncoding.UTF_8)),
+            keyLength / 8);
       } else if (keyLength <= 385) {
-        return Arrays.copyOf(MessageDigest.getInstance("SHA-384").digest(keyData), keyLength / 8);
+        return Arrays.copyOf(
+            MessageDigest.getInstance("SHA-384").digest(secret.getBytes(CharEncoding.UTF_8)),
+            keyLength / 8);
       } else {
-        return Arrays.copyOf(MessageDigest.getInstance("SHA-512").digest(keyData), keyLength / 8);
+        return Arrays.copyOf(
+            MessageDigest.getInstance("SHA-512").digest(secret.getBytes(CharEncoding.UTF_8)),
+            keyLength / 8);
       }
-    } catch (NoSuchAlgorithmException e) {
-      throw new ValueError(String
-          .format("Message digest required for key length '%d' cannot be instantiated", keyLength));
+    } catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
+      throw new ValueError(
+          String.format("Message digest required for key length '%d' cannot be instantiated, '%s'",
+              keyLength, e.getMessage()));
     }
   }
   
@@ -259,13 +267,16 @@ public class AlgorithmResolver {
         return Algorithm.RSAOAEP256((RSAPublicKey) key.getKey(false), null);
       case "A128KW":
         return Algorithm.AES128Keywrap(buildSymmetricCryptoKey(
-            ((SYMKey) key).getKey(false).getEncoded(), Algorithm.getAlgorithmKeydataLen(alg)));
+            ((String) ((SYMKey) key).serialize(false).get("k")),
+            Algorithm.getAlgorithmKeydataLen(alg)));
       case "A192KW":
         return Algorithm.AES192Keywrap(buildSymmetricCryptoKey(
-            ((SYMKey) key).getKey(false).getEncoded(), Algorithm.getAlgorithmKeydataLen(alg)));
+            ((String) ((SYMKey) key).serialize(false).get("k")),
+            Algorithm.getAlgorithmKeydataLen(alg)));
       case "A256KW":
         return Algorithm.AES256Keywrap(buildSymmetricCryptoKey(
-            ((SYMKey) key).getKey(false).getEncoded(), Algorithm.getAlgorithmKeydataLen(alg)));
+            ((String) ((SYMKey) key).serialize(false).get("k")),
+            Algorithm.getAlgorithmKeydataLen(alg)));
       case "ECDH-ES":
         return Algorithm.ECDH_ES((ECPrivateKey) key.getKey(true),
             (ECPublicKey) key.getKey(false),
@@ -401,17 +412,17 @@ public class AlgorithmResolver {
       case "RSA-OAEP-256":
         return Algorithm.RSAOAEP256(null, (RSAPrivateKey) key.getKey(true));
       case "A128KW":
-        return Algorithm
-            .AES128Keywrap(buildSymmetricCryptoKey(((SYMKey) key).getKey(false).getEncoded(),
-                Algorithm.getAlgorithmKeydataLen(decodedJWT.getAlgorithm())));
+        return Algorithm.AES128Keywrap(buildSymmetricCryptoKey(
+            ((String) ((SYMKey) key).serialize(false).get("k")),
+            Algorithm.getAlgorithmKeydataLen(decodedJWT.getAlgorithm())));
       case "A192KW":
-        return Algorithm
-            .AES192Keywrap(buildSymmetricCryptoKey(((SYMKey) key).getKey(false).getEncoded(),
-                Algorithm.getAlgorithmKeydataLen(decodedJWT.getAlgorithm())));
+        return Algorithm.AES192Keywrap(buildSymmetricCryptoKey(
+            ((String) ((SYMKey) key).serialize(false).get("k")),
+            Algorithm.getAlgorithmKeydataLen(decodedJWT.getAlgorithm())));
       case "A256KW":
-        return Algorithm
-            .AES256Keywrap(buildSymmetricCryptoKey(((SYMKey) key).getKey(false).getEncoded(),
-                Algorithm.getAlgorithmKeydataLen(decodedJWT.getAlgorithm())));
+        return Algorithm.AES256Keywrap(buildSymmetricCryptoKey(
+            ((String) ((SYMKey) key).serialize(false).get("k")),
+            Algorithm.getAlgorithmKeydataLen(decodedJWT.getAlgorithm())));
       case "ECDH-ES":
         return Algorithm.ECDH_ES((ECPrivateKey) key.getKey(true), null,
             (ECPublicKey) buildSenderEphemeralKey(decodedJWT).getKey(false),
