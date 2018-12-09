@@ -22,8 +22,6 @@ import com.auth0.msg.KeyJar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import org.oidc.msg.DeserializationException;
 import org.oidc.msg.ErrorDetails;
 import org.oidc.msg.ErrorType;
 import org.oidc.msg.ParameterVerification;
@@ -235,7 +233,7 @@ public class AuthenticationResponse extends AuthorizationResponse {
               "at_hash must be in id token if returned with access token"));
         } else {
           String atHash = TokenHash.compute((String) getClaims().get("access_token"),
-              JWT.decode((String) getClaims().get("id_token")).getAlgorithm());
+              (String) idToken.getHeader().get("alg"));
           if (!((String) idToken.getClaims().get("at_hash")).equals(atHash)) {
             getError().getDetails().add(new ErrorDetails("at_hash", ErrorType.VALUE_NOT_ALLOWED,
                 String.format("at_hash in id token not same as expected value '%s'", atHash)));
@@ -251,7 +249,7 @@ public class AuthenticationResponse extends AuthorizationResponse {
               idTokenErrorDetails.toString()));
         } else {
           String codeHash = TokenHash.compute((String) getClaims().get("code"),
-              JWT.decode((String) getClaims().get("id_token")).getAlgorithm());
+              (String) idToken.getHeader().get("alg"));
           if (!((String) idToken.getClaims().get("c_hash")).equals(codeHash)) {
             ErrorDetails idTokenErrorDetails = new ErrorDetails("c_hash", 
                 ErrorType.VALUE_NOT_ALLOWED,

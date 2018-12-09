@@ -621,6 +621,17 @@ public abstract class AbstractMessage implements Message {
     }
     return true;
   }
+  
+  /**
+   * Get the jwe/jwt header of the message. Header exists only if the message is deserialized from
+   * or serialized to jwe/jwt. If the message is serialized to, the header is the outermost header.
+   * If message is deserialized from, then header is the innermost header.
+   * 
+   * @return header.
+   */
+  public Map<String, Object> getHeader() {
+    return header;
+  }
 
   /**
    * Get error description of message parameter verification.
