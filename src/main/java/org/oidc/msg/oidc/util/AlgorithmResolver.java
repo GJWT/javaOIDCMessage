@@ -19,6 +19,7 @@ package org.oidc.msg.oidc.util;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.algorithms.CipherParams;
 import com.auth0.jwt.algorithms.ECDHESAlgorithm;
+import com.auth0.jwt.algorithms.JWEKeyAgreementAlgorithm;
 import com.auth0.jwt.exceptions.KeyAgreementException;
 import com.auth0.jwt.exceptions.oicmsg_exceptions.HeaderError;
 import com.auth0.jwt.exceptions.oicmsg_exceptions.JWKException;
@@ -315,9 +316,9 @@ public class AlgorithmResolver {
    */
   public static Algorithm resolveContentEncryptionAlg(Algorithm encAlg, String encEnc)
       throws KeyAgreementException {
-    if (encAlg instanceof ECDHESAlgorithm) {
+    if (encAlg instanceof JWEKeyAgreementAlgorithm) {
       return Algorithm.getContentEncryptionAlg(encEnc,
-          CipherParams.getKeyAgreementInstance(encEnc, encAlg));
+          CipherParams.getKeyAgreementInstance(encEnc, (JWEKeyAgreementAlgorithm)encAlg));
     }
     return Algorithm.getContentEncryptionAlg(encEnc, CipherParams.getInstance(encEnc));
   }
