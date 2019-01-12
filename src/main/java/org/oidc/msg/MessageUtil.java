@@ -30,11 +30,9 @@ public final class MessageUtil {
   /**
    * Splits the given token on the "." chars into a String array with 3 parts.
    *
-   * @param token
-   *          the string to split.
-   * @return the array representing the 3or more parts of the token.
-   * @throws JWTDecodeException
-   *           if the Token doesn't have 3 parts.
+   * @param token The string to split. Expected to have at least two parts.
+   * @return the array representing the 3or parts of the token.
+   * @throws JWTDecodeException if the given token doesn't have 2 (empty signature) or 3 parts.
    */
   public static String[] splitToken(String token) throws JWTDecodeException {
     String[] parts = token.split("\\.");
@@ -42,9 +40,9 @@ public final class MessageUtil {
       // Tokens with alg='none' have empty String as Signature.
       parts = new String[] { parts[0], parts[1], "" };
     }
-    if (parts.length < 3) {
+    if (parts.length != 3) {
       throw new JWTDecodeException(String
-          .format("The token was expected to have atleast 3 parts, but got %s.", parts.length));
+          .format("The token was expected to have 3 parts, but got %s.", parts.length));
     }
 
     return parts;
