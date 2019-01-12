@@ -341,16 +341,11 @@ public abstract class AbstractMessage implements Message {
    */
   @SuppressWarnings("unchecked")
   private void parseFromJwt(String jwt)
-      throws  IOException {
+      throws IOException {
     String[] parts = MessageUtil.splitToken(jwt);
-    String headerJson;
-    String payloadJson;
-    try {
-      headerJson = StringUtils.newStringUtf8(Base64.decodeBase64(parts[0]));
-      payloadJson = StringUtils.newStringUtf8(Base64.decodeBase64(parts[1]));
-    } catch (ArrayIndexOutOfBoundsException | NullPointerException e) {
-      throw new JWTDecodeException("Not able to locate header and payload for JWT", e);
-    }
+    String headerJson = StringUtils.newStringUtf8(Base64.decodeBase64(parts[0]));
+    String payloadJson = StringUtils.newStringUtf8(Base64.decodeBase64(parts[1]));
+
     this.header = mapper.readValue(headerJson, Map.class);
     this.claims = mapper.readValue(payloadJson, Map.class);
   }
