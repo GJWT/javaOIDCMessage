@@ -82,44 +82,63 @@ public class AbstractMessageTest extends BaseMessageTest<AbstractMessage> {
     String pcrUrlEncoded = pcr.toUrlEncoded();
     Assert.assertTrue(pcrUrlEncoded.contains("grant_type=refresh_token"));
     Assert.assertTrue(pcrUrlEncoded.contains("another=value"));
-    Assert.assertTrue(pcrUrlEncoded.contains("mock_json=%7B+%22mock%22+%3A+%7B+%22key%22+%3A+%22value%22+%7D+%7D"));
+    Assert.assertTrue(pcrUrlEncoded.contains(
+        "mock_json=%7B+%22mock%22+%3A+%7B+%22key%22+%3A+%22value%22+%7D+%7D"));
     
     MockMessage newMock = new MockMessage();
+    Assert.assertEquals("", newMock.toUrlEncoded());
     newMock.fromUrlEncoded(pcrUrlEncoded);
-    
-    Assert.assertEquals(3, newMock.getClaims().size());
-    Assert.assertEquals("refresh_token", newMock.getClaims().get("grant_type"));
-    Assert.assertEquals("value", newMock.getClaims().get("another"));
-    Assert.assertEquals("{ \"mock\" : { \"key\" : \"value\" } }", newMock.getClaims().get("mock_json"));
+    for (MockMessage mockMsg : Arrays.asList(newMock, fillMockFromUrlEncoded(newMock, null),
+        fillMockFromUrlEncoded(newMock, ""))) {
+      Assert.assertEquals(3, mockMsg.getClaims().size());
+      Assert.assertEquals("refresh_token", mockMsg.getClaims().get("grant_type"));
+      Assert.assertEquals("value", mockMsg.getClaims().get("another"));
+      Assert.assertEquals("{ \"mock\" : { \"key\" : \"value\" } }", 
+          mockMsg.getClaims().get("mock_json"));
+      
+    }
+  }
+  
+  protected MockMessage fillMockFromUrlEncoded(MockMessage baseMessage, String urlEncoded) 
+      throws MalformedURLException, DeserializationException {
+    MockMessage newMock = baseMessage;
+    newMock.fromUrlEncoded(urlEncoded);
+    return newMock;
   }
 
   @Test
   public void testToJson() throws Exception {
     HashMap<String, Object> claims = new HashMap<>();
-    claims.put("GRANT_TYPE", "refresh_token");
+    claims.put("grant_type", "refresh_token");
 
     MockMessage pcr = new MockMessage(claims);
     String pcrJson = pcr.toJson();
-    String testJson = "{\"GRANT_TYPE\":\"refresh_token\"}";
+    String testJson = "{\"grant_type\":\"refresh_token\"}";
     Assert.assertThat(pcrJson, CoreMatchers.is(testJson));
   }
 
   @Test
   public void testFromJson() throws Exception {
     HashMap<String, Object> claims = new HashMap<>();
-    claims.put("GRANT_TYPE", "refresh_token");
-    String testJson = "{\"GRANT_TYPE\":\"refresh_token\"}";
+    claims.put("grant_type", "refresh_token");
+    String testJson = "{\"grant_type\":\"refresh_token\"}";
     MockMessage pcr = new MockMessage(claims);
     pcr.fromJson(testJson);
     Assert.assertEquals(pcr.getClaims(), claims);
   }
-
-  // New tests ->
+  
+  @Test(expected = DeserializationException.class)
+  public void testFromJsonInvalid() throws Exception {
+    MockMessage msg = new MockMessage();
+    msg.fromJson("NOT_JSON");
+  }
   
   @Test
-  public void testSuccessToAndFromJWTNoneAlgBasicTypes() throws IOException, InvalidClaimException, SerializationException, DeserializationException {
+  public void testSuccessToAndFromJWTNoneAlgBasicTypes() throws IOException, InvalidClaimException,
+    SerializationException, DeserializationException {
     HashMap<String, Object> claims = new HashMap<String, Object>();
-    Map<String, ParameterVerificationDefinition> parVerDef = new HashMap<String, ParameterVerificationDefinition>();
+    Map<String, ParameterVerificationDefinition> parVerDef = new HashMap<String, 
+        ParameterVerificationDefinition>();
     parVerDef.put("foo1", ParameterVerification.SINGLE_OPTIONAL_BOOLEAN.getValue());
     parVerDef.put("foo2", ParameterVerification.SINGLE_OPTIONAL_STRING.getValue());
     parVerDef.put("foo3", ParameterVerification.SINGLE_OPTIONAL_DATE.getValue());
@@ -156,7 +175,8 @@ public class AbstractMessageTest extends BaseMessageTest<AbstractMessage> {
   
   private void testSuccessJWTEncryptDecrypt(String alg, String encAlg, String encEnc)
       throws IOException, InvalidClaimException, SerializationException, DeserializationException,
-      IllegalArgumentException, ImportException, UnknownKeyType, ValueError, JWKException, HeaderError, SerializationNotPossible {
+      IllegalArgumentException, ImportException, UnknownKeyType, ValueError, JWKException,
+      HeaderError, SerializationNotPossible {
     //Initial test for jwt encryption. Not at all complete case.
     HashMap<String, Object> claims = new HashMap<String, Object>();
     claims.put("foo", "bar");
@@ -213,7 +233,8 @@ public class AbstractMessageTest extends BaseMessageTest<AbstractMessage> {
   @Test
   public void testSuccessJWTEncryptDecrypt1()
       throws IOException, InvalidClaimException, SerializationException, DeserializationException,
-      IllegalArgumentException, ImportException, UnknownKeyType, ValueError, JWKException, HeaderError, SerializationNotPossible {
+      IllegalArgumentException, ImportException, UnknownKeyType, ValueError, JWKException, 
+      HeaderError, SerializationNotPossible {
     
 	  
     testSuccessJWTEncryptDecrypt("RS256","RSA1_5","A128CBC-HS256");
@@ -247,11 +268,13 @@ public class AbstractMessageTest extends BaseMessageTest<AbstractMessage> {
     Assert.assertEquals("bar", jwt.getClaim("foo").asString());
     Assert.assertEquals("RS256", jwt.getHeaderClaim("alg").asString());
     jwt = JWT.require(Algorithm.RSA384((RSAPublicKey) keysVerify.get(0).getKey(false), null))
-        .build().verify(mockMessage.toJwt(keysSign.get(0), "RS384", null, null, null, null, null, null));
+        .build().verify(mockMessage.toJwt(keysSign.get(0), "RS384", null, null, null, null, null, 
+            null));
     Assert.assertEquals("bar", jwt.getClaim("foo").asString());
     Assert.assertEquals("RS384", jwt.getHeaderClaim("alg").asString());
     jwt = JWT.require(Algorithm.RSA512((RSAPublicKey) keysVerify.get(0).getKey(false), null))
-        .build().verify(mockMessage.toJwt(keysSign.get(0), "RS512", null, null, null, null, null, null));
+        .build().verify(mockMessage.toJwt(keysSign.get(0), "RS512", null, null, null, null, null, 
+            null));
     Assert.assertEquals("bar", jwt.getClaim("foo").asString());
     Assert.assertEquals("RS512", jwt.getHeaderClaim("alg").asString());
   }
@@ -281,7 +304,8 @@ public class AbstractMessageTest extends BaseMessageTest<AbstractMessage> {
   }
  
   @Test
-  public void testSuccessFromJWTNoSignVerify() throws IOException, ImportException, UnknownKeyType, IllegalArgumentException, ValueError, DeserializationException {
+  public void testSuccessFromJWTNoSignVerify() throws IOException, ImportException, UnknownKeyType,
+    IllegalArgumentException, ValueError, DeserializationException {
     HashMap<String, Object> claims = new HashMap<>();
     MockMessage mockMessage = new MockMessage(claims);
     mockMessage.fromJwt(idToken, null, null);
@@ -301,11 +325,11 @@ public class AbstractMessageTest extends BaseMessageTest<AbstractMessage> {
         mockMessage.getClaims().get("picture"));
     
   }
- 
-  
+
   @Test
-  public void testSuccessFromJWTSignVerifyNone() throws InvalidClaimException, IllegalArgumentException,
-      IOException, ImportException, UnknownKeyType, ValueError, JWKException, DeserializationException {
+  public void testSuccessFromJWTSignVerifyNone() throws InvalidClaimException, 
+      IllegalArgumentException, IOException, ImportException, UnknownKeyType, ValueError,
+      JWKException, DeserializationException {
     HashMap<String, Object> claims = new HashMap<>();
     MockMessage mockMessage = new MockMessage(claims);
     String jwt = getSignedJwt("none");
@@ -315,8 +339,9 @@ public class AbstractMessageTest extends BaseMessageTest<AbstractMessage> {
   }
 
   @Test
-  public void testSuccessFromJWTSignVerifyRS() throws InvalidClaimException, IllegalArgumentException,
-      IOException, ImportException, UnknownKeyType, ValueError, JWKException, DeserializationException {
+  public void testSuccessFromJWTSignVerifyRS() throws InvalidClaimException, 
+      IllegalArgumentException, IOException, ImportException, UnknownKeyType, ValueError,
+      JWKException, DeserializationException {
     HashMap<String, Object> claims = new HashMap<>();
     MockMessage mockMessage = new MockMessage(claims);
     String jwt = getSignedJwt("RS256");
@@ -330,8 +355,9 @@ public class AbstractMessageTest extends BaseMessageTest<AbstractMessage> {
   }
   
   @Test(expected = JWTDecodeException.class)
-  public void testFailFromJWTSignVerifyRS() throws JWTDecodeException, InvalidClaimException, IllegalArgumentException,
-      IOException, ImportException, UnknownKeyType, ValueError, JWKException, DeserializationException {
+  public void testFailFromJWTSignVerifyRS() throws JWTDecodeException, InvalidClaimException,
+      IllegalArgumentException, IOException, ImportException, UnknownKeyType, ValueError, 
+      JWKException, DeserializationException {
     HashMap<String, Object> claims = new HashMap<>();
     MockMessage mockMessage = new MockMessage(claims);
     String jwt = getSignedJwt("RS256");
@@ -343,19 +369,22 @@ public class AbstractMessageTest extends BaseMessageTest<AbstractMessage> {
   public void failureMissingRequiredParam() throws InvalidClaimException {
     HashMap<String, Object> claims = new HashMap<>();
     claims.put("parameter1", "value");
-    Map<String, ParameterVerificationDefinition> parVerDef = new HashMap<String, ParameterVerificationDefinition>();
+    Map<String, ParameterVerificationDefinition> parVerDef = new HashMap<String, 
+        ParameterVerificationDefinition>();
     parVerDef.put("parameter2", ParameterVerification.SINGLE_REQUIRED_STRING.getValue());
     MockMessage mockMessage = new MockMessage(claims, parVerDef);
     Assert.assertFalse(mockMessage.verify());
     Assert.assertTrue(mockMessage.hasError());
-    Assert.assertTrue(mockMessage.getError().getDetails().get(0).getErrorType().equals(ErrorType.MISSING_REQUIRED_VALUE));
+    Assert.assertTrue(mockMessage.getError().getDetails().get(0).getErrorType().equals(
+        ErrorType.MISSING_REQUIRED_VALUE));
   }
 
   @Test
   public void successMissingOptionalParams() throws InvalidClaimException {
     HashMap<String, Object> claims = new HashMap<>();
     claims.put("parameter1", "value");
-    Map<String, ParameterVerificationDefinition> parVerDef = new HashMap<String, ParameterVerificationDefinition>();
+    Map<String, ParameterVerificationDefinition> parVerDef = new HashMap<String,
+        ParameterVerificationDefinition>();
     parVerDef.put("parameter2", ParameterVerification.SINGLE_OPTIONAL_STRING.getValue());
     parVerDef.put("parameter3", ParameterVerification.SINGLE_OPTIONAL_INT.getValue());
     parVerDef.put("parameter4", ParameterVerification.OPTIONAL_LIST_OF_SP_SEP_STRINGS.getValue());
@@ -370,7 +399,8 @@ public class AbstractMessageTest extends BaseMessageTest<AbstractMessage> {
       throws InvalidClaimException, JsonProcessingException, SerializationException {
     HashMap<String, Object> claims = new HashMap<>();
     claims.put("parameter1", "value");
-    Map<String, ParameterVerificationDefinition> parVerDef = new HashMap<String, ParameterVerificationDefinition>();
+    Map<String, ParameterVerificationDefinition> parVerDef = new HashMap<String,
+        ParameterVerificationDefinition>();
     parVerDef.put("parameter1", ParameterVerification.SINGLE_OPTIONAL_STRING.getValue());
     MockMessage mockMessage = new MockMessage(claims, parVerDef);
     mockMessage.verify();
@@ -382,7 +412,8 @@ public class AbstractMessageTest extends BaseMessageTest<AbstractMessage> {
   public void failTestStringType() throws InvalidClaimException {
     HashMap<String, Object> claims = new HashMap<>();
     claims.put("parameter1", 1);
-    Map<String, ParameterVerificationDefinition> parVerDef = new HashMap<String, ParameterVerificationDefinition>();
+    Map<String, ParameterVerificationDefinition> parVerDef = new HashMap<String,
+        ParameterVerificationDefinition>();
     parVerDef.put("parameter1", ParameterVerification.SINGLE_OPTIONAL_STRING.getValue());
     MockMessage mockMessage = new MockMessage(claims, parVerDef);
     Assert.assertFalse(mockMessage.verify());
@@ -393,7 +424,8 @@ public class AbstractMessageTest extends BaseMessageTest<AbstractMessage> {
       throws InvalidClaimException, JsonProcessingException, SerializationException {
     HashMap<String, Object> claims = new HashMap<>();
     claims.put("parameter1", new Long(5));
-    Map<String, ParameterVerificationDefinition> parVerDef = new HashMap<String, ParameterVerificationDefinition>();
+    Map<String, ParameterVerificationDefinition> parVerDef = new HashMap<String,
+        ParameterVerificationDefinition>();
     parVerDef.put("parameter1", ParameterVerification.SINGLE_OPTIONAL_INT.getValue());
     MockMessage mockMessage = new MockMessage(claims, parVerDef);
     mockMessage.verify();
@@ -406,7 +438,8 @@ public class AbstractMessageTest extends BaseMessageTest<AbstractMessage> {
       throws InvalidClaimException, JsonProcessingException, SerializationException {
     HashMap<String, Object> claims = new HashMap<>();
     claims.put("parameter1", new Integer(5));
-    Map<String, ParameterVerificationDefinition> parVerDef = new HashMap<String, ParameterVerificationDefinition>();
+    Map<String, ParameterVerificationDefinition> parVerDef = new HashMap<String, 
+        ParameterVerificationDefinition>();
     parVerDef.put("parameter1", ParameterVerification.SINGLE_OPTIONAL_INT.getValue());
     MockMessage mockMessage = new MockMessage(claims, parVerDef);
     mockMessage.verify();
@@ -419,7 +452,8 @@ public class AbstractMessageTest extends BaseMessageTest<AbstractMessage> {
       throws InvalidClaimException, JsonProcessingException, SerializationException {
     HashMap<String, Object> claims = new HashMap<>();
     claims.put("parameter1", "57");
-    Map<String, ParameterVerificationDefinition> parVerDef = new HashMap<String, ParameterVerificationDefinition>();
+    Map<String, ParameterVerificationDefinition> parVerDef = new HashMap<String, 
+        ParameterVerificationDefinition>();
     parVerDef.put("parameter1", ParameterVerification.SINGLE_OPTIONAL_INT.getValue());
     MockMessage mockMessage = new MockMessage(claims, parVerDef);
     mockMessage.verify();
@@ -431,12 +465,14 @@ public class AbstractMessageTest extends BaseMessageTest<AbstractMessage> {
   public void failTestIntType() throws InvalidClaimException {
     HashMap<String, Object> claims = new HashMap<>();
     claims.put("parameter1", "fail");
-    Map<String, ParameterVerificationDefinition> parVerDef = new HashMap<String, ParameterVerificationDefinition>();
+    Map<String, ParameterVerificationDefinition> parVerDef = new HashMap<String, 
+        ParameterVerificationDefinition>();
     parVerDef.put("parameter1", ParameterVerification.SINGLE_OPTIONAL_INT.getValue());
     MockMessage mockMessage = new MockMessage(claims, parVerDef);
     Assert.assertFalse(mockMessage.verify());
     Assert.assertTrue(mockMessage.hasError());
-    Assert.assertTrue(mockMessage.getError().getDetails().get(0).getErrorType().equals(ErrorType.INVALID_VALUE_FORMAT));
+    Assert.assertTrue(mockMessage.getError().getDetails().get(0).getErrorType().equals(
+        ErrorType.INVALID_VALUE_FORMAT));
   }
 
   @SuppressWarnings("unchecked")
@@ -448,14 +484,17 @@ public class AbstractMessageTest extends BaseMessageTest<AbstractMessage> {
     values.add("value");
     values.add("value2");
     claims.put("parameter1", values);
-    Map<String, ParameterVerificationDefinition> parVerDef = new HashMap<String, ParameterVerificationDefinition>();
+    Map<String, ParameterVerificationDefinition> parVerDef = new HashMap<String, 
+        ParameterVerificationDefinition>();
     parVerDef.put("parameter1", ParameterVerification.OPTIONAL_LIST_OF_STRINGS.getValue());
     MockMessage mockMessage = new MockMessage(claims, parVerDef);
     mockMessage.verify();
-    Assert.assertEquals(((List<String>) mockMessage.getClaims().get("parameter1")).get(0), "value");
+    Assert.assertEquals(((List<String>) mockMessage.getClaims().get("parameter1")).get(0), 
+        "value");
     Assert.assertEquals(((List<String>) mockMessage.getClaims().get("parameter1")).get(1),
         "value2");
-    Assert.assertThat(mockMessage.toJson(), CoreMatchers.is("{\"parameter1\":[\"value\",\"value2\"]}"));
+    Assert.assertThat(mockMessage.toJson(), 
+        CoreMatchers.is("{\"parameter1\":[\"value\",\"value2\"]}"));
   }
 
   @SuppressWarnings("unchecked")
@@ -467,16 +506,19 @@ public class AbstractMessageTest extends BaseMessageTest<AbstractMessage> {
     values.add("value");
     values.add("value2");
     claims.put("parameter1", values);
-    Map<String, ParameterVerificationDefinition> parVerDef = new HashMap<String, ParameterVerificationDefinition>();
+    Map<String, ParameterVerificationDefinition> parVerDef = new HashMap<String, 
+        ParameterVerificationDefinition>();
     parVerDef.put("parameter1", ParameterVerification.OPTIONAL_LIST_OF_STRINGS.getValue());
     Map<String, List<?>> allowedValues = new HashMap<String, List<?>>();
     allowedValues.put("parameter1", Arrays.asList("value", "value2", "evenMore"));
     MockMessage mockMessage = new MockMessage(claims, parVerDef, allowedValues);
     mockMessage.verify();
-    Assert.assertEquals(((List<String>) mockMessage.getClaims().get("parameter1")).get(0), "value");
+    Assert.assertEquals(((List<String>) mockMessage.getClaims().get("parameter1")).get(0),
+        "value");
     Assert.assertEquals(((List<String>) mockMessage.getClaims().get("parameter1")).get(1),
         "value2");
-    Assert.assertThat(mockMessage.toJson(), CoreMatchers.is("{\"parameter1\":[\"value\",\"value2\"]}"));
+    Assert.assertThat(mockMessage.toJson(), 
+        CoreMatchers.is("{\"parameter1\":[\"value\",\"value2\"]}"));
   }
 
   @Test
@@ -487,14 +529,16 @@ public class AbstractMessageTest extends BaseMessageTest<AbstractMessage> {
     values.add("value");
     values.add("value2");
     claims.put("parameter1", values);
-    Map<String, ParameterVerificationDefinition> parVerDef = new HashMap<String, ParameterVerificationDefinition>();
+    Map<String, ParameterVerificationDefinition> parVerDef = new HashMap<String, 
+        ParameterVerificationDefinition>();
     parVerDef.put("parameter1", ParameterVerification.OPTIONAL_LIST_OF_STRINGS.getValue());
     Map<String, List<?>> allowedValues = new HashMap<String, List<?>>();
     allowedValues.put("parameter1", Arrays.asList("value", "evenMore"));
     MockMessage mockMessage = new MockMessage(claims, parVerDef, allowedValues);
     Assert.assertFalse(mockMessage.verify());
     Assert.assertTrue(mockMessage.hasError());
-    Assert.assertTrue(mockMessage.getError().getDetails().get(0).getErrorType().equals(ErrorType.VALUE_NOT_ALLOWED));
+    Assert.assertTrue(mockMessage.getError().getDetails().get(0).getErrorType().equals(
+        ErrorType.VALUE_NOT_ALLOWED));
   }
 
   @SuppressWarnings("unchecked")
@@ -503,7 +547,8 @@ public class AbstractMessageTest extends BaseMessageTest<AbstractMessage> {
       throws InvalidClaimException, JsonProcessingException, SerializationException {
     HashMap<String, Object> claims = new HashMap<>();
     claims.put("parameter1", "values");
-    Map<String, ParameterVerificationDefinition> parVerDef = new HashMap<String, ParameterVerificationDefinition>();
+    Map<String, ParameterVerificationDefinition> parVerDef = new HashMap<String, 
+        ParameterVerificationDefinition>();
     parVerDef.put("parameter1", ParameterVerification.OPTIONAL_LIST_OF_STRINGS.getValue());
     MockMessage mockMessage = new MockMessage(claims, parVerDef);
     mockMessage.verify();
@@ -518,7 +563,8 @@ public class AbstractMessageTest extends BaseMessageTest<AbstractMessage> {
       throws InvalidClaimException, JsonProcessingException, SerializationException {
     HashMap<String, Object> claims = new HashMap<>();
     claims.put("parameter1", "values");
-    Map<String, ParameterVerificationDefinition> parVerDef = new HashMap<String, ParameterVerificationDefinition>();
+    Map<String, ParameterVerificationDefinition> parVerDef = new HashMap<String, 
+        ParameterVerificationDefinition>();
     parVerDef.put("parameter1", ParameterVerification.OPTIONAL_LIST_OF_STRINGS.getValue());
     Map<String, List<?>> allowedValues = new HashMap<String, List<?>>();
     allowedValues.put("parameter1", Arrays.asList("values"));
@@ -534,14 +580,16 @@ public class AbstractMessageTest extends BaseMessageTest<AbstractMessage> {
       throws InvalidClaimException, JsonProcessingException, SerializationException {
     HashMap<String, Object> claims = new HashMap<>();
     claims.put("parameter1", "values");
-    Map<String, ParameterVerificationDefinition> parVerDef = new HashMap<String, ParameterVerificationDefinition>();
+    Map<String, ParameterVerificationDefinition> parVerDef = new HashMap<String, 
+        ParameterVerificationDefinition>();
     parVerDef.put("parameter1", ParameterVerification.OPTIONAL_LIST_OF_STRINGS.getValue());
     Map<String, List<?>> allowedValues = new HashMap<String, List<?>>();
     allowedValues.put("parameter1", Arrays.asList("notValues"));
     MockMessage mockMessage = new MockMessage(claims, parVerDef, allowedValues);
     Assert.assertFalse(mockMessage.verify());
     Assert.assertTrue(mockMessage.hasError());
-    Assert.assertTrue(mockMessage.getError().getDetails().get(0).getErrorType().equals(ErrorType.VALUE_NOT_ALLOWED));
+    Assert.assertTrue(mockMessage.getError().getDetails().get(0).getErrorType().equals(
+        ErrorType.VALUE_NOT_ALLOWED));
   }
 
   @Test
@@ -550,12 +598,14 @@ public class AbstractMessageTest extends BaseMessageTest<AbstractMessage> {
     List<String> values = new ArrayList<String>();
     values.add("value");
     claims.put("parameter1", 1);
-    Map<String, ParameterVerificationDefinition> parVerDef = new HashMap<String, ParameterVerificationDefinition>();
+    Map<String, ParameterVerificationDefinition> parVerDef = new HashMap<String,
+        ParameterVerificationDefinition>();
     parVerDef.put("parameter1", ParameterVerification.OPTIONAL_LIST_OF_STRINGS.getValue());
     MockMessage mockMessage = new MockMessage(claims, parVerDef);
     Assert.assertFalse(mockMessage.verify());
     Assert.assertTrue(mockMessage.hasError());
-    Assert.assertTrue(mockMessage.getError().getDetails().get(0).getErrorType().equals(ErrorType.INVALID_VALUE_FORMAT));
+    Assert.assertTrue(mockMessage.getError().getDetails().get(0).getErrorType().equals(
+        ErrorType.INVALID_VALUE_FORMAT));
 
   }
 
@@ -567,7 +617,8 @@ public class AbstractMessageTest extends BaseMessageTest<AbstractMessage> {
     strArr[0] = "value";
     strArr[1] = "value2";
     claims.put("parameter1", strArr);
-    Map<String, ParameterVerificationDefinition> parVerDef = new HashMap<String, ParameterVerificationDefinition>();
+    Map<String, ParameterVerificationDefinition> parVerDef = new HashMap<String,
+        ParameterVerificationDefinition>();
     parVerDef.put("parameter1", ParameterVerification.REQUIRED_LIST_OF_SP_SEP_STRINGS.getValue());
     MockMessage mockMessage = new MockMessage(claims, parVerDef);
     mockMessage.verify();
@@ -579,19 +630,22 @@ public class AbstractMessageTest extends BaseMessageTest<AbstractMessage> {
   public void failTestArrayType() throws InvalidClaimException {
     HashMap<String, Object> claims = new HashMap<>();
     claims.put("parameter1", 1);
-    Map<String, ParameterVerificationDefinition> parVerDef = new HashMap<String, ParameterVerificationDefinition>();
+    Map<String, ParameterVerificationDefinition> parVerDef = new HashMap<String, 
+        ParameterVerificationDefinition>();
     parVerDef.put("parameter1", ParameterVerification.REQUIRED_LIST_OF_SP_SEP_STRINGS.getValue());
     MockMessage mockMessage = new MockMessage(claims, parVerDef);
     Assert.assertFalse(mockMessage.verify());
     Assert.assertTrue(mockMessage.hasError());
-    Assert.assertTrue(mockMessage.getError().getDetails().get(0).getErrorType().equals(ErrorType.INVALID_VALUE_FORMAT));
+    Assert.assertTrue(mockMessage.getError().getDetails().get(0).getErrorType().equals(
+        ErrorType.INVALID_VALUE_FORMAT));
   }
 
   @Test
   public void successTestBooleanType() throws InvalidClaimException {
     HashMap<String, Object> claims = new HashMap<>();
     claims.put("parameter1", true);
-    Map<String, ParameterVerificationDefinition> parVerDef = new HashMap<String, ParameterVerificationDefinition>();
+    Map<String, ParameterVerificationDefinition> parVerDef = new HashMap<String,
+        ParameterVerificationDefinition>();
     parVerDef.put("parameter1", ParameterVerification.SINGLE_OPTIONAL_BOOLEAN.getValue());
     MockMessage mockMessage = new MockMessage(claims, parVerDef);
     mockMessage.verify();
@@ -602,24 +656,34 @@ public class AbstractMessageTest extends BaseMessageTest<AbstractMessage> {
   public void failTestBooleanType() throws InvalidClaimException {
     HashMap<String, Object> claims = new HashMap<>();
     claims.put("parameter1", "value");
-    Map<String, ParameterVerificationDefinition> parVerDef = new HashMap<String, ParameterVerificationDefinition>();
+    Map<String, ParameterVerificationDefinition> parVerDef = new HashMap<String,
+        ParameterVerificationDefinition>();
     parVerDef.put("parameter1", ParameterVerification.SINGLE_OPTIONAL_BOOLEAN.getValue());
     MockMessage mockMessage = new MockMessage(claims, parVerDef);
     Assert.assertFalse(mockMessage.verify());
     Assert.assertTrue(mockMessage.hasError());
-    Assert.assertTrue(mockMessage.getError().getDetails().get(0).getErrorType().equals(ErrorType.INVALID_VALUE_FORMAT));
+    Assert.assertTrue(mockMessage.getError().getDetails().get(0).getErrorType().equals(
+        ErrorType.INVALID_VALUE_FORMAT));
   }
 
   @Test
-  public void successTestDateType() throws InvalidClaimException {
+  public void successTestDateType() throws InvalidClaimException, DeserializationException, 
+      SerializationException {
     HashMap<String, Object> claims = new HashMap<>();
-    Date date = new Date();
+    Date date = new Date(System.currentTimeMillis() / 1000 * 1000);
     claims.put("parameter1", date);
-    Map<String, ParameterVerificationDefinition> parVerDef = new HashMap<String, ParameterVerificationDefinition>();
+    Map<String, ParameterVerificationDefinition> parVerDef = new HashMap<String,
+        ParameterVerificationDefinition>();
     parVerDef.put("parameter1", ParameterVerification.SINGLE_OPTIONAL_DATE.getValue());
     MockMessage mockMessage = new MockMessage(claims, parVerDef);
     mockMessage.verify();
     Assert.assertEquals(((Date) mockMessage.getClaims().get("parameter1")).getTime(),
+        date.getTime());
+    MockMessage fromWire = new MockMessage(new HashMap<String, Object>(), parVerDef);
+    fromWire.fromJson(mockMessage.toJson());
+    fromWire.verify();
+    Assert.assertTrue(fromWire.isVerified());
+    Assert.assertEquals(((Date) fromWire.getClaims().get("parameter1")).getTime(),
         date.getTime());
   }
 
@@ -628,7 +692,8 @@ public class AbstractMessageTest extends BaseMessageTest<AbstractMessage> {
     HashMap<String, Object> claims = new HashMap<>();
     Date date = new Date();
     claims.put("parameter1", date.getTime()/1000);
-    Map<String, ParameterVerificationDefinition> parVerDef = new HashMap<String, ParameterVerificationDefinition>();
+    Map<String, ParameterVerificationDefinition> parVerDef = new HashMap<String,
+        ParameterVerificationDefinition>();
     parVerDef.put("parameter1", ParameterVerification.SINGLE_OPTIONAL_DATE.getValue());
     MockMessage mockMessage = new MockMessage(claims, parVerDef);
     mockMessage.verify();
@@ -640,25 +705,29 @@ public class AbstractMessageTest extends BaseMessageTest<AbstractMessage> {
   public void failTestDateType() throws InvalidClaimException {
     HashMap<String, Object> claims = new HashMap<>();
     claims.put("parameter1", "value");
-    Map<String, ParameterVerificationDefinition> parVerDef = new HashMap<String, ParameterVerificationDefinition>();
+    Map<String, ParameterVerificationDefinition> parVerDef = new HashMap<String,
+        ParameterVerificationDefinition>();
     parVerDef.put("parameter1", ParameterVerification.SINGLE_OPTIONAL_DATE.getValue());
     MockMessage mockMessage = new MockMessage(claims, parVerDef);
     Assert.assertFalse(mockMessage.verify());
     Assert.assertTrue(mockMessage.hasError());
-    Assert.assertTrue(mockMessage.getError().getDetails().get(0).getErrorType().equals(ErrorType.INVALID_VALUE_FORMAT));
+    Assert.assertTrue(mockMessage.getError().getDetails().get(0).getErrorType().equals(
+        ErrorType.INVALID_VALUE_FORMAT));
   }
 
   @Test
   public void successTestMessageType() throws InvalidClaimException {
     HashMap<String, Object> innerClaims = new HashMap<>();
     innerClaims.put("parameter1", "value");
-    Map<String, ParameterVerificationDefinition> innerParVerDef = new HashMap<String, ParameterVerificationDefinition>();
+    Map<String, ParameterVerificationDefinition> innerParVerDef = new HashMap<String,
+        ParameterVerificationDefinition>();
     innerParVerDef.put("parameter1", ParameterVerification.SINGLE_OPTIONAL_STRING.getValue());
     MockMessage innerMockMessage = new MockMessage(innerClaims, innerParVerDef);
 
     HashMap<String, Object> claims = new HashMap<>();
     claims.put("parameter1", innerMockMessage);
-    Map<String, ParameterVerificationDefinition> parVerDef = new HashMap<String, ParameterVerificationDefinition>();
+    Map<String, ParameterVerificationDefinition> parVerDef = new HashMap<String,
+        ParameterVerificationDefinition>();
     parVerDef.put("parameter1", ParameterVerification.SINGLE_OPTIONAL_MESSAGE.getValue());
     MockMessage mockMessage = new MockMessage(claims, parVerDef);
     mockMessage.verify();
@@ -671,19 +740,22 @@ public class AbstractMessageTest extends BaseMessageTest<AbstractMessage> {
   public void failTestMessageType() throws InvalidClaimException {
     HashMap<String, Object> claims = new HashMap<>();
     claims.put("parameter1", "value");
-    Map<String, ParameterVerificationDefinition> parVerDef = new HashMap<String, ParameterVerificationDefinition>();
+    Map<String, ParameterVerificationDefinition> parVerDef = new HashMap<String,
+        ParameterVerificationDefinition>();
     parVerDef.put("parameter1", ParameterVerification.SINGLE_OPTIONAL_MESSAGE.getValue());
     MockMessage mockMessage = new MockMessage(claims, parVerDef);
     Assert.assertFalse(mockMessage.verify());
     Assert.assertTrue(mockMessage.hasError());
-    Assert.assertTrue(mockMessage.getError().getDetails().get(0).getErrorType().equals(ErrorType.INVALID_VALUE_FORMAT));
+    Assert.assertTrue(mockMessage.getError().getDetails().get(0).getErrorType().equals(
+        ErrorType.INVALID_VALUE_FORMAT));
   }
   
   @Test
   public void successTestIdTokenType() throws InvalidClaimException {
     HashMap<String, Object> claims = new HashMap<>();
     claims.put("parameter1", idToken);
-    Map<String, ParameterVerificationDefinition> parVerDef = new HashMap<String, ParameterVerificationDefinition>();
+    Map<String, ParameterVerificationDefinition> parVerDef = new HashMap<String,
+        ParameterVerificationDefinition>();
     parVerDef.put("parameter1", ParameterVerification.SINGLE_OPTIONAL_JWT.getValue());
     MockMessage mockMessage = new MockMessage(claims, parVerDef);
     mockMessage.verify();
@@ -694,12 +766,14 @@ public class AbstractMessageTest extends BaseMessageTest<AbstractMessage> {
   public void failTestIdTokenType() throws InvalidClaimException {
     HashMap<String, Object> claims = new HashMap<>();
     claims.put("parameter1", "value");
-    Map<String, ParameterVerificationDefinition> parVerDef = new HashMap<String, ParameterVerificationDefinition>();
+    Map<String, ParameterVerificationDefinition> parVerDef = new HashMap<String,
+        ParameterVerificationDefinition>();
     parVerDef.put("parameter1", ParameterVerification.SINGLE_OPTIONAL_JWT.getValue());
     MockMessage mockMessage = new MockMessage(claims, parVerDef);
     Assert.assertFalse(mockMessage.verify());
     Assert.assertTrue(mockMessage.hasError());
-    Assert.assertTrue(mockMessage.getError().getDetails().get(0).getErrorType().equals(ErrorType.INVALID_VALUE_FORMAT));
+    Assert.assertTrue(mockMessage.getError().getDetails().get(0).getErrorType().equals(
+        ErrorType.INVALID_VALUE_FORMAT));
   }
   
 
