@@ -28,7 +28,6 @@ import com.auth0.msg.KeyJar;
 import com.auth0.msg.SYMKey;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.RSAPrivateKey;
 import java.util.ArrayList;
@@ -37,7 +36,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.codec.binary.Base64;
 import org.junit.Assert;
 import org.junit.Test;
 import org.oidc.msg.oidc.ClaimsRequest;
@@ -52,7 +50,6 @@ public abstract class BaseMessageTest<T extends AbstractMessage> {
   private static final String PRIVATE_KEY_FILE = "src/test/resources/rsa-private.pem";
   private static final String PUBLIC_KEY_FILE = "src/test/resources/rsa-public.pem";
   private static final String PUBLIC_KEY_FILE2 = "src/test/resources/rsa-public2.pem";
-  //TODO: return keyOwner to https://issuer.example.com once edmund explains how parameter is used in getJWTVerifyKeys 
   protected String keyOwner = "https://issuer.example.com";
   protected KeyJar keyJarOfPrivateKeys = null;
   protected KeyJar keyJarOfPublicKeys = null;
