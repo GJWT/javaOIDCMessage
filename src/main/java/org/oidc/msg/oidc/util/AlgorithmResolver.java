@@ -18,7 +18,6 @@ package org.oidc.msg.oidc.util;
 
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.algorithms.CipherParams;
-import com.auth0.jwt.algorithms.ECDHESAlgorithm;
 import com.auth0.jwt.algorithms.JWEKeyAgreementAlgorithm;
 import com.auth0.jwt.exceptions.KeyAgreementException;
 import com.auth0.jwt.exceptions.oicmsg_exceptions.HeaderError;
@@ -45,7 +44,9 @@ import java.util.Map;
 import org.apache.commons.codec.CharEncoding;
 import org.bouncycastle.util.Arrays;
 
-/** Class for verifying proposed key and algorithm match to create Algorithm. */
+/**
+ * Class verifies proposed key and algorithm match. For matching pair a Algorithm is instantiated.
+ */
 public class AlgorithmResolver {
 
   /**
@@ -155,7 +156,7 @@ public class AlgorithmResolver {
    * Resolves signature verification algorithm for key and algorithm identifier string.
    * 
    * @param key
-   *          for signing.
+   *          for verification.
    * @param alg
    *          algorithm name.
    * @return Algorithm instance
@@ -210,7 +211,7 @@ public class AlgorithmResolver {
    *          length of the key required.
    * @return symmetric encryption/decryption key.
    * @throws ValueError
-   *           of that type for convinience. Thrown if message diges caant be instantiated.
+   *           of that type for convinience. Thrown if message digest cannot be instantiated.
    */
   private static byte[] buildSymmetricCryptoKey(String secret, int keyLength) throws ValueError {
     try {
@@ -238,10 +239,19 @@ public class AlgorithmResolver {
    * Resolves key transport algorithm by key and algorithm identifier string.
    * 
    * @param key
-   *          for signing.
+   *          key transport/management key. For RSA family the receiver public key. For ECDH family
+   *          the sender private key. For symmetric algorithms the shared secret.
    * @param alg
-   *          algorithm name.
-   * @return Algorithm instance
+   *          key transport/management algorithm name.
+   * @param enc
+   *          content encryption algorithm name when ECDH-ES is used
+   * @param keyjar
+   *          key jar containing receiver EC keys when ECDH family of key agreements is used
+   * @param sender
+   *          client id of the sender
+   * @param receiver
+   *          issuer value of the receiver
+   * @return key transport algorithm.
    * @throws ValueError
    *           if key or algorithm is of unexpected type
    * @throws UnsupportedEncodingException
@@ -313,6 +323,7 @@ public class AlgorithmResolver {
    *          name of the content encryption algorithm
    * @return content encryption algorithm
    * @throws KeyAgreementException
+   *           if not able to resolve
    */
   public static Algorithm resolveContentEncryptionAlg(Algorithm encAlg, String encEnc)
       throws KeyAgreementException {
@@ -330,10 +341,10 @@ public class AlgorithmResolver {
    * @param keyjar
    *          KeyJar containing the ephemeral key
    * @param receiver
-   *          receiver identifier, op issuer id
+   *          issuer value of the receiver
    * @return EC key or null
    * @throws ValueError
-   *           if keyjar o
+   *           if not able to locate the receiver key from key jar
    */
   private static ECKey getReceiverEphemeralKey(KeyJar keyjar, String receiver) throws ValueError {
     if (keyjar == null) {
