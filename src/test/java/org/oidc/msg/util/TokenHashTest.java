@@ -30,6 +30,8 @@ public class TokenHashTest {
   public void testHashSuccess() {
     String at = "jHkWEdUXMU1BwAsC4vtUsZwnNvTIxEl0z9K3vx5KF0Y";
     Assert.assertThat("77QmUPtjPfzWtF2AnpK9RQ", CoreMatchers.is(TokenHash.compute(at, "RS256")));
+    Assert.assertThat("jtAeDp945y1dDqU3nkIVGNZP1HjH_MFs", CoreMatchers.is(TokenHash.compute(at, "RS384")));
+    Assert.assertThat("q7nS86GgvvFaZkzALLWqJYaJIKw2wCDAVfCAsm5CrBM", CoreMatchers.is(TokenHash.compute(at, "RS512")));
     String c = "Qcb0Orv1zh30vL1MPRsbm-diHiMwcLyZvn1arpZv-Jxf_11jnpEX3Tgfvk";
     Assert.assertThat("LDktKdoQak3Pk0cnXxCltA", CoreMatchers.is(TokenHash.compute(c, "RS256")));
   }
