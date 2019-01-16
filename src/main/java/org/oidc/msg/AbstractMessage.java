@@ -517,19 +517,11 @@ public abstract class AbstractMessage implements Message {
 
   /**
    * Verifies the presence of required message parameters. Verifies the the format of message
-   * parameters. If any messages extending this class wants to do any additional verifications, they
-   * should implement it in the doVerify() method.
+   * parameters.
    * 
-   * @return true if parameters are successfully verified.
+   * @param paramVerDefs  verification parameters. Must not be null.
    */
-  public final boolean verify() {
-    error.getDetails().clear();
-    verified = true;
-
-    Map<String, ParameterVerificationDefinition> paramVerDefs = getParameterVerificationDefinitions();
-    if (paramVerDefs == null || paramVerDefs.isEmpty()) {
-      return true;
-    }
+  private void verifyParameters(Map<String, ParameterVerificationDefinition> paramVerDefs) {
     for (String paramName : paramVerDefs.keySet()) {
       // If parameter is defined as REQUIRED, it must exist.
       if (paramVerDefs.get(paramName).isRequired()
@@ -585,9 +577,24 @@ public abstract class AbstractMessage implements Message {
         }
       }
     }
-    if (error.getDetails().size() > 0) {
+
+  }
+  
+  /**
+   * Verifies the presence of required message parameters. Verifies the the format of message
+   * parameters. If any messages extending this class wants to do any additional verifications, they
+   * should implement it in the doVerify() method.
+   * 
+   * @return true if parameters are successfully verified.
+   */
+  public final boolean verify() {
+    error.getDetails().clear();
+    Map<String, ParameterVerificationDefinition> paramVerDefs = 
+        getParameterVerificationDefinitions();
+    if (paramVerDefs != null && !paramVerDefs.isEmpty()) {
+      verifyParameters(paramVerDefs);
       if (!isValidStructure()) {
-        verified = false;
+        setVerified(false);
         return false;
       }
     }
